@@ -66,6 +66,17 @@ Based on the analysis, vardoger produces a text artifact — a set of instructio
 
 The generated prompt addition is written to the location each platform natively reads, so it takes effect without any manual intervention from the user. The exact delivery mechanism per platform is detailed in Section 5.
 
+### 4.5 Incremental Processing [ ]
+
+vardoger must maintain a lightweight checkpoint record of which conversations have already been processed. On subsequent runs, only new or updated conversations are read and analyzed. This avoids redundant work, speeds up repeated invocations, and provides a stable foundation for continuous refinement.
+
+The checkpoint store must:
+- Record per-conversation identifiers (session ID, file path, or content hash) and the timestamp of last processing
+- Be platform-aware — each platform adapter manages its own checkpoint namespace
+- Live locally alongside other vardoger state (e.g., `~/.vardoger/checkpoints/` or a single `~/.vardoger/state.json`)
+- Be resilient to missing or corrupt state — a missing checkpoint simply means "reprocess everything"
+- Support a `--full` / `--force` flag to bypass checkpoints and reprocess all history on demand
+
 ---
 
 ## 5. Platform Integration Details
@@ -269,6 +280,7 @@ The core analysis logic must be shared across all three platform integrations. P
 **Goal:** Replace the placeholder analysis with real AI-driven pattern extraction.
 
 **Deliverables:**
+- [ ] Checkpoint store that tracks processed conversations to enable incremental runs (see 4.5)
 - [ ] Analysis pipeline that processes conversation history through an AI model
 - [ ] Pattern categories: communication preferences, technical stack, workflow habits, pain points, coding style
 - [ ] Prompt generation that translates extracted patterns into effective system prompt instructions
@@ -281,7 +293,6 @@ The core analysis logic must be shared across all three platform integrations. P
 **Goal:** Make personalization continuous and self-improving.
 
 **Deliverables:**
-- [ ] Incremental analysis (process only new conversations since last run)
 - [ ] Staleness detection and automatic refresh suggestions
 - [ ] User feedback mechanism (accept/reject/edit generated rules)
 - [ ] Confidence scoring for extracted patterns
@@ -355,11 +366,15 @@ How much conversation history should vardoger analyze by default?
 | **Conversation history** | The recorded transcript of past user-assistant interactions, stored locally by each platform. |
 | **History adapter** | A vardoger component that reads and normalizes conversation history from a specific platform's storage format. |
 | **Prompt writer** | A vardoger component that formats and delivers the generated prompt addition to a specific platform's configuration mechanism. |
+| **Checkpoint store** | A local record of which conversations have already been processed, enabling incremental analysis without reprocessing old data. |
 | **JSONL** | JSON Lines format — one complete JSON object per line, used by all three platforms for conversation storage. |
 
 ## Appendix B: Platform File Paths Summary
 
 ```
+vardoger state:
+  Checkpoints: ~/.vardoger/state.json (per-platform processing watermarks)
+
 Cursor:
   History:  ~/.cursor/projects/<slug>/agent-transcripts/<uuid>/<uuid>.jsonl
   History:  ~/.cursor/chats/<hash>/<uuid>/store.db
