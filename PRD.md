@@ -113,9 +113,9 @@ Cursor is VS Code-based. Extensions are published to the **Visual Studio Marketp
 
 Additionally, Cursor supports **MCP servers** configured via `~/.cursor/mcp.json`. vardoger can expose analysis capabilities as MCP tools alongside or instead of a VS Code extension.
 
-**Recommended approach:** Ship as an MCP server (configured in `mcp.json`) that exposes vardoger commands as tools the agent can invoke. This aligns with Cursor's AI-native plugin model better than a traditional VS Code extension.
+**Recommended approach:** Ship as an MCP server (configured in `mcp.json`) that exposes vardoger commands as tools the agent can invoke. This aligns with Cursor's AI-native plugin model better than a traditional VS Code extension. Install via `pipx install vardoger && vardoger setup cursor`.
 
-> **Status:** [x] MCP server implemented (stdio transport, `vardoger_analyze` tool). [ ] VS Code Marketplace publishing not yet done.
+> **Status:** [x] MCP server implemented (stdio transport) with `vardoger_personalize` entry-point tool plus `vardoger_prepare`, `vardoger_synthesize_prompt`, and `vardoger_write` implementation tools. [ ] VS Code Marketplace publishing not yet done.
 
 ---
 
@@ -264,16 +264,18 @@ The core analysis logic must be shared across all three platform integrations. P
 
 **Deliverables:**
 - [x] History reader adapters for Cursor, Claude Code, and Codex (JSONL parsers)
-- [ ] History reader adapters for SQLite sources (Cursor chat DB, Codex state DB)
+- [ ] ~~History reader adapters for SQLite sources (Cursor chat DB, Codex state DB)~~ — **Deferred.** Cursor SQLite stores contain non-agent UI state in undocumented formats; Codex SQLite indexes the same JSONL files. JSONL provides cleaner data.
 - [x] A unified internal representation of conversation data
 - [x] Platform-native prompt writers that produce valid configuration files
+- [x] `vardoger setup` CLI command for post-install platform registration (Cursor MCP, Claude Code plugin dir, Codex marketplace.json)
+- [x] Distribution via `pipx install vardoger` verified; `vardoger_personalize` MCP entry-point tool guides Cursor agent through the analysis flow
 - [ ] Plugin packaging and marketplace submission for all three platforms
 - [x] A placeholder analysis step that produces a minimal, hard-coded prompt addition (proving the pipeline works end-to-end)
 - [x] Local plugin install for all three platforms (Cursor MCP, Claude Code plugin, Codex plugin)
 
 **Success criteria:** A user can install vardoger from the plugin marketplace on any supported platform, run it, and see a vardoger-authored rule file appear in the correct location.
 
-> **Status:** End-to-end pipeline works locally on all three platforms. Marketplace publishing remains.
+> **Status:** End-to-end pipeline works locally on all three platforms. Users install via `pipx install vardoger` and run `vardoger setup <platform>` to register. Marketplace publishing remains.
 
 ### Phase 2 — Intelligence: AI-Powered Analysis [x]
 
@@ -376,6 +378,7 @@ How much conversation history should vardoger analyze by default?
 ```
 vardoger state:
   Checkpoints: ~/.vardoger/state.json (per-platform processing watermarks)
+  Plugin dirs:  ~/.vardoger/plugins/{claude-code,codex}/ (created by vardoger setup)
 
 Cursor:
   History:  ~/.cursor/projects/<slug>/agent-transcripts/<uuid>/<uuid>.jsonl
