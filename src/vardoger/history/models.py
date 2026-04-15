@@ -23,6 +23,7 @@ class Conversation:
     platform: str = ""
     project: str | None = None
     session_id: str | None = None
+    source_path: str | None = None
 
     @property
     def message_count(self) -> int:
