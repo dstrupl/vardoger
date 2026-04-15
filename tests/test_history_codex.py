@@ -1,0 +1,48 @@
+"""Tests for the Codex history adapter."""
+
+import json
+import tempfile
+from pathlib import Path
+
+from vardoger.history.codex import read_codex_history
+
+
+def _write_rollout(base: Path, subpath: str, lines: list[dict]) -> None:
+    rollout_path = base / subpath
+    rollout_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(rollout_path, "w") as f:
+        for entry in lines:
+            f.write(json.dumps(entry) + "\n")
+
+
+def test_reads_basic_rollout():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        _write_rollout(base, "2026/04/15/rollout-test-abc.jsonl", [
+            {"id": "abc", "timestamp": "2026-04-15T10:00:00Z"},
+            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hello"}]},
+            {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Hi"}]},
+        ])
+
+        convos = read_codex_history(codex_dir=base)
+        assert len(convos) == 1
+        assert convos[0].platform == "codex"
+        assert convos[0].session_id == "abc"
+        assert convos[0].message_count == 2
+
+
+def test_reads_flat_rollout():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        _write_rollout(base, "rollout-flat-test.jsonl", [
+            {"id": "flat-1", "timestamp": "2025-07-17T16:00:00Z"},
+            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Test"}]},
+        ])
+
+        convos = read_codex_history(codex_dir=base)
+        assert len(convos) == 1
+
+
+def test_missing_directory():
+    convos = read_codex_history(codex_dir=Path("/nonexistent"))
+    assert convos == []
