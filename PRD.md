@@ -50,17 +50,17 @@ Each platform has its own conversation storage format, system prompt contributio
 
 vardoger must be able to discover and parse all locally stored conversation history for the active user across supported platforms. This is read-only access to files already on disk — no network calls, no API integrations, no platform authentication required.
 
-### 4.2 Analyze Patterns Locally [ ]
+### 4.2 Analyze Patterns Locally [x]
 
 Using AI capabilities available on the user's machine (the host platform's own model access, or a local model), vardoger analyzes conversation history to extract behavioral patterns. The analysis algorithm is explicitly deferred to a future phase (see Section 8), but the infrastructure to invoke it must be in place.
 
-> **Status:** Placeholder analysis implemented — returns real statistics but no AI-powered pattern extraction yet.
+> **Status:** Implemented via skill-driven two-stage pipeline. The `prepare` command batches conversations and provides summarization/synthesis prompts. The host AI model performs the actual analysis. The `write` command stores the result.
 
 ### 4.3 Generate System Prompt Additions [x]
 
 Based on the analysis, vardoger produces a text artifact — a set of instructions, preferences, and behavioral guidance — formatted as a valid system prompt addition for each target platform.
 
-> **Status:** Generates valid prompt additions with placeholder content. Real personalized content depends on 4.2.
+> **Status:** Implemented. The synthesis prompt guides the host model to produce structured, actionable prompt additions organized by category (communication, technical stack, workflow, coding style, things to avoid).
 
 ### 4.4 Deliver via Platform-Native Mechanisms [x]
 
@@ -229,7 +229,7 @@ All conversation history reading and analysis happens exclusively on the user's 
 
 **Rationale:** Conversation history contains proprietary code, internal discussions, credentials that were accidentally pasted, and other sensitive material. Users must be able to trust that vardoger never exfiltrates this data.
 
-### 6.2 AI Model Access [ ]
+### 6.2 AI Model Access [x]
 
 vardoger needs AI capabilities for the analysis phase. Since no cloud service is used, the analysis must run through one of:
 
@@ -237,7 +237,7 @@ vardoger needs AI capabilities for the analysis phase. Since no cloud service is
 2. **Local model** — Use a locally running model (e.g., via Ollama, llama.cpp, or similar)
 3. **User-configured API** — Allow the user to point at their own API key for a model provider (the key and calls are the user's own; vardoger does not intermediate)
 
-Option 1 is the preferred approach for Phase 1 because it requires zero additional setup.
+> **Decision:** Option 1 (host platform model access). The `prepare` command provides batched conversation data with summarization/synthesis prompts. The host assistant performs the analysis using its own model. Zero additional setup required.
 
 ### 6.3 Idempotent Output [x]
 
@@ -275,18 +275,20 @@ The core analysis logic must be shared across all three platform integrations. P
 
 > **Status:** End-to-end pipeline works locally on all three platforms. Marketplace publishing remains.
 
-### Phase 2 — Intelligence: AI-Powered Analysis [ ]
+### Phase 2 — Intelligence: AI-Powered Analysis [x]
 
 **Goal:** Replace the placeholder analysis with real AI-driven pattern extraction.
 
 **Deliverables:**
 - [x] Checkpoint store that tracks processed conversations to enable incremental runs (see 4.5)
-- [ ] Analysis pipeline that processes conversation history through an AI model
-- [ ] Pattern categories: communication preferences, technical stack, workflow habits, pain points, coding style
-- [ ] Prompt generation that translates extracted patterns into effective system prompt instructions
+- [x] Analysis pipeline that processes conversation history through an AI model
+- [x] Pattern categories: communication preferences, technical stack, workflow habits, pain points, coding style
+- [x] Prompt generation that translates extracted patterns into effective system prompt instructions
 - [x] Configurable analysis scope (last N days, specific projects, all history)
 
 **Success criteria:** The generated prompt addition measurably changes assistant behavior in ways the user recognizes as personalized.
+
+> **Status:** Implemented via two-stage skill-driven pipeline (prepare/summarize/synthesize/write). Prompts define five pattern categories. Host AI model performs all reasoning.
 
 ### Phase 3 — Refinement Loop [ ]
 
