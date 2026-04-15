@@ -1,9 +1,10 @@
 """MCP server for Cursor integration.
 
-Exposes vardoger's two-stage analysis pipeline as MCP tools:
-  1. vardoger_prepare() — returns batch metadata or a specific batch with summarize prompt
-  2. vardoger_synthesize_prompt() — returns the synthesis prompt
-  3. vardoger_write() — writes the final personalization to .cursor/rules/vardoger.md
+Exposes vardoger's analysis pipeline as MCP tools:
+  - vardoger_personalize() — entry point: returns orchestration instructions
+  - vardoger_prepare() — returns batch metadata or a specific batch with summarize prompt
+  - vardoger_synthesize_prompt() — returns the synthesis prompt
+  - vardoger_write() — writes the final personalization to .cursor/rules/vardoger.md
 
 The host AI model performs the actual analysis between prepare and write.
 
@@ -21,6 +22,61 @@ from vardoger.prompts import summarize_prompt, synthesize_prompt
 from vardoger.writers.cursor import write_cursor_rules
 
 mcp = FastMCP("vardoger")
+
+_ORCHESTRATION_INSTRUCTIONS = """\
+# vardoger — Personalize Your Assistant
+
+Follow these steps to analyze the user's conversation history and generate \
+a personalization. Report progress to the user after each step.
+
+## Step 1: Get batch metadata
+
+Call `vardoger_prepare(batch=0)`.
+
+This returns JSON like `{"batches": 3, "total_conversations": 29}`. \
+Note the number of batches. Tell the user: "Found N conversations in M batches. \
+Analyzing..."
+
+## Step 2: Summarize each batch
+
+For each batch from 1 to M, call `vardoger_prepare(batch=N)`.
+
+The output contains a summarization prompt and conversation data. Read it \
+carefully and produce a concise bullet-point summary of the behavioral signals \
+you observe. Keep each summary for later.
+
+Tell the user: "Analyzing batch N of M..."
+
+## Step 3: Get the synthesis prompt
+
+Call `vardoger_synthesize_prompt()`.
+
+## Step 4: Synthesize
+
+Following the synthesis prompt, combine all your batch summaries into a single \
+personalization. The output should be clean markdown with actionable instructions.
+
+## Step 5: Write the result
+
+Call `vardoger_write(content="YOUR_PERSONALIZATION_HERE")`.
+
+## Step 6: Report to the user
+
+Tell the user what was written and where. Mention they can ask you to \
+re-run vardoger any time to update the personalization.
+"""
+
+
+@mcp.tool()
+def vardoger_personalize() -> str:
+    """Personalize the AI assistant from conversation history.
+
+    Call this tool when the user asks to personalize their assistant, analyze
+    their conversation history, or mentions "vardoger". It returns step-by-step
+    instructions for you to follow using the other vardoger tools.
+    """
+    return _ORCHESTRATION_INSTRUCTIONS
+
 
 _cached_batches: list | None = None
 

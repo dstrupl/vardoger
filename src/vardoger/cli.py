@@ -1,6 +1,7 @@
 """Command-line interface for vardoger.
 
 Usage:
+    vardoger setup   <platform>
     vardoger analyze --platform X [--scope S] [--project P] [--full] [--since DAYS]
     vardoger prepare --platform X [--full] [--since DAYS] [--batch N] [--synthesize]
     vardoger write   --platform X [--scope S] [--project P]
@@ -138,6 +139,20 @@ def _save_checkpoint(checkpoint: CheckpointStore | None, conversations, platform
     checkpoint.save()
 
 
+# -- setup --
+
+def _run_setup(args: argparse.Namespace) -> None:
+    from vardoger.setup import setup_cursor, setup_claude_code, setup_codex
+
+    platform = args.platform
+    if platform == "cursor":
+        setup_cursor()
+    elif platform == "claude-code":
+        setup_claude_code()
+    elif platform == "codex":
+        setup_codex()
+
+
 # -- analyze (legacy placeholder) --
 
 def _run_analyze(args: argparse.Namespace) -> None:
@@ -266,6 +281,17 @@ def main(argv: list[str] | None = None) -> None:
 
     subparsers = parser.add_subparsers(dest="command")
 
+    # setup
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Register vardoger with an AI coding assistant platform.",
+    )
+    setup_parser.add_argument(
+        "platform",
+        choices=PLATFORM_CHOICES,
+        help="Platform to set up.",
+    )
+
     # analyze (legacy placeholder)
     analyze_parser = subparsers.add_parser(
         "analyze",
@@ -335,7 +361,9 @@ def main(argv: list[str] | None = None) -> None:
         format="%(name)s: %(message)s",
     )
 
-    if args.command == "analyze":
+    if args.command == "setup":
+        _run_setup(args)
+    elif args.command == "analyze":
         _run_analyze(args)
     elif args.command == "prepare":
         _run_prepare(args)
