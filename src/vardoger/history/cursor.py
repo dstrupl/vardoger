@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
 
 from vardoger.history.models import Conversation, Message
@@ -37,7 +38,28 @@ def _extract_text(message: dict) -> str:
     return ""
 
 
-def _parse_transcript(path: Path, project_slug: str) -> Conversation | None:
+def discover_cursor_files(
+    cursor_dir: Path | None = None,
+) -> list[tuple[Path, str]]:
+    """Return (absolute_path, relative_path) pairs for all transcript files."""
+    base = cursor_dir or DEFAULT_CURSOR_DIR
+    if not base.is_dir():
+        return []
+
+    results: list[tuple[Path, str]] = []
+    for project_dir in sorted(base.iterdir()):
+        if not project_dir.is_dir():
+            continue
+        transcripts_dir = project_dir / "agent-transcripts"
+        if not transcripts_dir.is_dir():
+            continue
+        for jsonl_file in sorted(transcripts_dir.rglob("*.jsonl")):
+            rel = str(jsonl_file.relative_to(base))
+            results.append((jsonl_file, rel))
+    return results
+
+
+def _parse_transcript(path: Path, project_slug: str, rel_path: str) -> Conversation | None:
     """Parse a single agent transcript JSONL file into a Conversation."""
     messages: list[Message] = []
     session_id = path.stem
@@ -77,35 +99,39 @@ def _parse_transcript(path: Path, project_slug: str) -> Conversation | None:
         platform="cursor",
         project=project_slug,
         session_id=session_id,
+        source_path=rel_path,
     )
 
 
 def read_cursor_history(
     cursor_dir: Path | None = None,
+    file_filter: Callable[[Path, str], bool] | None = None,
 ) -> list[Conversation]:
-    """Discover and parse all Cursor agent transcripts."""
+    """Discover and parse Cursor agent transcripts.
+
+    If file_filter is provided, it is called with (abs_path, rel_path) for
+    each discovered file. Only files where the filter returns True are parsed.
+    """
     base = cursor_dir or DEFAULT_CURSOR_DIR
-    if not base.is_dir():
-        logger.info("Cursor projects directory not found: %s", base)
-        return []
+    all_files = discover_cursor_files(cursor_dir)
 
     conversations: list[Conversation] = []
+    skipped = 0
 
-    for project_dir in sorted(base.iterdir()):
-        if not project_dir.is_dir():
-            continue
-        transcripts_dir = project_dir / "agent-transcripts"
-        if not transcripts_dir.is_dir():
+    for abs_path, rel_path in all_files:
+        if file_filter and not file_filter(abs_path, rel_path):
+            skipped += 1
             continue
 
-        for jsonl_file in sorted(transcripts_dir.rglob("*.jsonl")):
-            conv = _parse_transcript(jsonl_file, project_dir.name)
-            if conv is not None:
-                conversations.append(conv)
+        project_slug = abs_path.relative_to(base).parts[0]
+        conv = _parse_transcript(abs_path, project_slug, rel_path)
+        if conv is not None:
+            conversations.append(conv)
 
     logger.info(
-        "Cursor: found %d conversations across %s",
+        "Cursor: found %d conversations (%d skipped) across %s",
         len(conversations),
+        skipped,
         base,
     )
     return conversations

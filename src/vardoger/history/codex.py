@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
 
 from vardoger.history.models import Conversation, Message
@@ -37,7 +38,22 @@ def _extract_text(content: list | str) -> str:
     return ""
 
 
-def _parse_rollout(path: Path) -> Conversation | None:
+def discover_codex_files(
+    codex_dir: Path | None = None,
+) -> list[tuple[Path, str]]:
+    """Return (absolute_path, relative_path) pairs for all rollout files."""
+    base = codex_dir or DEFAULT_CODEX_DIR
+    if not base.is_dir():
+        return []
+
+    results: list[tuple[Path, str]] = []
+    for jsonl_file in sorted(base.rglob("rollout-*.jsonl")):
+        rel = str(jsonl_file.relative_to(base))
+        results.append((jsonl_file, rel))
+    return results
+
+
+def _parse_rollout(path: Path, rel_path: str) -> Conversation | None:
     """Parse a single Codex rollout JSONL file."""
     messages: list[Message] = []
     session_id: str | None = None
@@ -79,28 +95,36 @@ def _parse_rollout(path: Path) -> Conversation | None:
         platform="codex",
         project=None,
         session_id=session_id or path.stem,
+        source_path=rel_path,
     )
 
 
 def read_codex_history(
     codex_dir: Path | None = None,
+    file_filter: Callable[[Path, str], bool] | None = None,
 ) -> list[Conversation]:
-    """Discover and parse all Codex session rollout files."""
-    base = codex_dir or DEFAULT_CODEX_DIR
-    if not base.is_dir():
-        logger.info("Codex sessions directory not found: %s", base)
-        return []
+    """Discover and parse Codex session rollout files.
+
+    If file_filter is provided, it is called with (abs_path, rel_path) for
+    each discovered file. Only files where the filter returns True are parsed.
+    """
+    all_files = discover_codex_files(codex_dir)
 
     conversations: list[Conversation] = []
+    skipped = 0
 
-    for jsonl_file in sorted(base.rglob("rollout-*.jsonl")):
-        conv = _parse_rollout(jsonl_file)
+    for abs_path, rel_path in all_files:
+        if file_filter and not file_filter(abs_path, rel_path):
+            skipped += 1
+            continue
+
+        conv = _parse_rollout(abs_path, rel_path)
         if conv is not None:
             conversations.append(conv)
 
     logger.info(
-        "Codex: found %d conversations across %s",
+        "Codex: found %d conversations (%d skipped)",
         len(conversations),
-        base,
+        skipped,
     )
     return conversations

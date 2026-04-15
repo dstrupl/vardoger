@@ -4,7 +4,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from vardoger.history.codex import read_codex_history
+from vardoger.history.codex import discover_codex_files, read_codex_history
 
 
 def _write_rollout(base: Path, subpath: str, lines: list[dict]) -> None:
@@ -29,6 +29,53 @@ def test_reads_basic_rollout():
         assert convos[0].platform == "codex"
         assert convos[0].session_id == "abc"
         assert convos[0].message_count == 2
+
+
+def test_source_path_set():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        _write_rollout(base, "2026/04/15/rollout-test-abc.jsonl", [
+            {"id": "abc", "timestamp": "2026-04-15T10:00:00Z"},
+            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hello"}]},
+        ])
+
+        convos = read_codex_history(codex_dir=base)
+        assert len(convos) == 1
+        assert convos[0].source_path == "2026/04/15/rollout-test-abc.jsonl"
+
+
+def test_discover_files():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        _write_rollout(base, "2026/04/15/rollout-a.jsonl", [
+            {"id": "a", "timestamp": "2026-04-15T10:00:00Z"},
+            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hi"}]},
+        ])
+        _write_rollout(base, "rollout-flat.jsonl", [
+            {"id": "b", "timestamp": "2025-07-17T16:00:00Z"},
+            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hi"}]},
+        ])
+
+        files = discover_codex_files(codex_dir=base)
+        assert len(files) == 2
+        rel_paths = [f[1] for f in files]
+        assert "2026/04/15/rollout-a.jsonl" in rel_paths
+        assert "rollout-flat.jsonl" in rel_paths
+
+
+def test_file_filter_skips():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        _write_rollout(base, "rollout-test.jsonl", [
+            {"id": "x", "timestamp": "2026-04-15T10:00:00Z"},
+            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hi"}]},
+        ])
+
+        convos = read_codex_history(
+            codex_dir=base,
+            file_filter=lambda _abs, _rel: False,
+        )
+        assert len(convos) == 0
 
 
 def test_reads_flat_rollout():
