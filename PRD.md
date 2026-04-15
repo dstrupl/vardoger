@@ -66,7 +66,7 @@ Based on the analysis, vardoger produces a text artifact — a set of instructio
 
 The generated prompt addition is written to the location each platform natively reads, so it takes effect without any manual intervention from the user. The exact delivery mechanism per platform is detailed in Section 5.
 
-### 4.5 Incremental Processing [ ]
+### 4.5 Incremental Processing [x]
 
 vardoger must maintain a lightweight checkpoint record of which conversations have already been processed. On subsequent runs, only new or updated conversations are read and analyzed. This avoids redundant work, speeds up repeated invocations, and provides a stable foundation for continuous refinement.
 
@@ -280,11 +280,11 @@ The core analysis logic must be shared across all three platform integrations. P
 **Goal:** Replace the placeholder analysis with real AI-driven pattern extraction.
 
 **Deliverables:**
-- [ ] Checkpoint store that tracks processed conversations to enable incremental runs (see 4.5)
+- [x] Checkpoint store that tracks processed conversations to enable incremental runs (see 4.5)
 - [ ] Analysis pipeline that processes conversation history through an AI model
 - [ ] Pattern categories: communication preferences, technical stack, workflow habits, pain points, coding style
 - [ ] Prompt generation that translates extracted patterns into effective system prompt instructions
-- [ ] Configurable analysis scope (last N days, specific projects, all history)
+- [x] Configurable analysis scope (last N days, specific projects, all history)
 
 **Success criteria:** The generated prompt addition measurably changes assistant behavior in ways the user recognizes as personalized.
 
