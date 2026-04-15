@@ -3,6 +3,10 @@
 > **Version:** 0.1.0-draft
 > **Date:** 2026-04-15
 > **Status:** Draft
+>
+> **Implementation status legend:**
+> - [x] Implemented
+> - [ ] Not yet implemented
 
 ---
 
@@ -42,19 +46,23 @@ Each platform has its own conversation storage format, system prompt contributio
 
 ## 4. Core Capabilities
 
-### 4.1 Read Conversation History
+### 4.1 Read Conversation History [x]
 
 vardoger must be able to discover and parse all locally stored conversation history for the active user across supported platforms. This is read-only access to files already on disk — no network calls, no API integrations, no platform authentication required.
 
-### 4.2 Analyze Patterns Locally
+### 4.2 Analyze Patterns Locally [ ]
 
 Using AI capabilities available on the user's machine (the host platform's own model access, or a local model), vardoger analyzes conversation history to extract behavioral patterns. The analysis algorithm is explicitly deferred to a future phase (see Section 8), but the infrastructure to invoke it must be in place.
 
-### 4.3 Generate System Prompt Additions
+> **Status:** Placeholder analysis implemented — returns real statistics but no AI-powered pattern extraction yet.
+
+### 4.3 Generate System Prompt Additions [x]
 
 Based on the analysis, vardoger produces a text artifact — a set of instructions, preferences, and behavioral guidance — formatted as a valid system prompt addition for each target platform.
 
-### 4.4 Deliver via Platform-Native Mechanisms
+> **Status:** Generates valid prompt additions with placeholder content. Real personalized content depends on 4.2.
+
+### 4.4 Deliver via Platform-Native Mechanisms [x]
 
 The generated prompt addition is written to the location each platform natively reads, so it takes effect without any manual intervention from the user. The exact delivery mechanism per platform is detailed in Section 5.
 
@@ -62,21 +70,21 @@ The generated prompt addition is written to the location each platform natively 
 
 ## 5. Platform Integration Details
 
-### 5.1 Cursor
+### 5.1 Cursor [x]
 
-#### Conversation History Storage
+#### Conversation History Storage [x]
 
 | Source | Location | Format |
 |---|---|---|
-| Agent transcripts | `~/.cursor/projects/<workspace-slug>/agent-transcripts/<uuid>/<uuid>.jsonl` | JSONL — one JSON object per line; fields include `role` (`user` / `assistant`) and `message` payload (including tool calls) |
-| Chat history | `~/.cursor/chats/<hash>/<uuid>/store.db` | SQLite database |
-| Code tracking | `~/.cursor/ai-tracking/ai-code-tracking.db` | SQLite database |
+| Agent transcripts | `~/.cursor/projects/<workspace-slug>/agent-transcripts/<uuid>/<uuid>.jsonl` | JSONL — one JSON object per line; fields include `role` (`user` / `assistant`) and `message` payload (including tool calls) | [x] |
+| Chat history | `~/.cursor/chats/<hash>/<uuid>/store.db` | SQLite database | [ ] |
+| Code tracking | `~/.cursor/ai-tracking/ai-code-tracking.db` | SQLite database | [ ] |
 
 **Primary source for Phase 1:** Agent transcript JSONL files. These are the richest, most structured, and most accessible records of user-assistant interaction.
 
 **Discovery:** Enumerate directories under `~/.cursor/projects/` to find all workspace slugs, then walk `agent-transcripts/` within each.
 
-#### System Prompt Contribution
+#### System Prompt Contribution [x]
 
 | Mechanism | Scope | Path |
 |---|---|---|
@@ -86,6 +94,8 @@ The generated prompt addition is written to the location each platform natively 
 
 **vardoger target:** Write a `.cursor/rules/vardoger.md` file with `alwaysApply: true` in each project, or contribute a global user-level rule. The project-level approach is preferred because it is file-based and scriptable.
 
+> **Status:** Implemented — writes `.cursor/rules/vardoger.md` with `alwaysApply: true` frontmatter.
+
 #### Distribution
 
 Cursor is VS Code-based. Extensions are published to the **Visual Studio Marketplace** as standard VSIX packages. There is no separate Cursor-specific marketplace.
@@ -94,11 +104,13 @@ Additionally, Cursor supports **MCP servers** configured via `~/.cursor/mcp.json
 
 **Recommended approach:** Ship as an MCP server (configured in `mcp.json`) that exposes vardoger commands as tools the agent can invoke. This aligns with Cursor's AI-native plugin model better than a traditional VS Code extension.
 
+> **Status:** [x] MCP server implemented (stdio transport, `vardoger_analyze` tool). [ ] VS Code Marketplace publishing not yet done.
+
 ---
 
-### 5.2 Claude Code
+### 5.2 Claude Code [x]
 
-#### Conversation History Storage
+#### Conversation History Storage [x]
 
 | Source | Location | Format |
 |---|---|---|
@@ -127,6 +139,8 @@ Additionally, Cursor supports **MCP servers** configured via `~/.cursor/mcp.json
 
 **vardoger target:** Write to `~/.claude/rules/vardoger.md` for global personalization, or `.claude/rules/vardoger.md` per project. The modular rules approach is cleanest — it avoids modifying the user's hand-written CLAUDE.md files.
 
+> **Status:** Implemented — writes to `~/.claude/rules/vardoger.md` (global) or `<project>/.claude/rules/vardoger.md` (project scope).
+
 #### Distribution
 
 Claude Code has a **first-class plugin system**:
@@ -144,11 +158,13 @@ Plugins are git repositories. Installation clones into `~/.claude/plugins/cache/
 - A **hook** on `SessionStart` to check if the prompt addition is stale and suggest refresh
 - Generated output written to `~/.claude/rules/vardoger.md` or `.claude/rules/vardoger.md`
 
+> **Status:** [x] Plugin manifest and analyze skill implemented. [ ] SessionStart hook not yet implemented. [ ] Marketplace publishing not yet done.
+
 ---
 
-### 5.3 OpenAI Codex
+### 5.3 OpenAI Codex [x]
 
-#### Conversation History Storage
+#### Conversation History Storage [x]
 
 | Source | Location | Format |
 |---|---|---|
@@ -172,6 +188,8 @@ Plugins are git repositories. Installation clones into `~/.claude/plugins/cache/
 
 **vardoger target:** Write to `~/.codex/AGENTS.md` for global personalization (appending a vardoger section), or maintain a separate file referenced via `project_doc_fallback_filenames`. The global approach is simplest for user-wide personalization.
 
+> **Status:** Implemented — writes fenced `<!-- vardoger:start/end -->` section to `~/.codex/AGENTS.md` with idempotent replacement.
+
 #### Distribution
 
 Codex has a plugin system similar in structure to Claude Code:
@@ -188,17 +206,19 @@ Self-serve publishing to the official directory is listed as "coming soon."
 - A **skill** for on-demand analysis
 - Generated output written to `~/.codex/AGENTS.md` (or a vardoger-specific section within it)
 
+> **Status:** [x] Plugin manifest and analyze skill implemented. [ ] Marketplace publishing not yet done.
+
 ---
 
 ## 6. Architecture Constraints
 
-### 6.1 Local-Only Processing
+### 6.1 Local-Only Processing [x]
 
 All conversation history reading and analysis happens exclusively on the user's machine. No data is transmitted to any external service. This is a non-negotiable architectural constraint, not a preference.
 
 **Rationale:** Conversation history contains proprietary code, internal discussions, credentials that were accidentally pasted, and other sensitive material. Users must be able to trust that vardoger never exfiltrates this data.
 
-### 6.2 AI Model Access
+### 6.2 AI Model Access [ ]
 
 vardoger needs AI capabilities for the analysis phase. Since no cloud service is used, the analysis must run through one of:
 
@@ -208,15 +228,15 @@ vardoger needs AI capabilities for the analysis phase. Since no cloud service is
 
 Option 1 is the preferred approach for Phase 1 because it requires zero additional setup.
 
-### 6.3 Idempotent Output
+### 6.3 Idempotent Output [x]
 
 vardoger must be able to re-run analysis and regenerate prompt additions without accumulating stale or duplicate content. Each run produces a complete replacement for the vardoger-managed section of the prompt configuration.
 
-### 6.4 Non-Destructive Integration
+### 6.4 Non-Destructive Integration [x]
 
 vardoger must never modify user-authored configuration files. It writes only to files it owns (e.g., `vardoger.md` in a rules directory) or to clearly demarcated sections within shared files (e.g., a `<!-- vardoger:start -->` / `<!-- vardoger:end -->` block in AGENTS.md).
 
-### 6.5 Cross-Platform Portability
+### 6.5 Cross-Platform Portability [x]
 
 The core analysis logic must be shared across all three platform integrations. Platform-specific code should be limited to:
 - History discovery and parsing (adapters per platform)
@@ -232,36 +252,40 @@ The core analysis logic must be shared across all three platform integrations. P
 **Goal:** Ship a working plugin on all three platforms that can read conversation history and write a (placeholder) system prompt addition.
 
 **Deliverables:**
-- History reader adapters for Cursor, Claude Code, and Codex (JSONL and SQLite parsers)
-- A unified internal representation of conversation data
-- Platform-native prompt writers that produce valid configuration files
-- Plugin packaging and marketplace submission for all three platforms
-- A placeholder analysis step that produces a minimal, hard-coded prompt addition (proving the pipeline works end-to-end)
+- [x] History reader adapters for Cursor, Claude Code, and Codex (JSONL parsers)
+- [ ] History reader adapters for SQLite sources (Cursor chat DB, Codex state DB)
+- [x] A unified internal representation of conversation data
+- [x] Platform-native prompt writers that produce valid configuration files
+- [ ] Plugin packaging and marketplace submission for all three platforms
+- [x] A placeholder analysis step that produces a minimal, hard-coded prompt addition (proving the pipeline works end-to-end)
+- [x] Local plugin install for all three platforms (Cursor MCP, Claude Code plugin, Codex plugin)
 
 **Success criteria:** A user can install vardoger from the plugin marketplace on any supported platform, run it, and see a vardoger-authored rule file appear in the correct location.
 
-### Phase 2 — Intelligence: AI-Powered Analysis
+> **Status:** End-to-end pipeline works locally on all three platforms. Marketplace publishing remains.
+
+### Phase 2 — Intelligence: AI-Powered Analysis [ ]
 
 **Goal:** Replace the placeholder analysis with real AI-driven pattern extraction.
 
 **Deliverables:**
-- Analysis pipeline that processes conversation history through an AI model
-- Pattern categories: communication preferences, technical stack, workflow habits, pain points, coding style
-- Prompt generation that translates extracted patterns into effective system prompt instructions
-- Configurable analysis scope (last N days, specific projects, all history)
+- [ ] Analysis pipeline that processes conversation history through an AI model
+- [ ] Pattern categories: communication preferences, technical stack, workflow habits, pain points, coding style
+- [ ] Prompt generation that translates extracted patterns into effective system prompt instructions
+- [ ] Configurable analysis scope (last N days, specific projects, all history)
 
 **Success criteria:** The generated prompt addition measurably changes assistant behavior in ways the user recognizes as personalized.
 
-### Phase 3 — Refinement Loop
+### Phase 3 — Refinement Loop [ ]
 
 **Goal:** Make personalization continuous and self-improving.
 
 **Deliverables:**
-- Incremental analysis (process only new conversations since last run)
-- Staleness detection and automatic refresh suggestions
-- User feedback mechanism (accept/reject/edit generated rules)
-- Confidence scoring for extracted patterns
-- A/B style comparison (before/after personalization quality)
+- [ ] Incremental analysis (process only new conversations since last run)
+- [ ] Staleness detection and automatic refresh suggestions
+- [ ] User feedback mechanism (accept/reject/edit generated rules)
+- [ ] Confidence scoring for extracted patterns
+- [ ] A/B style comparison (before/after personalization quality)
 
 **Success criteria:** The system improves its personalization over time without requiring manual intervention.
 
@@ -286,25 +310,15 @@ The following are explicitly deferred or excluded:
 
 These decisions are intentionally left open and will be resolved during implementation planning:
 
-### 9.1 Implementation Language
+### 9.1 Implementation Language — RESOLVED
 
-The core logic must be packaged for three different plugin ecosystems. Options:
+> **Decision:** Python. Good AI/ML ecosystem for Phase 2, works as MCP server for Cursor, and as CLI invoked by skills in Claude Code and Codex. Package management via uv.
 
-| Language | Pros | Cons |
-|---|---|---|
-| **TypeScript/Node.js** | Broadest plugin ecosystem compatibility; Cursor is VS Code-based (Node); Claude Code and Codex plugins can bundle Node scripts | Runtime dependency; larger package size |
-| **Python** | Strong AI/ML ecosystem; good for analysis phase | Less natural for Cursor (VS Code) integration |
-| **Rust** | Fast CLI binary; no runtime dependency; small package | Harder marketplace integration; longer development cycle |
-| **Polyglot** | Shared core in one language, thin adapters per platform | Build complexity |
+~~The core logic must be packaged for three different plugin ecosystems.~~
 
-### 9.2 MVP Platform Priority
+### 9.2 MVP Platform Priority — RESOLVED
 
-Should Phase 1 target all three platforms simultaneously, or ship one first?
-
-- **All three:** Broader validation; proves cross-platform architecture early
-- **Claude Code first:** Richest plugin model; cleanest history format; most aligned with vardoger's skill-based invocation
-- **Cursor first:** Largest user base; VS Code extension model is well-understood
-- **Codex first:** Plugin model similar to Claude Code; date-organized history is convenient
+> **Decision:** All three simultaneously. Proves cross-platform architecture from the start. All three are implemented and working locally.
 
 ### 9.3 Prompt Delivery Mode
 
