@@ -36,3 +36,11 @@ logs/
 # Coverage
 coverage/
 .nyc_output/
+
+# Python / uv
+.venv/
+*.egg-info/
+uv.lock
+
+# vardoger generated output (don't commit personalization)
+.cursor/rules/vardoger.md
