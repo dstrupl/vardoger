@@ -8,40 +8,38 @@ vardoger prepares your conversation history in batches. You (the assistant) summ
 
 ## Steps
 
-### 1. Find vardoger
+### 1. Verify vardoger is installed
 
 ```bash
-VARDOGER="$(find /Users -maxdepth 5 -path '*/vardoger/.venv/bin/vardoger' 2>/dev/null | head -1)"
-if [ -z "$VARDOGER" ]; then
-  echo "vardoger not found. Please run 'uv sync' in the vardoger repository first."
-  exit 1
-fi
+command -v vardoger >/dev/null 2>&1 || { echo "vardoger not found. Install with: pipx install vardoger"; exit 1; }
 ```
 
 ### 2. Get batch metadata
 
 ```bash
-"$VARDOGER" prepare --platform codex
+vardoger prepare --platform codex
 ```
 
-This prints JSON like `{"batches": 3, "total_conversations": 29}`. Note the number of batches.
+This prints JSON like `{"batches": 3, "total_conversations": 29}`. Note the number of batches. Tell the user: "Found N conversations in M batches. Analyzing..."
 
 ### 3. Summarize each batch
 
 For each batch number from 1 to N, run:
 
 ```bash
-"$VARDOGER" prepare --platform codex --batch 1
+vardoger prepare --platform codex --batch 1
 ```
 
 The output contains a summarization prompt and conversation data. Read the output carefully and produce a concise bullet-point summary of the behavioral signals you observe in that batch. Keep your summary for later.
+
+Tell the user which batch you are processing: "Analyzing batch 1 of N..."
 
 Repeat for all batches (--batch 2, --batch 3, etc.).
 
 ### 4. Get the synthesis prompt
 
 ```bash
-"$VARDOGER" prepare --platform codex --synthesize
+vardoger prepare --platform codex --synthesize
 ```
 
 ### 5. Synthesize the personalization
@@ -53,14 +51,14 @@ Following the synthesis prompt, combine all your batch summaries into a single p
 Pipe your personalization to vardoger:
 
 ```bash
-echo "YOUR_PERSONALIZATION_HERE" | "$VARDOGER" write --platform codex --scope global
+echo "YOUR_PERSONALIZATION_HERE" | vardoger write --platform codex --scope global
 ```
 
 Replace `YOUR_PERSONALIZATION_HERE` with the actual personalization markdown you generated.
 
 ### 7. Report to the user
 
-Tell the user what was written and where.
+Tell the user what was written and where. Mention they can ask you to re-run vardoger any time to update the personalization.
 
 ## When to use
 

@@ -1,18 +1,25 @@
 # vardoger — Cursor Plugin
 
-Exposes vardoger as an MCP server that Cursor's agent can invoke.
+Exposes vardoger as an MCP server that Cursor's agent can invoke to personalize your assistant.
 
-## Local Install
+## Install
 
 ```bash
-bash plugins/cursor/install.sh
+pipx install vardoger
+vardoger setup cursor
 ```
 
-This adds a `vardoger` entry to `~/.cursor/mcp.json`. Restart Cursor to pick it up.
+This registers the vardoger MCP server in `~/.cursor/mcp.json`. Restart Cursor to activate.
 
 ## Usage
 
-Once installed, ask the Cursor agent to "run vardoger" or "analyze my conversation history." The agent will see the `vardoger_analyze` tool and invoke it.
+Ask the Cursor agent:
+
+- "Personalize my assistant"
+- "Run vardoger"
+- "Analyze my conversation history"
+
+The agent will call the `vardoger_personalize` tool, which returns step-by-step orchestration instructions. The agent then follows them automatically — preparing batches, summarizing, synthesizing, and writing the result to `.cursor/rules/vardoger.md`.
 
 ## Uninstall
 
