@@ -61,7 +61,8 @@ These are the patterns reviewers consistently flag:
   - Assert whole expected objects in a single comparison, not field-by-field.
 
 - **Serialization & data**
-  - Don't build JSON by string concatenation; construct objects and serialize.
+  - Don't build JSON by string concatenation or manual dict construction; use Pydantic models and `model_dump_json()`.
+  - Parse incoming JSON with `model_validate_json()`, not raw `json.loads()` + `.get()` chains.
   - Keep templates centralized and reusable.
 
 - **Performance**
@@ -114,9 +115,11 @@ uv run ruff check --fix .            # auto-fix lints
 
 ### Code Standards
 - **Data structures**:
-  - Use `pydantic.BaseModel(frozen=True)` for DTOs/data containers.
-  - `attrs.define` is acceptable for service/container classes.
-  - Avoid stdlib `dataclasses` in application code.
+  - Use `pydantic.BaseModel` for all JSON I/O shapes (parsing, validation, serialization). All Pydantic models live in `src/vardoger/models.py`.
+  - Use `model_validate_json(raw)` to parse, `model_dump_json()` to serialize. Avoid manual `json.loads` / `json.dumps` for typed data.
+  - Set `extra="ignore"` on models that parse external/third-party JSON with unpredictable fields.
+  - Plain `dataclasses` are fine for pure domain objects that are never serialized (e.g., `Message`, `Conversation` in `history/models.py`).
+  - Do not scatter model definitions across modules; add new models to `models.py`.
 - **Typing**:
   - Add `from __future__ import annotations` in every module.
   - MyPy strict mode: `disallow_untyped_defs`, `check_untyped_defs`.

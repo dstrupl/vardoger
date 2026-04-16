@@ -2,6 +2,12 @@
 
 Exposes vardoger as an MCP server that Cursor's agent can invoke to personalize your assistant.
 
+## Prerequisites
+
+- **Python 3.11+** — [python.org/downloads](https://www.python.org/downloads/)
+- **pipx** — [pipx.pypa.io/stable/installation](https://pipx.pypa.io/stable/installation/)
+- **Cursor** — [cursor.com](https://www.cursor.com/)
+
 ## Install
 
 ```bash

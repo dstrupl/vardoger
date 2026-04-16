@@ -4,6 +4,11 @@ A cross-platform plugin for AI coding assistants (Cursor, Claude Code, OpenAI Co
 
 All processing happens locally. No data ever leaves your machine.
 
+## Prerequisites
+
+- **Python 3.11+** — [python.org/downloads](https://www.python.org/downloads/) or via your system package manager
+- **pipx** (recommended for installing vardoger as a CLI tool) — [pipx.pypa.io/stable/installation](https://pipx.pypa.io/stable/installation/)
+
 ## Quick Start
 
 ```bash
@@ -29,6 +34,8 @@ Then tell your assistant: **"Personalize my assistant."**
 | **OpenAI Codex** | Session rollout JSONL | `~/.codex/AGENTS.md` | Plugin with skill |
 
 ## Development
+
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) (Python package manager):
 
 ```bash
 git clone https://github.com/dstrupl/vardoger.git

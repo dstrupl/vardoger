@@ -2,9 +2,24 @@
 
 A Codex plugin that analyzes your conversation history and generates personalized instructions.
 
-## Local Install
+## Prerequisites
 
-Create or edit `~/.agents/plugins/marketplace.json`:
+- **Python 3.11+** — [python.org/downloads](https://www.python.org/downloads/)
+- **pipx** — [pipx.pypa.io/stable/installation](https://pipx.pypa.io/stable/installation/)
+- **OpenAI Codex CLI** — [github.com/openai/codex](https://github.com/openai/codex)
+
+## Install
+
+```bash
+pipx install vardoger
+vardoger setup codex
+```
+
+This creates the plugin directory at `~/.vardoger/plugins/codex/` and registers it in `~/.agents/plugins/marketplace.json`. Open Codex and run `/plugins` to activate.
+
+## Local Development Install
+
+If you're developing vardoger from source, create or edit `~/.agents/plugins/marketplace.json` manually:
 
 ```json
 {
@@ -23,7 +38,7 @@ Create or edit `~/.agents/plugins/marketplace.json`:
 
 Then open Codex and run `/plugins` to install from the local marketplace.
 
-Make sure you have run `uv sync` in the vardoger repo root first so the CLI is available.
+Make sure you have run `uv sync` ([install uv](https://docs.astral.sh/uv/getting-started/installation/)) in the vardoger repo root first so the CLI is available.
 
 ## Usage
 
