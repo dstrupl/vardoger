@@ -109,10 +109,12 @@ def vardoger_prepare(batch: int = 0) -> str:
     total_convos = sum(len(b) for b in batches)
 
     if batch == 0:
-        return json.dumps({
-            "batches": len(batches),
-            "total_conversations": total_convos,
-        })
+        return json.dumps(
+            {
+                "batches": len(batches),
+                "total_conversations": total_convos,
+            }
+        )
 
     if batch < 1 or batch > len(batches):
         return f"Batch {batch} out of range (1-{len(batches)})."

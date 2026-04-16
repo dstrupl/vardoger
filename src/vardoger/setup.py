@@ -9,7 +9,6 @@ Handles post-install registration for each supported platform:
 from __future__ import annotations
 
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -76,7 +75,8 @@ into a personalization. vardoger writes the result.
 ### 1. Verify vardoger is installed
 
 ```bash
-command -v vardoger >/dev/null 2>&1 || {{ echo "vardoger not found. Install with: pipx install vardoger"; exit 1; }}
+command -v vardoger >/dev/null 2>&1 || \
+  {{ echo "vardoger not found. Install with: pipx install vardoger"; exit 1; }}
 ```
 
 ### 2. Get batch metadata
@@ -146,10 +146,7 @@ def setup_cursor() -> None:
     mcp_config = Path.home() / ".cursor" / "mcp.json"
     mcp_config.parent.mkdir(parents=True, exist_ok=True)
 
-    if mcp_config.is_file():
-        config = json.loads(mcp_config.read_text(encoding="utf-8"))
-    else:
-        config = {}
+    config = json.loads(mcp_config.read_text(encoding="utf-8")) if mcp_config.is_file() else {}
 
     servers = config.setdefault("mcpServers", {})
     servers["vardoger"] = {
@@ -207,15 +204,15 @@ def setup_codex() -> None:
 
     plugins = marketplace.setdefault("plugins", [])
     existing = [p for p in plugins if p.get("name") != "vardoger"]
-    existing.append({
-        "name": "vardoger",
-        "source": {"source": "local", "path": str(plugin_dir)},
-    })
+    existing.append(
+        {
+            "name": "vardoger",
+            "source": {"source": "local", "path": str(plugin_dir)},
+        }
+    )
     marketplace["plugins"] = existing
 
-    marketplace_path.write_text(
-        json.dumps(marketplace, indent=2) + "\n", encoding="utf-8"
-    )
+    marketplace_path.write_text(json.dumps(marketplace, indent=2) + "\n", encoding="utf-8")
 
     print(f"Created Codex plugin at {plugin_dir}")
     print(f"Registered in {marketplace_path}")

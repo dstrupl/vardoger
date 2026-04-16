@@ -4,7 +4,9 @@ from vardoger.digest import batch_conversations, format_batch
 from vardoger.history.models import Conversation, Message
 
 
-def _make_conv(n_user: int = 2, n_assistant: int = 1, platform: str = "cursor", project: str = "proj") -> Conversation:
+def _make_conv(
+    n_user: int = 2, n_assistant: int = 1, platform: str = "cursor", project: str = "proj"
+) -> Conversation:
     msgs = []
     for i in range(n_user):
         msgs.append(Message(role="user", content=f"User message {i + 1}"))

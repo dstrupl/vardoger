@@ -18,11 +18,23 @@ def _write_rollout(base: Path, subpath: str, lines: list[dict]) -> None:
 def test_reads_basic_rollout():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_rollout(base, "2026/04/15/rollout-test-abc.jsonl", [
-            {"id": "abc", "timestamp": "2026-04-15T10:00:00Z"},
-            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hello"}]},
-            {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Hi"}]},
-        ])
+        _write_rollout(
+            base,
+            "2026/04/15/rollout-test-abc.jsonl",
+            [
+                {"id": "abc", "timestamp": "2026-04-15T10:00:00Z"},
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hello"}],
+                },
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": "Hi"}],
+                },
+            ],
+        )
 
         convos = read_codex_history(codex_dir=base)
         assert len(convos) == 1
@@ -34,10 +46,18 @@ def test_reads_basic_rollout():
 def test_source_path_set():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_rollout(base, "2026/04/15/rollout-test-abc.jsonl", [
-            {"id": "abc", "timestamp": "2026-04-15T10:00:00Z"},
-            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hello"}]},
-        ])
+        _write_rollout(
+            base,
+            "2026/04/15/rollout-test-abc.jsonl",
+            [
+                {"id": "abc", "timestamp": "2026-04-15T10:00:00Z"},
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hello"}],
+                },
+            ],
+        )
 
         convos = read_codex_history(codex_dir=base)
         assert len(convos) == 1
@@ -47,14 +67,30 @@ def test_source_path_set():
 def test_discover_files():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_rollout(base, "2026/04/15/rollout-a.jsonl", [
-            {"id": "a", "timestamp": "2026-04-15T10:00:00Z"},
-            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hi"}]},
-        ])
-        _write_rollout(base, "rollout-flat.jsonl", [
-            {"id": "b", "timestamp": "2025-07-17T16:00:00Z"},
-            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hi"}]},
-        ])
+        _write_rollout(
+            base,
+            "2026/04/15/rollout-a.jsonl",
+            [
+                {"id": "a", "timestamp": "2026-04-15T10:00:00Z"},
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hi"}],
+                },
+            ],
+        )
+        _write_rollout(
+            base,
+            "rollout-flat.jsonl",
+            [
+                {"id": "b", "timestamp": "2025-07-17T16:00:00Z"},
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hi"}],
+                },
+            ],
+        )
 
         files = discover_codex_files(codex_dir=base)
         assert len(files) == 2
@@ -66,10 +102,18 @@ def test_discover_files():
 def test_file_filter_skips():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_rollout(base, "rollout-test.jsonl", [
-            {"id": "x", "timestamp": "2026-04-15T10:00:00Z"},
-            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hi"}]},
-        ])
+        _write_rollout(
+            base,
+            "rollout-test.jsonl",
+            [
+                {"id": "x", "timestamp": "2026-04-15T10:00:00Z"},
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hi"}],
+                },
+            ],
+        )
 
         convos = read_codex_history(
             codex_dir=base,
@@ -81,10 +125,18 @@ def test_file_filter_skips():
 def test_reads_flat_rollout():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_rollout(base, "rollout-flat-test.jsonl", [
-            {"id": "flat-1", "timestamp": "2025-07-17T16:00:00Z"},
-            {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Test"}]},
-        ])
+        _write_rollout(
+            base,
+            "rollout-flat-test.jsonl",
+            [
+                {"id": "flat-1", "timestamp": "2025-07-17T16:00:00Z"},
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Test"}],
+                },
+            ],
+        )
 
         convos = read_codex_history(codex_dir=base)
         assert len(convos) == 1

@@ -19,10 +19,18 @@ def _write_transcript(base: Path, slug: str, session_id: str, lines: list[dict])
 def test_reads_basic_transcript():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_transcript(base, "my-project", "sess-1", [
-            {"role": "user", "message": {"content": [{"type": "text", "text": "Hello"}]}},
-            {"role": "assistant", "message": {"content": [{"type": "text", "text": "Hi there"}]}},
-        ])
+        _write_transcript(
+            base,
+            "my-project",
+            "sess-1",
+            [
+                {"role": "user", "message": {"content": [{"type": "text", "text": "Hello"}]}},
+                {
+                    "role": "assistant",
+                    "message": {"content": [{"type": "text", "text": "Hi there"}]},
+                },
+            ],
+        )
 
         convos = read_cursor_history(cursor_dir=base)
         assert len(convos) == 1
@@ -35,9 +43,14 @@ def test_reads_basic_transcript():
 def test_source_path_set():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_transcript(base, "proj-a", "sess-1", [
-            {"role": "user", "message": {"content": [{"type": "text", "text": "Hi"}]}},
-        ])
+        _write_transcript(
+            base,
+            "proj-a",
+            "sess-1",
+            [
+                {"role": "user", "message": {"content": [{"type": "text", "text": "Hi"}]}},
+            ],
+        )
 
         convos = read_cursor_history(cursor_dir=base)
         assert len(convos) == 1
@@ -47,12 +60,22 @@ def test_source_path_set():
 def test_discover_files():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_transcript(base, "proj-a", "s1", [
-            {"role": "user", "message": {"content": "hi"}},
-        ])
-        _write_transcript(base, "proj-b", "s2", [
-            {"role": "user", "message": {"content": "hi"}},
-        ])
+        _write_transcript(
+            base,
+            "proj-a",
+            "s1",
+            [
+                {"role": "user", "message": {"content": "hi"}},
+            ],
+        )
+        _write_transcript(
+            base,
+            "proj-b",
+            "s2",
+            [
+                {"role": "user", "message": {"content": "hi"}},
+            ],
+        )
 
         files = discover_cursor_files(cursor_dir=base)
         assert len(files) == 2
@@ -66,12 +89,22 @@ def test_discover_files():
 def test_file_filter_skips():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_transcript(base, "proj", "sess-1", [
-            {"role": "user", "message": {"content": [{"type": "text", "text": "Hello"}]}},
-        ])
-        _write_transcript(base, "proj", "sess-2", [
-            {"role": "user", "message": {"content": [{"type": "text", "text": "World"}]}},
-        ])
+        _write_transcript(
+            base,
+            "proj",
+            "sess-1",
+            [
+                {"role": "user", "message": {"content": [{"type": "text", "text": "Hello"}]}},
+            ],
+        )
+        _write_transcript(
+            base,
+            "proj",
+            "sess-2",
+            [
+                {"role": "user", "message": {"content": [{"type": "text", "text": "World"}]}},
+            ],
+        )
 
         def reject_all(abs_path: Path, rel_path: str) -> bool:
             return False
@@ -83,9 +116,14 @@ def test_file_filter_skips():
 def test_skips_empty_transcripts():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_transcript(base, "proj", "sess-empty", [
-            {"role": "system", "message": {"content": "setup"}},
-        ])
+        _write_transcript(
+            base,
+            "proj",
+            "sess-empty",
+            [
+                {"role": "system", "message": {"content": "setup"}},
+            ],
+        )
 
         convos = read_cursor_history(cursor_dir=base)
         assert len(convos) == 0

@@ -37,6 +37,21 @@ uv sync
 .venv/bin/vardoger --help
 ```
 
+### Project Layout
+
+```
+src/vardoger/          # shared core — history reading, analysis, prompt generation
+plugins/cursor/        # Cursor MCP server config, install script
+plugins/claude-code/   # Claude Code plugin manifest, skills
+plugins/codex/         # Codex plugin manifest, skills
+```
+
+- Platform-agnostic logic lives under `src/vardoger/`.
+- Platform-specific integration (manifests, skills, install scripts) lives under `plugins/<platform>/`.
+- Tests are co-located next to the code they test (`test_*.py`).
+
+See [AGENTS.md](AGENTS.md) for full coding standards and quality checks.
+
 ## Status
 
 Early development. See [PRD.md](PRD.md) for the full product requirements document.

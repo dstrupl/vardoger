@@ -73,11 +73,7 @@ def _discover_sessions_from_index(project_dir: Path) -> list[Path]:
 
 def _discover_sessions_by_glob(project_dir: Path) -> list[Path]:
     """Fallback: find JSONL files directly in the project directory."""
-    return sorted(
-        p
-        for p in project_dir.glob("*.jsonl")
-        if p.is_file()
-    )
+    return sorted(p for p in project_dir.glob("*.jsonl") if p.is_file())
 
 
 def discover_claude_code_files(
@@ -136,9 +132,7 @@ def _parse_session(path: Path, project_name: str, rel_path: str) -> Conversation
 
                 text = _extract_text(msg_payload)
                 if text.strip():
-                    messages.append(
-                        Message(role=role, content=text)
-                    )
+                    messages.append(Message(role=role, content=text))
     except OSError as exc:
         logger.warning("Could not read %s: %s", path, exc)
         return None
@@ -175,7 +169,11 @@ def read_claude_code_history(
             skipped += 1
             continue
 
-        project_name = abs_path.relative_to(base).parts[0] if abs_path.is_relative_to(base) else abs_path.parent.name
+        project_name = (
+            abs_path.relative_to(base).parts[0]
+            if abs_path.is_relative_to(base)
+            else abs_path.parent.name
+        )
         conv = _parse_session(abs_path, project_name, rel_path)
         if conv is not None:
             conversations.append(conv)

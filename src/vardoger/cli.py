@@ -14,18 +14,20 @@ import json
 import logging
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 from vardoger.analyze import analyze
 from vardoger.checkpoint import CheckpointStore
 from vardoger.digest import batch_conversations, format_batch
-from vardoger.history.cursor import read_cursor_history
 from vardoger.history.claude_code import read_claude_code_history
 from vardoger.history.codex import read_codex_history
+from vardoger.history.cursor import read_cursor_history
+from vardoger.history.models import Conversation
 from vardoger.prompts import summarize_prompt, synthesize_prompt
-from vardoger.writers.cursor import write_cursor_rules
 from vardoger.writers.claude_code import write_claude_code_rules
 from vardoger.writers.codex import write_codex_rules
+from vardoger.writers.cursor import write_cursor_rules
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ def _make_file_filter(
     checkpoint: CheckpointStore | None,
     platform_key: str,
     since_seconds: float | None,
-) -> tuple[callable, dict]:
+) -> tuple[Callable[..., bool], dict[str, int]]:
     """Build a file_filter callback and a mutable stats dict."""
     stats = {"skipped_mtime": 0, "skipped_hash": 0, "accepted": 0}
     now = time.time()
@@ -67,8 +69,13 @@ def _make_file_filter(
     return _filter, stats
 
 
-def _read_conversations(platform: str, full: bool, since_days: int | None):
-    """Read conversations with checkpoint/mtime filtering. Returns (conversations, checkpoint, stats)."""
+def _read_conversations(
+    platform: str, full: bool, since_days: int | None
+) -> tuple[list[Conversation], CheckpointStore | None, dict[str, int]]:
+    """Read conversations with checkpoint/mtime filtering.
+
+    Returns (conversations, checkpoint, stats).
+    """
     platform_key = PLATFORM_KEY[platform]
 
     checkpoint: CheckpointStore | None = None
@@ -114,9 +121,9 @@ def _write_platform(platform: str, content: str, scope: str, project_path: Path 
 
 def _get_reader_base(platform: str) -> Path:
     """Return the base directory for a platform's history files."""
-    from vardoger.history.cursor import DEFAULT_CURSOR_DIR
     from vardoger.history.claude_code import DEFAULT_CLAUDE_DIR
     from vardoger.history.codex import DEFAULT_CODEX_DIR
+    from vardoger.history.cursor import DEFAULT_CURSOR_DIR
 
     return {
         "cursor": DEFAULT_CURSOR_DIR,
@@ -125,7 +132,9 @@ def _get_reader_base(platform: str) -> Path:
     }[platform]
 
 
-def _save_checkpoint(checkpoint: CheckpointStore | None, conversations, platform: str) -> None:
+def _save_checkpoint(
+    checkpoint: CheckpointStore | None, conversations: list[Conversation], platform: str
+) -> None:
     """Record processed conversations in the checkpoint store."""
     if not checkpoint:
         return
@@ -141,8 +150,9 @@ def _save_checkpoint(checkpoint: CheckpointStore | None, conversations, platform
 
 # -- setup --
 
+
 def _run_setup(args: argparse.Namespace) -> None:
-    from vardoger.setup import setup_cursor, setup_claude_code, setup_codex
+    from vardoger.setup import setup_claude_code, setup_codex, setup_cursor
 
     platform = args.platform
     if platform == "cursor":
@@ -155,14 +165,13 @@ def _run_setup(args: argparse.Namespace) -> None:
 
 # -- analyze (legacy placeholder) --
 
+
 def _run_analyze(args: argparse.Namespace) -> None:
     platform = args.platform
     scope = args.scope
     project_path = Path(args.project) if args.project else None
 
-    conversations, checkpoint, stats = _read_conversations(
-        platform, args.full, args.since
-    )
+    conversations, checkpoint, stats = _read_conversations(platform, args.full, args.since)
 
     if not conversations:
         skipped_total = stats["skipped_mtime"] + stats["skipped_hash"]
@@ -188,6 +197,7 @@ def _run_analyze(args: argparse.Namespace) -> None:
 
 # -- prepare (AI pipeline stage 1) --
 
+
 def _run_prepare(args: argparse.Namespace) -> None:
     platform = args.platform
 
@@ -195,15 +205,15 @@ def _run_prepare(args: argparse.Namespace) -> None:
         print(synthesize_prompt())
         return
 
-    conversations, checkpoint, stats = _read_conversations(
-        platform, args.full, args.since
-    )
+    conversations, checkpoint, stats = _read_conversations(platform, args.full, args.since)
 
     if not conversations:
         skipped_total = stats["skipped_mtime"] + stats["skipped_hash"]
         if skipped_total > 0:
-            print(f"No new conversations for {platform} ({skipped_total} unchanged, skipped).",
-                  file=sys.stderr)
+            print(
+                f"No new conversations for {platform} ({skipped_total} unchanged, skipped).",
+                file=sys.stderr,
+            )
         else:
             print(f"No conversation history found for {platform}.", file=sys.stderr)
         print(json.dumps({"batches": 0, "total_conversations": 0}))
@@ -237,6 +247,7 @@ def _run_prepare(args: argparse.Namespace) -> None:
 
 # -- write (AI pipeline stage 2) --
 
+
 def _run_write(args: argparse.Namespace) -> None:
     platform = args.platform
     scope = args.scope
@@ -253,10 +264,12 @@ def _run_write(args: argparse.Namespace) -> None:
 
 # -- CLI argument parsing --
 
+
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
     """Add arguments shared across subcommands."""
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging.",
     )
@@ -274,7 +287,8 @@ def main(argv: list[str] | None = None) -> None:
         description="Personalize AI coding assistants from conversation history.",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging.",
     )
@@ -299,19 +313,27 @@ def main(argv: list[str] | None = None) -> None:
     )
     _add_common_args(analyze_parser)
     analyze_parser.add_argument(
-        "--scope", choices=["global", "project"], default="global",
+        "--scope",
+        choices=["global", "project"],
+        default="global",
         help="Write scope: global (user-wide) or project-local.",
     )
     analyze_parser.add_argument(
-        "--project", default=None,
+        "--project",
+        default=None,
         help="Project directory path (used with --scope project).",
     )
     analyze_parser.add_argument(
-        "--full", action="store_true", default=False,
+        "--full",
+        action="store_true",
+        default=False,
         help="Bypass checkpoint and reprocess all history.",
     )
     analyze_parser.add_argument(
-        "--since", type=int, default=None, metavar="DAYS",
+        "--since",
+        type=int,
+        default=None,
+        metavar="DAYS",
         help="Only process files modified in the last N days.",
     )
 
@@ -322,19 +344,29 @@ def main(argv: list[str] | None = None) -> None:
     )
     _add_common_args(prepare_parser)
     prepare_parser.add_argument(
-        "--full", action="store_true", default=False,
+        "--full",
+        action="store_true",
+        default=False,
         help="Bypass checkpoint and reprocess all history.",
     )
     prepare_parser.add_argument(
-        "--since", type=int, default=None, metavar="DAYS",
+        "--since",
+        type=int,
+        default=None,
+        metavar="DAYS",
         help="Only process files modified in the last N days.",
     )
     prepare_parser.add_argument(
-        "--batch", type=int, default=None, metavar="N",
+        "--batch",
+        type=int,
+        default=None,
+        metavar="N",
         help="Return batch N (1-based). Without this, returns metadata.",
     )
     prepare_parser.add_argument(
-        "--synthesize", action="store_true", default=False,
+        "--synthesize",
+        action="store_true",
+        default=False,
         help="Print the synthesize prompt instead of conversation data.",
     )
 
@@ -345,11 +377,14 @@ def main(argv: list[str] | None = None) -> None:
     )
     _add_common_args(write_parser)
     write_parser.add_argument(
-        "--scope", choices=["global", "project"], default="global",
+        "--scope",
+        choices=["global", "project"],
+        default="global",
         help="Write scope: global (user-wide) or project-local.",
     )
     write_parser.add_argument(
-        "--project", default=None,
+        "--project",
+        default=None,
         help="Project directory path (used with --scope project).",
     )
 

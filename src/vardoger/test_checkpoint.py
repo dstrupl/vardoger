@@ -96,7 +96,9 @@ def test_load_wrong_version_starts_fresh():
     with tempfile.TemporaryDirectory() as tmp:
         state_dir = Path(tmp) / "state"
         state_dir.mkdir()
-        (state_dir / "state.json").write_text(json.dumps({"version": 999, "checkpoints": {"cursor": {"f.jsonl": {"sha256": "abc"}}}}))
+        (state_dir / "state.json").write_text(
+            json.dumps({"version": 999, "checkpoints": {"cursor": {"f.jsonl": {"sha256": "abc"}}}})
+        )
 
         store = CheckpointStore(state_dir=state_dir)
         data_file = Path(tmp) / "f.jsonl"

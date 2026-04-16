@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -75,9 +75,7 @@ class CheckpointStore:
         current_hash = file_hash(abs_path)
         platform_ckpts = self._data.get("checkpoints", {}).get(platform, {})
         stored = platform_ckpts.get(rel_path)
-        if stored and stored.get(HASH_ALGORITHM) == current_hash:
-            return False
-        return True
+        return not (stored and stored.get(HASH_ALGORITHM) == current_hash)
 
     def record(self, platform: str, rel_path: str, abs_path: Path) -> None:
         """Record a file as processed with its current content hash."""
@@ -85,7 +83,7 @@ class CheckpointStore:
         platform_ckpts = checkpoints.setdefault(platform, {})
         platform_ckpts[rel_path] = {
             HASH_ALGORITHM: file_hash(abs_path),
-            "processed_at": datetime.now(timezone.utc).isoformat(),
+            "processed_at": datetime.now(UTC).isoformat(),
         }
 
     def clear(self, platform: str | None = None) -> None:

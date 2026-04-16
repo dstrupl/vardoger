@@ -9,7 +9,7 @@ from vardoger.writers.claude_code import write_claude_code_rules
 def test_global_scope():
     with tempfile.TemporaryDirectory() as tmp:
         home = Path(tmp)
-        rules_dir = home / ".claude" / "rules"
+        _ = home / ".claude" / "rules"
 
         path = write_claude_code_rules("test content", scope="global")
         assert path.exists()

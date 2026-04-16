@@ -19,10 +19,26 @@ def _write_session(base: Path, project_name: str, session_id: str, lines: list[d
 def test_reads_basic_session():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_session(base, "-Users-test-proj", "abc-123", [
-            {"type": "user", "message": {"role": "user", "content": [{"type": "text", "text": "Help me"}]}, "sessionId": "abc-123"},
-            {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": "Sure"}]}, "sessionId": "abc-123"},
-        ])
+        _write_session(
+            base,
+            "-Users-test-proj",
+            "abc-123",
+            [
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": [{"type": "text", "text": "Help me"}]},
+                    "sessionId": "abc-123",
+                },
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "content": [{"type": "text", "text": "Sure"}],
+                    },
+                    "sessionId": "abc-123",
+                },
+            ],
+        )
 
         convos = read_claude_code_history(claude_dir=base)
         assert len(convos) == 1
@@ -33,9 +49,18 @@ def test_reads_basic_session():
 def test_source_path_set():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_session(base, "-Users-test-proj", "abc-123", [
-            {"type": "user", "message": {"role": "user", "content": "Hello"}, "sessionId": "abc-123"},
-        ])
+        _write_session(
+            base,
+            "-Users-test-proj",
+            "abc-123",
+            [
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": "Hello"},
+                    "sessionId": "abc-123",
+                },
+            ],
+        )
 
         convos = read_claude_code_history(claude_dir=base)
         assert len(convos) == 1
@@ -45,12 +70,22 @@ def test_source_path_set():
 def test_discover_files():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_session(base, "-proj-a", "s1", [
-            {"type": "user", "message": {"role": "user", "content": "hi"}, "sessionId": "s1"},
-        ])
-        _write_session(base, "-proj-b", "s2", [
-            {"type": "user", "message": {"role": "user", "content": "hi"}, "sessionId": "s2"},
-        ])
+        _write_session(
+            base,
+            "-proj-a",
+            "s1",
+            [
+                {"type": "user", "message": {"role": "user", "content": "hi"}, "sessionId": "s1"},
+            ],
+        )
+        _write_session(
+            base,
+            "-proj-b",
+            "s2",
+            [
+                {"type": "user", "message": {"role": "user", "content": "hi"}, "sessionId": "s2"},
+            ],
+        )
 
         files = discover_claude_code_files(claude_dir=base)
         assert len(files) == 2
@@ -62,9 +97,18 @@ def test_discover_files():
 def test_file_filter_skips():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_session(base, "-proj", "sess-1", [
-            {"type": "user", "message": {"role": "user", "content": "Hello"}, "sessionId": "sess-1"},
-        ])
+        _write_session(
+            base,
+            "-proj",
+            "sess-1",
+            [
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": "Hello"},
+                    "sessionId": "sess-1",
+                },
+            ],
+        )
 
         convos = read_claude_code_history(
             claude_dir=base,
@@ -76,11 +120,20 @@ def test_file_filter_skips():
 def test_filters_non_message_types():
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        _write_session(base, "-proj", "sess-1", [
-            {"type": "file-history-snapshot", "messageId": "x", "snapshot": {}},
-            {"type": "user", "message": {"role": "user", "content": "Hello"}, "sessionId": "sess-1"},
-            {"type": "permission-mode", "mode": "auto"},
-        ])
+        _write_session(
+            base,
+            "-proj",
+            "sess-1",
+            [
+                {"type": "file-history-snapshot", "messageId": "x", "snapshot": {}},
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": "Hello"},
+                    "sessionId": "sess-1",
+                },
+                {"type": "permission-mode", "mode": "auto"},
+            ],
+        )
 
         convos = read_claude_code_history(claude_dir=base)
         assert len(convos) == 1

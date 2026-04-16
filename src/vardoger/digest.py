@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from vardoger.history.models import Conversation
 
-
 DEFAULT_BATCH_SIZE = 10
 
 
@@ -20,10 +19,7 @@ def batch_conversations(
     """Split conversations into batches of the given size."""
     if not conversations:
         return []
-    return [
-        conversations[i : i + batch_size]
-        for i in range(0, len(conversations), batch_size)
-    ]
+    return [conversations[i : i + batch_size] for i in range(0, len(conversations), batch_size)]
 
 
 def format_batch(batch: list[Conversation], batch_number: int, total_batches: int) -> str:
@@ -39,7 +35,9 @@ def format_batch(batch: list[Conversation], batch_number: int, total_batches: in
             header_parts.append(f"(platform: {conv.platform}")
             if conv.project:
                 header_parts[-1] += f", project: {conv.project}"
-            header_parts[-1] += f", {conv.message_count} messages, {conv.user_message_count} from user)"
+            header_parts[-1] += (
+                f", {conv.message_count} messages, {conv.user_message_count} from user)"
+            )
         lines.append(" ".join(header_parts))
         lines.append("")
 

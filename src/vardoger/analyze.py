@@ -7,7 +7,7 @@ prove the pipeline works end-to-end.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from vardoger.history.models import Conversation
 
@@ -24,7 +24,7 @@ def analyze(conversations: list[Conversation]) -> str:
 
     projects = {c.project for c in conversations if c.project}
 
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     lines = [
         "# vardoger personalization",

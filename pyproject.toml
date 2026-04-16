@@ -23,9 +23,56 @@ packages = ["src/vardoger"]
 
 [dependency-groups]
 dev = [
+    "mypy>=1.15",
     "pytest>=9.0.3",
+    "pytest-cov>=6.1",
+    "ruff>=0.11",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["src", "plugins"]
 addopts = "--import-mode=importlib"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 99
+src = ["src", "plugins"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["vardoger"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["mcp.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "vardoger.test_checkpoint",
+    "vardoger.test_digest",
+    "vardoger.history.test_cursor",
+    "vardoger.history.test_codex",
+    "vardoger.history.test_claude_code",
+]
+disallow_untyped_defs = false
