@@ -1,0 +1,16 @@
+{
+  "description": "vardoger staleness check on session start",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "vardoger _hook-session-start claude-code 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

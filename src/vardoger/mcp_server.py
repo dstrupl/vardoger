@@ -21,6 +21,7 @@ from mcp.server.fastmcp import FastMCP
 from vardoger.digest import batch_conversations, format_batch
 from vardoger.history.cursor import read_cursor_history
 from vardoger.prompts import summarize_prompt, synthesize_prompt
+from vardoger.staleness import check_staleness
 from vardoger.writers.cursor import write_cursor_rules
 
 mcp = FastMCP("vardoger")
@@ -31,7 +32,15 @@ _ORCHESTRATION_INSTRUCTIONS = """\
 Follow these steps to analyze the user's conversation history and generate \
 a personalization. Report progress to the user after each step.
 
-## Step 1: Get batch metadata
+## Step 1: Check status
+
+Call `vardoger_status()`.
+
+If the personalization is fresh (not stale), tell the user their \
+personalization is up to date and ask if they want to re-run anyway. \
+If stale or never generated, continue.
+
+## Step 2: Get batch metadata
 
 Call `vardoger_prepare(batch=0)`.
 
@@ -39,7 +48,7 @@ This returns JSON like `{"batches": 3, "total_conversations": 29}`. \
 Note the number of batches. Tell the user: "Found N conversations in M batches. \
 Analyzing..."
 
-## Step 2: Summarize each batch
+## Step 3: Summarize each batch
 
 For each batch from 1 to M, call `vardoger_prepare(batch=N)`.
 
@@ -49,24 +58,48 @@ you observe. Keep each summary for later.
 
 Tell the user: "Analyzing batch N of M..."
 
-## Step 3: Get the synthesis prompt
+## Step 4: Get the synthesis prompt
 
 Call `vardoger_synthesize_prompt()`.
 
-## Step 4: Synthesize
+## Step 5: Synthesize
 
 Following the synthesis prompt, combine all your batch summaries into a single \
 personalization. The output should be clean markdown with actionable instructions.
 
-## Step 5: Write the result
+## Step 6: Write the result
 
 Call `vardoger_write(content="YOUR_PERSONALIZATION_HERE")`.
 
-## Step 6: Report to the user
+## Step 7: Report to the user
 
 Tell the user what was written and where. Mention they can ask you to \
 re-run vardoger any time to update the personalization.
 """
+
+
+@mcp.tool()
+def vardoger_status() -> str:
+    """Check if the Cursor personalization is up to date.
+
+    Returns a status report indicating whether the personalization needs
+    refreshing, how many days since the last update, and how many new or
+    changed conversations exist.
+    """
+    import json
+
+    report = check_staleness("cursor")
+    return json.dumps(
+        {
+            "platform": report.platform,
+            "is_stale": report.is_stale,
+            "days_since_generation": report.days_since_generation,
+            "new_conversations": report.new_conversations,
+            "changed_conversations": report.changed_conversations,
+            "reason": report.reason,
+        },
+        indent=2,
+    )
 
 
 @mcp.tool()
@@ -155,8 +188,15 @@ def vardoger_write(content: str, project_path: str = "") -> str:
     """
     from pathlib import Path
 
+    from vardoger.checkpoint import CheckpointStore
+
     target = Path(project_path) if project_path else None
     output = write_cursor_rules(content, project_path=target)
+
+    store = CheckpointStore()
+    store.record_generation("cursor", conversations_analyzed=0, output_path=str(output))
+    store.save()
+
     return f"vardoger: wrote personalization to {output}"
 
 

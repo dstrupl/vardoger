@@ -169,7 +169,7 @@ Plugins are git repositories. Installation clones into `~/.claude/plugins/cache/
 - A **hook** on `SessionStart` to check if the prompt addition is stale and suggest refresh
 - Generated output written to `~/.claude/rules/vardoger.md` or `.claude/rules/vardoger.md`
 
-> **Status:** [x] Plugin manifest and analyze skill implemented. [ ] SessionStart hook not yet implemented. Marketplace publishing deferred to Phase 4.
+> **Status:** [x] Plugin manifest and analyze skill implemented. [x] SessionStart hook for staleness check. Marketplace publishing deferred to Phase 4.
 
 ---
 
@@ -296,7 +296,7 @@ The core analysis logic must be shared across all three platform integrations. P
 **Goal:** Make personalization continuous and self-improving.
 
 **Deliverables:**
-- [ ] Staleness detection and automatic refresh suggestions
+- [x] Staleness detection and automatic refresh suggestions
 - [ ] User feedback mechanism (accept/reject/edit generated rules)
 - [ ] Confidence scoring for extracted patterns
 - [ ] A/B style comparison (before/after personalization quality)

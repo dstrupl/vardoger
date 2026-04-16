@@ -4,6 +4,7 @@
 
 Usage:
     vardoger setup   <platform>
+    vardoger status  [--platform X] [--json]
     vardoger analyze --platform X [--scope S] [--project P] [--full] [--since DAYS]
     vardoger prepare --platform X [--full] [--since DAYS] [--batch N] [--synthesize]
     vardoger write   --platform X [--scope S] [--project P]
@@ -27,6 +28,7 @@ from vardoger.history.codex import read_codex_history
 from vardoger.history.cursor import read_cursor_history
 from vardoger.history.models import Conversation
 from vardoger.prompts import summarize_prompt, synthesize_prompt
+from vardoger.staleness import check_staleness
 from vardoger.writers.claude_code import write_claude_code_rules
 from vardoger.writers.codex import write_codex_rules
 from vardoger.writers.cursor import write_cursor_rules
@@ -165,6 +167,63 @@ def _run_setup(args: argparse.Namespace) -> None:
         setup_codex()
 
 
+# -- status --
+
+
+def _run_status(args: argparse.Namespace) -> None:
+    platforms = [args.platform] if args.platform else PLATFORM_CHOICES
+    use_json = getattr(args, "json", False)
+
+    reports = []
+    for platform in platforms:
+        report = check_staleness(platform)
+        reports.append(report)
+
+    if use_json:
+        print(
+            json.dumps(
+                [
+                    {
+                        "platform": r.platform,
+                        "is_stale": r.is_stale,
+                        "days_since_generation": r.days_since_generation,
+                        "new_conversations": r.new_conversations,
+                        "changed_conversations": r.changed_conversations,
+                        "reason": r.reason,
+                    }
+                    for r in reports
+                ],
+                indent=2,
+            )
+        )
+    else:
+        for r in reports:
+            label = f"{r.platform}:"
+            print(f"{label:<14} {r.reason}")
+
+
+# -- hook-session-start (hidden, invoked by plugin hooks) --
+
+
+def _run_hook_session_start(args: argparse.Namespace) -> None:
+    """Output a Claude Code SessionStart hook JSON response if stale."""
+    platform = args.platform
+    report = check_staleness(platform)
+    if not report.is_stale:
+        return
+
+    hook_output = {
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": (
+                f"vardoger personalization is {report.reason}. "
+                "Consider running the vardoger analyze skill to refresh."
+            ),
+        }
+    }
+    print(json.dumps(hook_output))
+
+
 # -- analyze (legacy placeholder) --
 
 
@@ -186,6 +245,14 @@ def _run_analyze(args: argparse.Namespace) -> None:
     prompt_addition = analyze(conversations)
     output = _write_platform(platform, prompt_addition, scope, project_path)
     _save_checkpoint(checkpoint, conversations, platform)
+
+    store = checkpoint or CheckpointStore()
+    store.record_generation(
+        PLATFORM_KEY[platform],
+        conversations_analyzed=len(conversations),
+        output_path=str(output),
+    )
+    store.save()
 
     total_msgs = sum(c.message_count for c in conversations)
     skipped_total = stats["skipped_mtime"] + stats["skipped_hash"]
@@ -261,6 +328,15 @@ def _run_write(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     output = _write_platform(platform, content, scope, project_path)
+
+    store = CheckpointStore()
+    store.record_generation(
+        PLATFORM_KEY[platform],
+        conversations_analyzed=0,
+        output_path=str(output),
+    )
+    store.save()
+
     print(f"vardoger: wrote personalization to {output}")
 
 
@@ -306,6 +382,24 @@ def main(argv: list[str] | None = None) -> None:
         "platform",
         choices=PLATFORM_CHOICES,
         help="Platform to set up.",
+    )
+
+    # status
+    status_parser = subparsers.add_parser(
+        "status",
+        help="Check whether personalizations are up to date.",
+    )
+    status_parser.add_argument(
+        "--platform",
+        choices=PLATFORM_CHOICES,
+        default=None,
+        help="Check a single platform (default: all).",
+    )
+    status_parser.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output machine-readable JSON.",
     )
 
     # analyze (legacy placeholder)
@@ -390,6 +484,10 @@ def main(argv: list[str] | None = None) -> None:
         help="Project directory path (used with --scope project).",
     )
 
+    # hidden: _hook-session-start (invoked by plugin hooks, not user-facing)
+    hook_parser = subparsers.add_parser("_hook-session-start")
+    hook_parser.add_argument("platform", choices=PLATFORM_CHOICES)
+
     args = parser.parse_args(argv)
 
     verbose = getattr(args, "verbose", False)
@@ -400,6 +498,10 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.command == "setup":
         _run_setup(args)
+    elif args.command == "status":
+        _run_status(args)
+    elif args.command == "_hook-session-start":
+        _run_hook_session_start(args)
     elif args.command == "analyze":
         _run_analyze(args)
     elif args.command == "prepare":

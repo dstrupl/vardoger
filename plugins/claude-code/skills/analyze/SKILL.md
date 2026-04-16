@@ -14,7 +14,15 @@ vardoger prepares your conversation history in batches. You (the assistant) summ
 command -v vardoger >/dev/null 2>&1 || { echo "vardoger not found. Install with: pipx install vardoger"; exit 1; }
 ```
 
-### 2. Get batch metadata
+### 2. Check if a refresh is needed
+
+```bash
+vardoger status --platform claude-code --json
+```
+
+If the output shows `"is_stale": false`, tell the user their personalization is up to date and ask if they want to re-run anyway. If stale or never generated, continue with the analysis.
+
+### 3. Get batch metadata
 
 ```bash
 vardoger prepare --platform claude-code
@@ -22,7 +30,7 @@ vardoger prepare --platform claude-code
 
 This prints JSON like `{"batches": 3, "total_conversations": 29}`. Note the number of batches. Tell the user: "Found N conversations in M batches. Analyzing..."
 
-### 3. Summarize each batch
+### 4. Summarize each batch
 
 For each batch number from 1 to N, run:
 
@@ -36,17 +44,17 @@ Tell the user which batch you are processing: "Analyzing batch 1 of N..."
 
 Repeat for all batches (--batch 2, --batch 3, etc.).
 
-### 4. Get the synthesis prompt
+### 5. Get the synthesis prompt
 
 ```bash
 vardoger prepare --platform claude-code --synthesize
 ```
 
-### 5. Synthesize the personalization
+### 6. Synthesize the personalization
 
 Following the synthesis prompt, combine all your batch summaries into a single personalization. The output should be clean markdown with actionable instructions for an AI assistant.
 
-### 6. Write the result
+### 7. Write the result
 
 Pipe your personalization to vardoger:
 
@@ -56,7 +64,7 @@ echo "YOUR_PERSONALIZATION_HERE" | vardoger write --platform claude-code --scope
 
 Replace `YOUR_PERSONALIZATION_HERE` with the actual personalization markdown you generated.
 
-### 7. Report to the user
+### 8. Report to the user
 
 Tell the user what was written and where. Mention they can ask you to re-run vardoger any time to update the personalization.
 

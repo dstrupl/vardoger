@@ -6,6 +6,10 @@ Tracks which conversation files have already been analyzed by storing
 a SHA-256 content hash per file. On subsequent runs, files whose hash
 hasn't changed are skipped.
 
+Also records per-platform generation metadata (timestamp, conversation
+count, output path) so that staleness detection can determine whether
+the personalization needs refreshing.
+
 State is persisted to ~/.vardoger/state.json.
 """
 
@@ -20,7 +24,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 DEFAULT_STATE_DIR = Path.home() / ".vardoger"
-STATE_VERSION = 1
+STATE_VERSION = 2
 HASH_ALGORITHM = "sha256"
 READ_CHUNK_SIZE = 65536
 
@@ -42,26 +46,51 @@ class CheckpointStore:
         self._state_path = self._state_dir / "state.json"
         self._data: dict = self._load()
 
+    @staticmethod
+    def _empty() -> dict:
+        return {"version": STATE_VERSION, "checkpoints": {}, "generations": {}}
+
+    @staticmethod
+    def _migrate(data: dict) -> dict:
+        """Migrate older state versions to the current schema."""
+        version = data.get("version")
+        if version == 1:
+            data["version"] = STATE_VERSION
+            data.setdefault("generations", {})
+        return data
+
     def _load(self) -> dict:
         if not self._state_path.is_file():
-            return {"version": STATE_VERSION, "checkpoints": {}}
+            return self._empty()
         try:
             with open(self._state_path, encoding="utf-8") as f:
                 data = json.load(f)
-            if not isinstance(data, dict) or data.get("version") != STATE_VERSION:
+            if not isinstance(data, dict):
                 logger.warning(
-                    "Unrecognized checkpoint version in %s — starting fresh",
+                    "Invalid checkpoint data in %s — starting fresh",
                     self._state_path,
                 )
-                return {"version": STATE_VERSION, "checkpoints": {}}
-            return data
+                return self._empty()
+            version = data.get("version")
+            if version == STATE_VERSION:
+                data.setdefault("generations", {})
+                return data
+            if isinstance(version, int) and version < STATE_VERSION:
+                logger.info("Migrating checkpoint state from v%d to v%d", version, STATE_VERSION)
+                return self._migrate(data)
+            logger.warning(
+                "Unrecognized checkpoint version %s in %s — starting fresh",
+                version,
+                self._state_path,
+            )
+            return self._empty()
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning(
                 "Could not read checkpoint state %s: %s — starting fresh",
                 self._state_path,
                 exc,
             )
-            return {"version": STATE_VERSION, "checkpoints": {}}
+            return self._empty()
 
     def save(self) -> None:
         """Persist current checkpoint state to disk."""
@@ -87,6 +116,26 @@ class CheckpointStore:
             HASH_ALGORITHM: file_hash(abs_path),
             "processed_at": datetime.now(UTC).isoformat(),
         }
+
+    def record_generation(
+        self,
+        platform: str,
+        conversations_analyzed: int,
+        output_path: str,
+    ) -> None:
+        """Record that a personalization was generated for a platform."""
+        generations = self._data.setdefault("generations", {})
+        generations[platform] = {
+            "generated_at": datetime.now(UTC).isoformat(),
+            "conversations_analyzed": conversations_analyzed,
+            "output_path": output_path,
+        }
+
+    def get_generation(self, platform: str) -> dict | None:
+        """Return generation metadata for a platform, or None if never generated."""
+        generations: dict = self._data.get("generations", {})
+        result: dict | None = generations.get(platform)
+        return result
 
     def clear(self, platform: str | None = None) -> None:
         """Remove checkpoint data, optionally for a single platform."""
