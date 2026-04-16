@@ -86,20 +86,8 @@ def vardoger_status() -> str:
     refreshing, how many days since the last update, and how many new or
     changed conversations exist.
     """
-    import json
-
     report = check_staleness("cursor")
-    return json.dumps(
-        {
-            "platform": report.platform,
-            "is_stale": report.is_stale,
-            "days_since_generation": report.days_since_generation,
-            "new_conversations": report.new_conversations,
-            "changed_conversations": report.changed_conversations,
-            "reason": report.reason,
-        },
-        indent=2,
-    )
+    return report.model_dump_json(indent=2)
 
 
 @mcp.tool()

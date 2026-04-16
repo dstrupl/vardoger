@@ -10,10 +10,10 @@ generation metadata stored in state.json.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from vardoger.checkpoint import CheckpointStore
+from vardoger.models import StalenessReport
 
 logger = logging.getLogger(__name__)
 
@@ -25,18 +25,6 @@ PLATFORM_KEY = {
 
 DEFAULT_NEW_CONVERSATION_THRESHOLD = 5
 DEFAULT_DAYS_THRESHOLD = 7
-
-
-@dataclass
-class StalenessReport:
-    """Result of a staleness check for a single platform."""
-
-    platform: str
-    is_stale: bool
-    days_since_generation: int | None
-    new_conversations: int
-    changed_conversations: int
-    reason: str
 
 
 def _discover_files(platform: str) -> list[tuple]:
@@ -81,7 +69,7 @@ def check_staleness(
             reason="never generated — run vardoger to personalize",
         )
 
-    generated_at = datetime.fromisoformat(generation["generated_at"])
+    generated_at = datetime.fromisoformat(generation.generated_at)
     days_since = (datetime.now(UTC) - generated_at).days
 
     files = _discover_files(platform)
@@ -89,8 +77,8 @@ def check_staleness(
     changed_count = 0
     for abs_path, rel_path in files:
         if store.is_changed(platform_key, rel_path, abs_path):
-            ckpts = store._data.get("checkpoints", {}).get(platform_key, {})
-            if rel_path in ckpts:
+            existing_ckpt = store.get_checkpoint(platform_key, rel_path)
+            if existing_ckpt is not None:
                 changed_count += 1
             else:
                 new_count += 1

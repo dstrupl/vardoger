@@ -27,6 +27,7 @@ from vardoger.history.claude_code import read_claude_code_history
 from vardoger.history.codex import read_codex_history
 from vardoger.history.cursor import read_cursor_history
 from vardoger.history.models import Conversation
+from vardoger.models import HookOutput, SessionStartContext
 from vardoger.prompts import summarize_prompt, synthesize_prompt
 from vardoger.staleness import check_staleness
 from vardoger.writers.claude_code import write_claude_code_rules
@@ -180,22 +181,9 @@ def _run_status(args: argparse.Namespace) -> None:
         reports.append(report)
 
     if use_json:
-        print(
-            json.dumps(
-                [
-                    {
-                        "platform": r.platform,
-                        "is_stale": r.is_stale,
-                        "days_since_generation": r.days_since_generation,
-                        "new_conversations": r.new_conversations,
-                        "changed_conversations": r.changed_conversations,
-                        "reason": r.reason,
-                    }
-                    for r in reports
-                ],
-                indent=2,
-            )
-        )
+        import json as _json
+
+        print(_json.dumps([r.model_dump() for r in reports], indent=2))
     else:
         for r in reports:
             label = f"{r.platform}:"
@@ -212,16 +200,15 @@ def _run_hook_session_start(args: argparse.Namespace) -> None:
     if not report.is_stale:
         return
 
-    hook_output = {
-        "hookSpecificOutput": {
-            "hookEventName": "SessionStart",
-            "additionalContext": (
+    hook = HookOutput(
+        hookSpecificOutput=SessionStartContext(
+            additionalContext=(
                 f"vardoger personalization is {report.reason}. "
                 "Consider running the vardoger analyze skill to refresh."
             ),
-        }
-    }
-    print(json.dumps(hook_output))
+        )
+    )
+    print(hook.model_dump_json())
 
 
 # -- analyze (legacy placeholder) --

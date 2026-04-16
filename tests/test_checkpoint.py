@@ -165,9 +165,9 @@ def test_record_and_get_generation():
         store2 = CheckpointStore(state_dir=state_dir)
         gen = store2.get_generation("cursor")
         assert gen is not None
-        assert gen["conversations_analyzed"] == 10
-        assert gen["output_path"] == "/out.md"
-        assert "generated_at" in gen
+        assert gen.conversations_analyzed == 10
+        assert gen.output_path == "/out.md"
+        assert gen.generated_at
 
 
 def test_v1_migration_preserves_checkpoints():
@@ -186,9 +186,10 @@ def test_v1_migration_preserves_checkpoints():
         (state_dir / "state.json").write_text(json.dumps(v1_data))
 
         store = CheckpointStore(state_dir=state_dir)
-        assert store._data["version"] == 2
-        assert "generations" in store._data
-        assert store._data["checkpoints"]["cursor"]["proj/test.jsonl"]["sha256"] == "abc123"
+        assert store._state.version == 2
+        assert store._state.generations == {}
+        ckpt = store._state.checkpoints["cursor"]["proj/test.jsonl"]
+        assert ckpt.sha256 == "abc123"
 
 
 def test_v1_migration_adds_empty_generations():
@@ -200,8 +201,8 @@ def test_v1_migration_adds_empty_generations():
         (state_dir / "state.json").write_text(json.dumps(v1_data))
 
         store = CheckpointStore(state_dir=state_dir)
-        assert store._data["version"] == 2
-        assert store._data["generations"] == {}
+        assert store._state.version == 2
+        assert store._state.generations == {}
 
 
 def test_generation_metadata_per_platform():
@@ -214,6 +215,10 @@ def test_generation_metadata_per_platform():
         store.save()
 
         store2 = CheckpointStore(state_dir=state_dir)
-        assert store2.get_generation("cursor")["conversations_analyzed"] == 5
-        assert store2.get_generation("claude_code")["conversations_analyzed"] == 10
+        cursor_gen = store2.get_generation("cursor")
+        assert cursor_gen is not None
+        assert cursor_gen.conversations_analyzed == 5
+        claude_gen = store2.get_generation("claude_code")
+        assert claude_gen is not None
+        assert claude_gen.conversations_analyzed == 10
         assert store2.get_generation("codex") is None

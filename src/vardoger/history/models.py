@@ -7,6 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from vardoger.models import ContentBlock
+
 
 @dataclass
 class Message:
@@ -40,7 +42,10 @@ class Conversation:
         return sum(1 for m in self.messages if m.role == "assistant")
 
 
-def extract_text(content: list | str, text_types: tuple[str, ...] = ("text",)) -> str:
+def extract_text(
+    content: list[ContentBlock | str] | str,
+    text_types: tuple[str, ...] = ("text",),
+) -> str:
     """Pull plain text from a message content payload.
 
     Works across Cursor, Claude Code, and Codex formats. Each platform uses
@@ -52,8 +57,12 @@ def extract_text(content: list | str, text_types: tuple[str, ...] = ("text",)) -
     if isinstance(content, list):
         parts: list[str] = []
         for block in content:
-            if isinstance(block, dict) and block.get("type") in text_types:
-                parts.append(block.get("text", ""))
+            if isinstance(block, ContentBlock) and block.type in text_types:
+                parts.append(block.text)
+            elif isinstance(block, dict):
+                cb = ContentBlock.model_validate(block)
+                if cb.type in text_types:
+                    parts.append(cb.text)
             elif isinstance(block, str):
                 parts.append(block)
         return "\n".join(parts)

@@ -8,7 +8,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from vardoger.checkpoint import CheckpointStore
-from vardoger.staleness import StalenessReport, check_staleness
+from vardoger.models import GenerationRecord, StalenessReport
+from vardoger.staleness import check_staleness
 
 
 def _write_file(path: Path, content: str) -> None:
@@ -75,11 +76,11 @@ def test_stale_when_old_generation():
         store = CheckpointStore(state_dir=state_dir)
 
         old_time = (datetime.now(UTC) - timedelta(days=10)).isoformat()
-        store._data.setdefault("generations", {})["cursor"] = {
-            "generated_at": old_time,
-            "conversations_analyzed": 5,
-            "output_path": "/out",
-        }
+        store._state.generations["cursor"] = GenerationRecord(
+            generated_at=old_time,
+            conversations_analyzed=5,
+            output_path="/out",
+        )
         store.save()
 
         store2 = CheckpointStore(state_dir=state_dir)

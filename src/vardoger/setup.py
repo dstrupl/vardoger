@@ -10,29 +10,40 @@ Handles post-install registration for each supported platform:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
-CLAUDE_PLUGIN_JSON = {
-    "name": "vardoger",
-    "description": (
+from pydantic import ValidationError
+
+from vardoger.models import (
+    ClaudePluginManifest,
+    CodexMarketplace,
+    CodexPluginManifest,
+    CursorMcpConfig,
+    MarketplacePlugin,
+    MarketplacePluginSource,
+    McpServerConfig,
+    PluginAuthor,
+)
+
+CLAUDE_PLUGIN_MANIFEST = ClaudePluginManifest(
+    name="vardoger",
+    description=(
         "Personalizes your AI assistant by analyzing conversation "
         "history and generating tailored rules"
     ),
-    "author": {"name": "dstrupl"},
-}
+    author=PluginAuthor(name="dstrupl"),
+)
 
-CODEX_PLUGIN_JSON = {
-    "name": "vardoger",
-    "version": "0.1.0",
-    "description": (
+CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
+    name="vardoger",
+    version="0.1.0",
+    description=(
         "Personalizes your AI assistant by analyzing conversation "
         "history and generating tailored instructions"
     ),
-    "author": {"name": "dstrupl"},
-    "skills": "./skills/",
-}
+    author=PluginAuthor(name="dstrupl"),
+)
 
 
 def _vardoger_plugin_dir() -> Path:
@@ -145,20 +156,26 @@ vardoger any time to update the personalization.
 
 def setup_cursor() -> None:
     """Register the vardoger MCP server in ~/.cursor/mcp.json."""
-    mcp_config = Path.home() / ".cursor" / "mcp.json"
-    mcp_config.parent.mkdir(parents=True, exist_ok=True)
+    mcp_config_path = Path.home() / ".cursor" / "mcp.json"
+    mcp_config_path.parent.mkdir(parents=True, exist_ok=True)
 
-    config = json.loads(mcp_config.read_text(encoding="utf-8")) if mcp_config.is_file() else {}
+    if mcp_config_path.is_file():
+        raw = mcp_config_path.read_text(encoding="utf-8")
+        try:
+            config = CursorMcpConfig.model_validate_json(raw)
+        except ValidationError:
+            config = CursorMcpConfig()
+    else:
+        config = CursorMcpConfig()
 
-    servers = config.setdefault("mcpServers", {})
-    servers["vardoger"] = {
-        "command": sys.executable,
-        "args": ["-m", "vardoger.mcp_server"],
-    }
+    config.mcpServers["vardoger"] = McpServerConfig(
+        command=sys.executable,
+        args=["-m", "vardoger.mcp_server"],
+    )
 
-    mcp_config.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+    mcp_config_path.write_text(config.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
-    print(f"Registered vardoger MCP server in {mcp_config}")
+    print(f"Registered vardoger MCP server in {mcp_config_path}")
     print("Restart Cursor to activate.")
     print()
     _print_getting_started()
@@ -171,7 +188,7 @@ def setup_claude_code() -> None:
     manifest_dir = plugin_dir / ".claude-plugin"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     (manifest_dir / "plugin.json").write_text(
-        json.dumps(CLAUDE_PLUGIN_JSON, indent=2) + "\n", encoding="utf-8"
+        CLAUDE_PLUGIN_MANIFEST.model_dump_json(indent=2) + "\n", encoding="utf-8"
     )
 
     _write_skill(plugin_dir, "claude-code")
@@ -191,7 +208,7 @@ def setup_codex() -> None:
     manifest_dir = plugin_dir / ".codex-plugin"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     (manifest_dir / "plugin.json").write_text(
-        json.dumps(CODEX_PLUGIN_JSON, indent=2) + "\n", encoding="utf-8"
+        CODEX_PLUGIN_MANIFEST.model_dump_json(indent=2) + "\n", encoding="utf-8"
     )
 
     _write_skill(plugin_dir, "codex")
@@ -200,21 +217,23 @@ def setup_codex() -> None:
     marketplace_path.parent.mkdir(parents=True, exist_ok=True)
 
     if marketplace_path.is_file():
-        marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+        raw = marketplace_path.read_text(encoding="utf-8")
+        try:
+            marketplace = CodexMarketplace.model_validate_json(raw)
+        except ValidationError:
+            marketplace = CodexMarketplace()
     else:
-        marketplace = {"name": "local", "plugins": []}
+        marketplace = CodexMarketplace()
 
-    plugins = marketplace.setdefault("plugins", [])
-    existing = [p for p in plugins if p.get("name") != "vardoger"]
-    existing.append(
-        {
-            "name": "vardoger",
-            "source": {"source": "local", "path": str(plugin_dir)},
-        }
+    marketplace.plugins = [p for p in marketplace.plugins if p.name != "vardoger"]
+    marketplace.plugins.append(
+        MarketplacePlugin(
+            name="vardoger",
+            source=MarketplacePluginSource(source="local", path=str(plugin_dir)),
+        )
     )
-    marketplace["plugins"] = existing
 
-    marketplace_path.write_text(json.dumps(marketplace, indent=2) + "\n", encoding="utf-8")
+    marketplace_path.write_text(marketplace.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
     print(f"Created Codex plugin at {plugin_dir}")
     print(f"Registered in {marketplace_path}")

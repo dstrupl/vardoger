@@ -16,12 +16,14 @@ A sessions-index.json in each project dir provides a manifest.
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from vardoger.history.models import Conversation, Message, extract_text
+from vardoger.models import ClaudeCodeEntry, ContentBlock, SessionIndex
 
 logger = logging.getLogger(__name__)
 
@@ -37,20 +39,19 @@ def _discover_sessions_from_index(project_dir: Path) -> list[Path]:
         return []
 
     try:
-        with open(index_path, encoding="utf-8") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, OSError):
+        raw = index_path.read_text(encoding="utf-8")
+        index = SessionIndex.model_validate_json(raw)
+    except (ValidationError, OSError):
         return []
 
     paths = []
-    for entry in data.get("entries", []):
-        full_path = entry.get("fullPath")
-        if full_path:
-            p = Path(full_path)
+    for entry in index.entries:
+        if entry.fullPath:
+            p = Path(entry.fullPath)
             if p.is_file():
                 paths.append(p)
             else:
-                alt = project_dir / f"{entry.get('sessionId', '')}.jsonl"
+                alt = project_dir / f"{entry.sessionId}.jsonl"
                 if alt.is_file():
                     paths.append(alt)
     return paths
@@ -99,23 +100,31 @@ def _parse_session(path: Path, project_name: str, rel_path: str) -> Conversation
                 if not line:
                     continue
                 try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
+                    entry = ClaudeCodeEntry.model_validate_json(line)
+                except ValidationError:
                     continue
 
-                entry_type = entry.get("type", "")
-                if entry_type not in RELEVANT_TYPES:
+                if entry.type not in RELEVANT_TYPES:
                     continue
 
-                msg_payload = entry.get("message", {})
-                if not isinstance(msg_payload, dict):
+                msg = entry.message
+                if not isinstance(msg, dict):
                     continue
 
-                role = msg_payload.get("role", entry_type)
-                if role not in ("user", "assistant"):
+                role = msg.get("role", entry.type)
+                if not isinstance(role, str) or role not in ("user", "assistant"):
                     continue
 
-                text = extract_text(msg_payload.get("content", []))
+                raw_content = msg.get("content", [])
+                content: list[ContentBlock | str]
+                if isinstance(raw_content, list):
+                    content = raw_content
+                elif isinstance(raw_content, str):
+                    content = [raw_content]
+                else:
+                    continue
+
+                text = extract_text(content)
                 if text.strip():
                     messages.append(Message(role=role, content=text))
     except OSError as exc:

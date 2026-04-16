@@ -12,12 +12,14 @@ Subsequent lines are messages: {"type": "message", "role": "user"|"assistant", "
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from vardoger.history.models import Conversation, Message, extract_text
+from vardoger.models import CodexEntry
 
 logger = logging.getLogger(__name__)
 
@@ -53,24 +55,23 @@ def _parse_rollout(path: Path, rel_path: str) -> Conversation | None:
                 if not line:
                     continue
                 try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
+                    entry = CodexEntry.model_validate_json(line)
+                except ValidationError:
                     continue
 
-                if "id" in entry and "timestamp" in entry and "type" not in entry:
-                    session_id = entry["id"]
+                if entry.id and entry.timestamp and not entry.type:
+                    session_id = entry.id
                     continue
 
-                if entry.get("type") != "message":
+                if entry.type != "message":
                     continue
 
-                role = entry.get("role", "")
-                if role not in ("user", "assistant"):
+                if entry.role not in ("user", "assistant"):
                     continue
 
-                text = extract_text(entry.get("content", []), text_types=CODEX_TEXT_TYPES)
+                text = extract_text(entry.content, text_types=CODEX_TEXT_TYPES)
                 if text.strip():
-                    messages.append(Message(role=role, content=text))
+                    messages.append(Message(role=entry.role, content=text))
     except OSError as exc:
         logger.warning("Could not read %s: %s", path, exc)
         return None

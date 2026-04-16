@@ -12,12 +12,14 @@ Each line is a JSON object with:
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from vardoger.history.models import Conversation, Message, extract_text
+from vardoger.models import ContentBlock, CursorEntry
 
 logger = logging.getLogger(__name__)
 
@@ -57,22 +59,25 @@ def _parse_transcript(path: Path, project_slug: str, rel_path: str) -> Conversat
                 if not line:
                     continue
                 try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
+                    entry = CursorEntry.model_validate_json(line)
+                except ValidationError:
                     continue
 
-                role = entry.get("role")
-                if role not in ("user", "assistant"):
+                if entry.role not in ("user", "assistant"):
                     continue
 
-                msg_payload = entry.get("message", {})
-                if isinstance(msg_payload, dict):
-                    text = extract_text(msg_payload.get("content", []))
+                raw_content = entry.message.get("content", [])
+                content: list[ContentBlock | str]
+                if isinstance(raw_content, list):
+                    content = raw_content
+                elif isinstance(raw_content, str):
+                    content = [raw_content]
                 else:
-                    text = str(msg_payload)
+                    continue
 
+                text = extract_text(content)
                 if text.strip():
-                    messages.append(Message(role=role, content=text))
+                    messages.append(Message(role=entry.role, content=text))
     except OSError as exc:
         logger.warning("Could not read %s: %s", path, exc)
         return None
