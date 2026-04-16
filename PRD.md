@@ -115,7 +115,7 @@ Additionally, Cursor supports **MCP servers** configured via `~/.cursor/mcp.json
 
 **Recommended approach:** Ship as an MCP server (configured in `mcp.json`) that exposes vardoger commands as tools the agent can invoke. This aligns with Cursor's AI-native plugin model better than a traditional VS Code extension. Install via `pipx install vardoger && vardoger setup cursor`.
 
-> **Status:** [x] MCP server implemented (stdio transport) with `vardoger_personalize` entry-point tool plus `vardoger_prepare`, `vardoger_synthesize_prompt`, and `vardoger_write` implementation tools. [ ] VS Code Marketplace publishing not yet done.
+> **Status:** [x] MCP server implemented (stdio transport) with `vardoger_personalize` entry-point tool plus `vardoger_prepare`, `vardoger_synthesize_prompt`, and `vardoger_write` implementation tools. VS Code Marketplace publishing deferred to Phase 4.
 
 ---
 
@@ -169,7 +169,7 @@ Plugins are git repositories. Installation clones into `~/.claude/plugins/cache/
 - A **hook** on `SessionStart` to check if the prompt addition is stale and suggest refresh
 - Generated output written to `~/.claude/rules/vardoger.md` or `.claude/rules/vardoger.md`
 
-> **Status:** [x] Plugin manifest and analyze skill implemented. [ ] SessionStart hook not yet implemented. [ ] Marketplace publishing not yet done.
+> **Status:** [x] Plugin manifest and analyze skill implemented. [ ] SessionStart hook not yet implemented. Marketplace publishing deferred to Phase 4.
 
 ---
 
@@ -217,7 +217,7 @@ Self-serve publishing to the official directory is listed as "coming soon."
 - A **skill** for on-demand analysis
 - Generated output written to `~/.codex/AGENTS.md` (or a vardoger-specific section within it)
 
-> **Status:** [x] Plugin manifest and analyze skill implemented. [ ] Marketplace publishing not yet done.
+> **Status:** [x] Plugin manifest and analyze skill implemented. Marketplace publishing deferred to Phase 4.
 
 ---
 
@@ -258,7 +258,7 @@ The core analysis logic must be shared across all three platform integrations. P
 
 ## 7. Phasing
 
-### Phase 1 — Foundation: Read and Contribute
+### Phase 1 — Foundation: Read and Contribute [x]
 
 **Goal:** Ship a working plugin on all three platforms that can read conversation history and write a (placeholder) system prompt addition.
 
@@ -269,13 +269,12 @@ The core analysis logic must be shared across all three platform integrations. P
 - [x] Platform-native prompt writers that produce valid configuration files
 - [x] `vardoger setup` CLI command for post-install platform registration (Cursor MCP, Claude Code plugin dir, Codex marketplace.json)
 - [x] Distribution via `pipx install vardoger` verified; `vardoger_personalize` MCP entry-point tool guides Cursor agent through the analysis flow
-- [ ] Plugin packaging and marketplace submission for all three platforms
 - [x] A placeholder analysis step that produces a minimal, hard-coded prompt addition (proving the pipeline works end-to-end)
 - [x] Local plugin install for all three platforms (Cursor MCP, Claude Code plugin, Codex plugin)
 
-**Success criteria:** A user can install vardoger from the plugin marketplace on any supported platform, run it, and see a vardoger-authored rule file appear in the correct location.
+**Success criteria:** A user can install vardoger via `pipx install vardoger`, run `vardoger setup <platform>`, and see a vardoger-authored rule file appear in the correct location — no marketplace required.
 
-> **Status:** End-to-end pipeline works locally on all three platforms. Users install via `pipx install vardoger` and run `vardoger setup <platform>` to register. Marketplace publishing remains.
+> **Status:** Complete. End-to-end pipeline works locally on all three platforms. Marketplace publishing deferred to Phase 4 (after limited beta).
 
 ### Phase 2 — Intelligence: AI-Powered Analysis [x]
 
@@ -304,6 +303,20 @@ The core analysis logic must be shared across all three platform integrations. P
 
 **Success criteria:** The system improves its personalization over time without requiring manual intervention.
 
+### Phase 4 — Marketplace Publishing [ ]
+
+**Goal:** Publish vardoger to the official plugin marketplaces after validating through limited beta.
+
+**Deliverables:**
+- [ ] Plugin packaging and marketplace submission for Cursor (VS Code Marketplace VSIX)
+- [ ] Plugin packaging and marketplace submission for Claude Code (`anthropics/claude-plugins-official`)
+- [ ] Plugin packaging and marketplace submission for Codex (official plugin directory)
+- [ ] PyPI publishing for `pip install vardoger`
+
+**Prerequisites:** Limited beta with direct installs (`pipx install vardoger && vardoger setup <platform>`) validates the UX and analysis quality across real users.
+
+**Success criteria:** A user can discover and install vardoger through each platform's native marketplace UI.
+
 ---
 
 ## 8. Non-Goals and Out of Scope
@@ -312,7 +325,7 @@ The following are explicitly deferred or excluded:
 
 | Item | Reason |
 |---|---|
-| **Analysis algorithm design** | Deferred to Phase 2. Phase 1 proves the plumbing; the intelligence comes later. |
+| **Analysis algorithm design** | Phase 2 (complete). Phase 1 proved the plumbing; Phase 2 added the intelligence. |
 | **Cloud processing service** | Architectural constraint. All processing is local. |
 | **Real-time conversation monitoring** | vardoger operates on historical data, not live streams. It runs on-demand or on session start, not continuously. |
 | **Cross-platform history merging** | If a user uses both Cursor and Claude Code, each platform's history is analyzed independently. Merging signals across tools is a future consideration. |
