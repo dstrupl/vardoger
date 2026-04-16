@@ -3,6 +3,7 @@ name = "vardoger"
 version = "0.1.0"
 description = "Personalize AI coding assistants by analyzing conversation history"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.11"
 dependencies = [
     "mcp>=1.0.0",

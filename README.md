@@ -58,4 +58,4 @@ Early development. See [PRD.md](PRD.md) for the full product requirements docume
 
 ## License
 
-Private — all rights reserved.
+Licensed under the [Apache License, Version 2.0](LICENSE).
