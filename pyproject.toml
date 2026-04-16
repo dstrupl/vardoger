@@ -5,6 +5,23 @@ description = "Personalize AI coding assistants by analyzing conversation histor
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
+authors = [
+    { name = "David Strupl", email = "dstrupl@gmail.com" },
+]
+keywords = ["ai", "coding-assistant", "personalization", "cursor", "claude", "codex", "openclaw"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
 dependencies = [
     "mcp>=1.0.0",
     "pydantic>=2.0",
@@ -15,6 +32,8 @@ vardoger = "vardoger.cli:main"
 
 [project.urls]
 Repository = "https://github.com/dstrupl/vardoger"
+Issues = "https://github.com/dstrupl/vardoger/issues"
+Documentation = "https://github.com/dstrupl/vardoger#readme"
 
 [build-system]
 requires = ["hatchling"]
