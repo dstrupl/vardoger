@@ -79,6 +79,18 @@ tests/                 # all tests, mirroring src/ structure
 
 See [AGENTS.md](AGENTS.md) for full coding standards and quality checks.
 
+## Releasing to PyPI
+
+CI runs automatically on every push and PR (lint, type check, tests across Python 3.11–3.13). To publish a new version:
+
+1. Bump `version` in `pyproject.toml`
+2. Commit and push to `main`
+3. Go to [Releases](https://github.com/dstrupl/vardoger/releases) > **Create a new release**
+4. Create a new tag matching the version (e.g. `v0.1.0`), add a title and description
+5. Click **Publish release**
+
+The `publish.yml` workflow builds the package and uploads it to PyPI via [trusted publishers](https://docs.pypi.org/trusted-publishers/) (no API tokens needed). Once complete, `pipx install vardoger` will pull the new version.
+
 ## Status
 
 Early development. See [PRD.md](PRD.md) for the full product requirements document.
