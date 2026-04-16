@@ -44,11 +44,12 @@ src/vardoger/          # shared core — history reading, analysis, prompt gener
 plugins/cursor/        # Cursor MCP server config, install script
 plugins/claude-code/   # Claude Code plugin manifest, skills
 plugins/codex/         # Codex plugin manifest, skills
+tests/                 # all tests, mirroring src/ structure
 ```
 
 - Platform-agnostic logic lives under `src/vardoger/`.
 - Platform-specific integration (manifests, skills, install scripts) lives under `plugins/<platform>/`.
-- Tests are co-located next to the code they test (`test_*.py`).
+- Tests live in `tests/`, mirroring the source tree.
 
 See [AGENTS.md](AGENTS.md) for full coding standards and quality checks.
 

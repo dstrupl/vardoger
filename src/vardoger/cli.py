@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Command-line interface for vardoger.
 
 Usage:

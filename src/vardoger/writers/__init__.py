@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Prompt writers that deliver generated content to each platform's config."""
 
 from vardoger.writers.claude_code import write_claude_code_rules

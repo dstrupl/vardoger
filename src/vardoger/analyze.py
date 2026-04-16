@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Placeholder analysis step.
 
 In Phase 2 this will use AI to extract behavioral patterns from conversation

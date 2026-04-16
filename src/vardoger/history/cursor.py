@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Read Cursor agent transcript JSONL files.
 
 Cursor stores agent transcripts at:
@@ -15,27 +17,11 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from vardoger.history.models import Conversation, Message
+from vardoger.history.models import Conversation, Message, extract_text
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CURSOR_DIR = Path.home() / ".cursor" / "projects"
-
-
-def _extract_text(message: dict) -> str:
-    """Pull plain text from a Cursor message payload."""
-    content = message.get("content", [])
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts = []
-        for block in content:
-            if isinstance(block, dict) and block.get("type") == "text":
-                parts.append(block.get("text", ""))
-            elif isinstance(block, str):
-                parts.append(block)
-        return "\n".join(parts)
-    return ""
 
 
 def discover_cursor_files(
@@ -81,7 +67,7 @@ def _parse_transcript(path: Path, project_slug: str, rel_path: str) -> Conversat
 
                 msg_payload = entry.get("message", {})
                 if isinstance(msg_payload, dict):
-                    text = _extract_text(msg_payload)
+                    text = extract_text(msg_payload.get("content", []))
                 else:
                     text = str(msg_payload)
 

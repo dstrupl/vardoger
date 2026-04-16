@@ -35,7 +35,11 @@ logs/
 
 # Coverage
 coverage/
+.coverage
 .nyc_output/
+
+# Pytest
+.pytest_cache/
 
 # Python / uv
 .venv/

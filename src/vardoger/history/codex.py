@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Read OpenAI Codex session rollout JSONL files.
 
 Codex stores session rollouts at:
@@ -15,27 +17,13 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from vardoger.history.models import Conversation, Message
+from vardoger.history.models import Conversation, Message, extract_text
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CODEX_DIR = Path.home() / ".codex" / "sessions"
 
-
-def _extract_text(content: list | str) -> str:
-    """Pull plain text from Codex message content."""
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts = []
-        for block in content:
-            if isinstance(block, dict):
-                if block.get("type") in ("input_text", "output_text", "text"):
-                    parts.append(block.get("text", ""))
-            elif isinstance(block, str):
-                parts.append(block)
-        return "\n".join(parts)
-    return ""
+CODEX_TEXT_TYPES = ("input_text", "output_text", "text")
 
 
 def discover_codex_files(
@@ -80,7 +68,7 @@ def _parse_rollout(path: Path, rel_path: str) -> Conversation | None:
                 if role not in ("user", "assistant"):
                     continue
 
-                text = _extract_text(entry.get("content", []))
+                text = extract_text(entry.get("content", []), text_types=CODEX_TEXT_TYPES)
                 if text.strip():
                     messages.append(Message(role=role, content=text))
     except OSError as exc:

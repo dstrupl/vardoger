@@ -15,6 +15,7 @@ src/vardoger/          # shared core — history reading, analysis, prompt gener
 plugins/cursor/        # Cursor MCP server config, install script
 plugins/claude-code/   # Claude Code plugin manifest, skills
 plugins/codex/         # Codex plugin manifest, skills
+tests/                 # all tests, mirroring src/ structure
 ```
 
 | Kind | Path pattern |
@@ -24,7 +25,7 @@ plugins/codex/         # Codex plugin manifest, skills
 | AI prompts | `src/vardoger/prompts/*.md` (or `plugins/<platform>/prompts/` if platform-specific) |
 | Plugin manifests | `plugins/<platform>/.<tool>-plugin/plugin.json` |
 | Skills | `plugins/<platform>/skills/<name>/SKILL.md` |
-| Tests | co-located `test_*.py` next to the code they test |
+| Tests | `tests/` directory mirroring `src/vardoger/` (e.g., `tests/history/test_cursor.py`) |
 
 ---
 
@@ -123,7 +124,7 @@ uv run ruff check --fix .            # auto-fix lints
 - **Formatting**: enforced by ruff (replaces black + isort + autoflake). See `[tool.ruff]` in `pyproject.toml`.
 
 ### Testing
-- Framework: pytest with co-located test files (`test_*.py` next to the code they test).
+- Framework: pytest. Tests live in `tests/`, mirroring the `src/vardoger/` structure.
 - Target coverage: ≥90% for core modules.
 - All tests must pass before commit/push.
 

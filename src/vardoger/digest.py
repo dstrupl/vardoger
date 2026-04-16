@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Conversation batching and formatting for AI analysis.
 
 Splits conversations into batches and formats them as markdown with full

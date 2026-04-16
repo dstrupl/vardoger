@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Tests for conversation batching and formatting."""
 
 from vardoger.digest import batch_conversations, format_batch

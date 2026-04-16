@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Read Claude Code session JSONL files.
 
 Claude Code stores session transcripts at:
@@ -19,30 +21,13 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from vardoger.history.models import Conversation, Message
+from vardoger.history.models import Conversation, Message, extract_text
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CLAUDE_DIR = Path.home() / ".claude" / "projects"
 
 RELEVANT_TYPES = {"user", "assistant"}
-
-
-def _extract_text(message: dict) -> str:
-    """Pull plain text from a Claude Code message payload."""
-    content = message.get("content", [])
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts = []
-        for block in content:
-            if isinstance(block, dict):
-                if block.get("type") == "text":
-                    parts.append(block.get("text", ""))
-            elif isinstance(block, str):
-                parts.append(block)
-        return "\n".join(parts)
-    return ""
 
 
 def _discover_sessions_from_index(project_dir: Path) -> list[Path]:
@@ -130,7 +115,7 @@ def _parse_session(path: Path, project_name: str, rel_path: str) -> Conversation
                 if role not in ("user", "assistant"):
                     continue
 
-                text = _extract_text(msg_payload)
+                text = extract_text(msg_payload.get("content", []))
                 if text.strip():
                     messages.append(Message(role=role, content=text))
     except OSError as exc:

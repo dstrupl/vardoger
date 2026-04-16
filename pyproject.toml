@@ -31,13 +31,13 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["src", "plugins"]
+testpaths = ["tests"]
 addopts = "--import-mode=importlib"
 
 [tool.ruff]
 target-version = "py311"
 line-length = 99
-src = ["src", "plugins"]
+src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
@@ -63,17 +63,8 @@ check_untyped_defs = true
 strict_equality = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+exclude = ["tests/"]
 
 [[tool.mypy.overrides]]
 module = ["mcp.*"]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = [
-    "vardoger.test_checkpoint",
-    "vardoger.test_digest",
-    "vardoger.history.test_cursor",
-    "vardoger.history.test_codex",
-    "vardoger.history.test_claude_code",
-]
-disallow_untyped_defs = false

@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Write vardoger output to Codex's AGENTS.md.
 
 Codex reads global instructions from:

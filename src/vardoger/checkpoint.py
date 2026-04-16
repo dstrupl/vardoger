@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Checkpoint store for incremental conversation processing.
 
 Tracks which conversation files have already been analyzed by storing

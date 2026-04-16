@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """History reader adapters for each supported platform."""
 
 from vardoger.history.claude_code import discover_claude_code_files, read_claude_code_history

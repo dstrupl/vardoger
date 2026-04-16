@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Tests for the Claude Code prompt writer."""
 
 import tempfile

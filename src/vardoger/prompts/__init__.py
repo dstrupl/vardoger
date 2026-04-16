@@ -1,3 +1,5 @@
+# Copyright 2026 David Strupl
+# SPDX-License-Identifier: Apache-2.0
 """Prompt templates for AI analysis, loaded from .md files at runtime."""
 
 from __future__ import annotations
