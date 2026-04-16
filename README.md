@@ -6,8 +6,25 @@ All processing happens locally. No data ever leaves your machine.
 
 ## Prerequisites
 
-- **Python 3.11+** — [python.org/downloads](https://www.python.org/downloads/) or via your system package manager
-- **pipx** (recommended for installing vardoger as a CLI tool) — [pipx.pypa.io/stable/installation](https://pipx.pypa.io/stable/installation/)
+### Python 3.11+
+
+| Platform | Command |
+|---|---|
+| **macOS** | `brew install python@3.13` ([install Homebrew](https://brew.sh/)) or [python.org/downloads/macos](https://www.python.org/downloads/macos/) |
+| **Debian / Ubuntu** | `sudo apt install python3` |
+| **Fedora** | `sudo dnf install python3` |
+| **Windows** | `winget install Python.Python.3.13` or [python.org/downloads/windows](https://www.python.org/downloads/windows/) |
+
+### pipx
+
+Recommended for installing vardoger as an isolated CLI tool. Full instructions at [pipx.pypa.io/stable/installation](https://pipx.pypa.io/stable/installation/).
+
+| Platform | Command |
+|---|---|
+| **macOS** | `brew install pipx && pipx ensurepath` |
+| **Debian / Ubuntu** | `sudo apt install pipx && pipx ensurepath` |
+| **Fedora** | `sudo dnf install pipx && pipx ensurepath` |
+| **Windows** | `scoop install pipx` or `pip install --user pipx && pipx ensurepath` |
 
 ## Quick Start
 

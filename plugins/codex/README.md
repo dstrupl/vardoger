@@ -4,8 +4,7 @@ A Codex plugin that analyzes your conversation history and generates personalize
 
 ## Prerequisites
 
-- **Python 3.11+** — [python.org/downloads](https://www.python.org/downloads/)
-- **pipx** — [pipx.pypa.io/stable/installation](https://pipx.pypa.io/stable/installation/)
+- **Python 3.11+** and **pipx** — see [installation instructions](../../README.md#prerequisites) in the main README
 - **OpenAI Codex CLI** — [github.com/openai/codex](https://github.com/openai/codex)
 
 ## Install

@@ -4,8 +4,7 @@ A Claude Code plugin that analyzes your conversation history and generates perso
 
 ## Prerequisites
 
-- **Python 3.11+** — [python.org/downloads](https://www.python.org/downloads/)
-- **pipx** — [pipx.pypa.io/stable/installation](https://pipx.pypa.io/stable/installation/)
+- **Python 3.11+** and **pipx** — see [installation instructions](../../README.md#prerequisites) in the main README
 - **Claude Code CLI** (`claude`) — [docs.anthropic.com/en/docs/claude-code](https://docs.anthropic.com/en/docs/claude-code/overview)
 
 ## Install
