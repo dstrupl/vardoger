@@ -75,6 +75,21 @@ class SessionIndex(BaseModel, extra="ignore"):
     entries: list[SessionIndexEntry] = []
 
 
+class OpenClawMessageMetadata(BaseModel, extra="ignore"):
+    userId: str = ""
+    platform: str = ""
+    model: str = ""
+
+
+class OpenClawEntry(BaseModel, extra="ignore"):
+    id: str = ""
+    parentId: str | None = None
+    role: str = ""
+    content: str = ""
+    timestamp: float = 0.0
+    metadata: OpenClawMessageMetadata = OpenClawMessageMetadata()
+
+
 # ---------------------------------------------------------------------------
 # Group 3: Setup / config models
 # ---------------------------------------------------------------------------

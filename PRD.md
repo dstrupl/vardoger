@@ -32,15 +32,16 @@ vardoger fills that gap.
 
 ## 3. Target Platforms
 
-vardoger targets the three leading AI coding environments:
+vardoger targets the leading AI coding environments:
 
 | Platform | Vendor | Distribution Model |
 |---|---|---|
 | **Cursor** | Anysphere | VS Code extension marketplace + MCP servers |
 | **Claude Code** | Anthropic | Claude Code plugin marketplace (GitHub-based) |
 | **OpenAI Codex** | OpenAI | Codex plugin directory + custom marketplaces |
+| **OpenClaw** | OpenClaw (open-source) | ClawHub skill registry + local skill directories |
 
-Each platform has its own conversation storage format, system prompt contribution mechanism, and plugin distribution channel. vardoger must integrate natively with all three.
+Each platform has its own conversation storage format, system prompt contribution mechanism, and plugin distribution channel. vardoger must integrate natively with all of them.
 
 ---
 
@@ -48,7 +49,7 @@ Each platform has its own conversation storage format, system prompt contributio
 
 ### 4.1 Read Conversation History [x]
 
-vardoger must be able to discover and parse all locally stored conversation history for the active user across supported platforms. This is read-only access to files already on disk — no network calls, no API integrations, no platform authentication required.
+vardoger must be able to discover and parse all locally stored conversation history for the active user across supported platforms (Cursor, Claude Code, OpenAI Codex, OpenClaw). This is read-only access to files already on disk — no network calls, no API integrations, no platform authentication required.
 
 ### 4.2 Analyze Patterns Locally [x]
 
@@ -221,6 +222,47 @@ Self-serve publishing to the official directory is listed as "coming soon."
 
 ---
 
+### 5.4 OpenClaw [ ]
+
+#### Conversation History Storage
+
+| Source | Location | Format |
+|---|---|---|
+| Session transcripts | `~/.openclaw/agents/<agentId>/sessions/<channel>_<id>.jsonl` | JSONL — one message per line; fields include `id`, `parentId`, `role` (`user` / `assistant` / `system` / `tool`), `content`, `timestamp` (Unix seconds), `metadata` (userId, platform, model, token counts) |
+
+**Primary source:** Per-agent session JSONL files under `~/.openclaw/agents/`. The format is flat (no nested content blocks), making it the simplest of all supported platforms.
+
+**Discovery:** Walk `~/.openclaw/agents/` to find agent IDs, then enumerate `sessions/*.jsonl` within each.
+
+#### System Prompt Contribution
+
+OpenClaw uses a **skill system** with SKILL.md files that get injected into the agent's system prompt. Skills are discovered from:
+
+| Mechanism | Scope | Path |
+|---|---|---|
+| Workspace skills | Per-project | `./skills/<name>/SKILL.md` |
+| User skills | Global (all agents) | `~/.openclaw/skills/<name>/SKILL.md` |
+| Bundled skills | Built-in | Shipped with OpenClaw |
+
+**vardoger target:** Write a `~/.openclaw/skills/vardoger-personalization/SKILL.md` containing the generated personalization as a skill that loads on every session. For per-project scope, write to `./skills/vardoger-personalization/SKILL.md`.
+
+#### Distribution
+
+OpenClaw has a skill registry called **ClawHub**:
+
+- **Install:** `clawhub install <skill-slug>`
+- **Update:** `clawhub update --all`
+- **Local skills:** Placed directly in `~/.openclaw/skills/`
+- **MCP support:** Configured in `~/.config/openclaw/openclaw.json5` (stdio and SSE modes)
+
+**Recommended approach:** Ship vardoger as an OpenClaw skill with:
+- An **analysis skill** (`~/.openclaw/skills/vardoger/SKILL.md`) that users invoke to trigger analysis
+- Generated output written as a separate **personalization skill** (`~/.openclaw/skills/vardoger-personalization/SKILL.md`)
+
+Install via `pipx install vardoger && vardoger setup openclaw`. ClawHub publishing deferred to Phase 4.
+
+---
+
 ## 6. Architecture Constraints
 
 ### 6.1 Local-Only Processing [x]
@@ -264,6 +306,7 @@ The core analysis logic must be shared across all three platform integrations. P
 
 **Deliverables:**
 - [x] History reader adapters for Cursor, Claude Code, and Codex (JSONL parsers)
+- [ ] History reader adapter for OpenClaw (JSONL parser)
 - [ ] ~~History reader adapters for SQLite sources (Cursor chat DB, Codex state DB)~~ — **Deferred.** Cursor SQLite stores contain non-agent UI state in undocumented formats; Codex SQLite indexes the same JSONL files. JSONL provides cleaner data.
 - [x] A unified internal representation of conversation data
 - [x] Platform-native prompt writers that produce valid configuration files
@@ -271,10 +314,11 @@ The core analysis logic must be shared across all three platform integrations. P
 - [x] Distribution via `pipx install vardoger` verified; `vardoger_personalize` MCP entry-point tool guides Cursor agent through the analysis flow
 - [x] A placeholder analysis step that produces a minimal, hard-coded prompt addition (proving the pipeline works end-to-end)
 - [x] Local plugin install for all three platforms (Cursor MCP, Claude Code plugin, Codex plugin)
+- [ ] Local skill install for OpenClaw
 
 **Success criteria:** A user can install vardoger via `pipx install vardoger`, run `vardoger setup <platform>`, and see a vardoger-authored rule file appear in the correct location — no marketplace required.
 
-> **Status:** Complete. End-to-end pipeline works locally on all three platforms. Marketplace publishing deferred to Phase 4 (after limited beta).
+> **Status:** Complete for Cursor, Claude Code, and Codex. OpenClaw integration pending. Marketplace publishing deferred to Phase 4 (after limited beta).
 
 ### Phase 2 — Intelligence: AI-Powered Analysis [x]
 
@@ -311,6 +355,7 @@ The core analysis logic must be shared across all three platform integrations. P
 - [ ] Plugin packaging and marketplace submission for Cursor (VS Code Marketplace VSIX)
 - [ ] Plugin packaging and marketplace submission for Claude Code (`anthropics/claude-plugins-official`)
 - [ ] Plugin packaging and marketplace submission for Codex (official plugin directory)
+- [ ] Skill publishing to ClawHub for OpenClaw
 - [ ] PyPI publishing for `pip install vardoger`
 
 **Prerequisites:** Limited beta with direct installs (`pipx install vardoger && vardoger setup <platform>`) validates the UX and analysis quality across real users.
@@ -391,7 +436,7 @@ How much conversation history should vardoger analyze by default?
 ```
 vardoger state:
   Checkpoints: ~/.vardoger/state.json (per-platform processing watermarks)
-  Plugin dirs:  ~/.vardoger/plugins/{claude-code,codex}/ (created by vardoger setup)
+  Plugin dirs:  ~/.vardoger/plugins/{claude-code,codex,openclaw}/ (created by vardoger setup)
 
 Cursor:
   History:  ~/.cursor/projects/<slug>/agent-transcripts/<uuid>/<uuid>.jsonl
@@ -410,4 +455,10 @@ OpenAI Codex:
   History:  ~/.codex/history.jsonl
   Output:   ~/.codex/AGENTS.md (vardoger section) or project AGENTS.md
   Plugin:   /plugins in TUI (official directory or custom marketplace)
+
+OpenClaw:
+  History:  ~/.openclaw/agents/<agentId>/sessions/<channel>_<id>.jsonl
+  Output:   ~/.openclaw/skills/vardoger-personalization/SKILL.md (global)
+            ./skills/vardoger-personalization/SKILL.md (project)
+  Skill:    clawhub install (ClawHub registry) or ~/.openclaw/skills/ (local)
 ```

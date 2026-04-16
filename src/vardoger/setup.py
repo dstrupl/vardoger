@@ -6,6 +6,7 @@ Handles post-install registration for each supported platform:
   - Cursor: registers MCP server in ~/.cursor/mcp.json
   - Claude Code: creates plugin directory and prints activation command
   - Codex: creates plugin directory and registers in marketplace.json
+  - OpenClaw: installs analysis skill to ~/.openclaw/skills/vardoger/
 """
 
 from __future__ import annotations
@@ -55,18 +56,25 @@ def _write_skill(plugin_dir: Path, platform: str) -> None:
     skill_dir = plugin_dir / "skills" / "analyze"
     skill_dir.mkdir(parents=True, exist_ok=True)
 
+    platform_labels = {
+        "claude-code": ("Claude Code", "rules"),
+        "codex": ("Codex", "instructions"),
+        "openclaw": ("OpenClaw", "instructions"),
+    }
+    label, artifact = platform_labels.get(platform, (platform, "instructions"))
+
     if platform == "claude-code":
-        title = "Analyze conversation history and generate personalized rules"
+        title = f"Analyze conversation history and generate personalized {artifact}"
         desc = (
-            "Use this skill to read your Claude Code conversation history, "
+            f"Use this skill to read your {label} conversation history, "
             "extract behavioral patterns, and generate a personalized rule "
             "file that helps the assistant better understand your preferences "
             "and working style."
         )
     else:
-        title = "Analyze conversation history and generate personalized instructions"
+        title = f"Analyze conversation history and generate personalized {artifact}"
         desc = (
-            "Use this skill to read your Codex conversation history, "
+            f"Use this skill to read your {label} conversation history, "
             "extract behavioral patterns, and generate personalized "
             "instructions that help the assistant better understand your "
             "preferences and working style."
@@ -238,6 +246,19 @@ def setup_codex() -> None:
     print(f"Created Codex plugin at {plugin_dir}")
     print(f"Registered in {marketplace_path}")
     print("Open Codex and run /plugins to activate.")
+    print()
+    _print_getting_started()
+
+
+def setup_openclaw() -> None:
+    """Install the vardoger analysis skill into OpenClaw's user skill directory."""
+    skill_dir = Path.home() / ".openclaw" / "skills" / "vardoger"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+
+    _write_skill(skill_dir, "openclaw")
+
+    print(f"Installed vardoger skill to {skill_dir}")
+    print("OpenClaw will discover it automatically on the next session.")
     print()
     _print_getting_started()
 

@@ -1,6 +1,6 @@
 # vardoger
 
-A cross-platform plugin for AI coding assistants (Cursor, Claude Code, OpenAI Codex) that reads your conversation history, extracts behavioral patterns, and generates personalized system prompt additions — making the assistant progressively better suited to how you work.
+A cross-platform plugin for AI coding assistants (Cursor, Claude Code, OpenAI Codex, OpenClaw) that reads your conversation history, extracts behavioral patterns, and generates personalized system prompt additions — making the assistant progressively better suited to how you work.
 
 All processing happens locally. No data ever leaves your machine.
 
@@ -30,7 +30,7 @@ Recommended for installing vardoger as an isolated CLI tool. Full instructions a
 
 ```bash
 pipx install vardoger
-vardoger setup cursor        # or claude-code, or codex
+vardoger setup cursor        # or claude-code, codex, openclaw
 ```
 
 Then tell your assistant: **"Personalize my assistant."**
@@ -49,6 +49,7 @@ Then tell your assistant: **"Personalize my assistant."**
 | **Cursor** | Agent transcript JSONL | `.cursor/rules/vardoger.md` | MCP server |
 | **Claude Code** | Session JSONL | `.claude/rules/vardoger.md` | Plugin with skill |
 | **OpenAI Codex** | Session rollout JSONL | `~/.codex/AGENTS.md` | Plugin with skill |
+| **OpenClaw** | Session JSONL | `~/.openclaw/skills/vardoger-personalization/SKILL.md` | Skill |
 
 ## Development
 
@@ -68,6 +69,7 @@ src/vardoger/          # shared core — history reading, analysis, prompt gener
 plugins/cursor/        # Cursor MCP server config, install script
 plugins/claude-code/   # Claude Code plugin manifest, skills
 plugins/codex/         # Codex plugin manifest, skills
+plugins/openclaw/      # OpenClaw skill
 tests/                 # all tests, mirroring src/ structure
 ```
 

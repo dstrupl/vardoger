@@ -15,6 +15,7 @@ src/vardoger/          # shared core — history reading, analysis, prompt gener
 plugins/cursor/        # Cursor MCP server config, install script
 plugins/claude-code/   # Claude Code plugin manifest, skills
 plugins/codex/         # Codex plugin manifest, skills
+plugins/openclaw/      # OpenClaw skill
 tests/                 # all tests, mirroring src/ structure
 ```
 

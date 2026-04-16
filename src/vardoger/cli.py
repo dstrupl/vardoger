@@ -33,6 +33,7 @@ from vardoger.staleness import check_staleness
 from vardoger.writers.claude_code import write_claude_code_rules
 from vardoger.writers.codex import write_codex_rules
 from vardoger.writers.cursor import write_cursor_rules
+from vardoger.writers.openclaw import write_openclaw_rules
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +41,10 @@ PLATFORM_KEY = {
     "cursor": "cursor",
     "claude-code": "claude_code",
     "codex": "codex",
+    "openclaw": "openclaw",
 }
 
-PLATFORM_CHOICES = ["cursor", "claude-code", "codex"]
+PLATFORM_CHOICES = ["cursor", "claude-code", "codex", "openclaw"]
 
 
 def _make_file_filter(
@@ -104,6 +106,10 @@ def _read_conversations(
         conversations = read_claude_code_history(**reader_kwargs)
     elif platform == "codex":
         conversations = read_codex_history(**reader_kwargs)
+    elif platform == "openclaw":
+        from vardoger.history.openclaw import read_openclaw_history
+
+        conversations = read_openclaw_history(**reader_kwargs)
     else:
         print(f"Unknown platform: {platform}", file=sys.stderr)
         sys.exit(1)
@@ -119,6 +125,8 @@ def _write_platform(platform: str, content: str, scope: str, project_path: Path 
         return write_claude_code_rules(content, scope=scope, project_path=project_path)
     elif platform == "codex":
         return write_codex_rules(content, scope=scope, project_path=project_path)
+    elif platform == "openclaw":
+        return write_openclaw_rules(content, scope=scope, project_path=project_path)
     else:
         print(f"Unknown platform: {platform}", file=sys.stderr)
         sys.exit(1)
@@ -129,11 +137,13 @@ def _get_reader_base(platform: str) -> Path:
     from vardoger.history.claude_code import DEFAULT_CLAUDE_DIR
     from vardoger.history.codex import DEFAULT_CODEX_DIR
     from vardoger.history.cursor import DEFAULT_CURSOR_DIR
+    from vardoger.history.openclaw import DEFAULT_OPENCLAW_DIR
 
     return {
         "cursor": DEFAULT_CURSOR_DIR,
         "claude-code": DEFAULT_CLAUDE_DIR,
         "codex": DEFAULT_CODEX_DIR,
+        "openclaw": DEFAULT_OPENCLAW_DIR,
     }[platform]
 
 
@@ -157,7 +167,7 @@ def _save_checkpoint(
 
 
 def _run_setup(args: argparse.Namespace) -> None:
-    from vardoger.setup import setup_claude_code, setup_codex, setup_cursor
+    from vardoger.setup import setup_claude_code, setup_codex, setup_cursor, setup_openclaw
 
     platform = args.platform
     if platform == "cursor":
@@ -166,6 +176,8 @@ def _run_setup(args: argparse.Namespace) -> None:
         setup_claude_code()
     elif platform == "codex":
         setup_codex()
+    elif platform == "openclaw":
+        setup_openclaw()
 
 
 # -- status --

@@ -21,6 +21,7 @@ PLATFORM_KEY = {
     "cursor": "cursor",
     "claude-code": "claude_code",
     "codex": "codex",
+    "openclaw": "openclaw",
 }
 
 DEFAULT_NEW_CONVERSATION_THRESHOLD = 5
@@ -32,6 +33,7 @@ def _discover_files(platform: str) -> list[tuple]:
     from vardoger.history.claude_code import discover_claude_code_files
     from vardoger.history.codex import discover_codex_files
     from vardoger.history.cursor import discover_cursor_files
+    from vardoger.history.openclaw import discover_openclaw_files
 
     if platform == "cursor":
         return discover_cursor_files()
@@ -39,6 +41,8 @@ def _discover_files(platform: str) -> list[tuple]:
         return discover_claude_code_files()
     elif platform == "codex":
         return discover_codex_files()
+    elif platform == "openclaw":
+        return discover_openclaw_files()
     return []
 
 
