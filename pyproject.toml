@@ -1,6 +1,6 @@
 [project]
 name = "vardoger"
-version = "0.1.0"
+version = "0.1.0b1"
 description = "Personalize AI coding assistants by analyzing conversation history"
 readme = "README.md"
 license = "Apache-2.0"
