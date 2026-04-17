@@ -16,7 +16,32 @@ vardoger prepares your conversation history in batches. You (the assistant) summ
 ### 1. Verify vardoger is installed
 
 ```bash
-command -v vardoger >/dev/null 2>&1 || { echo "vardoger not found. Install with: pipx install vardoger"; exit 1; }
+if ! command -v vardoger >/dev/null 2>&1; then
+  cat <<'INSTALL_EOF'
+vardoger CLI is not installed.
+
+This skill calls the vardoger CLI to read your conversation history and
+write a personalization file, so the CLI must be on PATH.
+
+Install options:
+
+  # Recommended while vardoger is in beta (pre-1.0):
+  pipx install --pip-args="--pre" vardoger
+
+  # Once vardoger reaches 1.0, the --pip-args flag is not needed:
+  pipx install vardoger
+
+  # Or run without installing:
+  uvx vardoger --help
+
+If you do not have pipx, see https://pipx.pypa.io/stable/installation/.
+
+Project page: https://github.com/dstrupl/vardoger
+
+After installing, re-run the personalization request.
+INSTALL_EOF
+  exit 1
+fi
 ```
 
 ### 2. Check if a refresh is needed
