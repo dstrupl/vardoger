@@ -186,8 +186,9 @@ def test_v1_migration_preserves_checkpoints():
         (state_dir / "state.json").write_text(json.dumps(v1_data))
 
         store = CheckpointStore(state_dir=state_dir)
-        assert store._state.version == 2
+        assert store._state.version == 3
         assert store._state.generations == {}
+        assert store._state.feedback == {}
         ckpt = store._state.checkpoints["cursor"]["proj/test.jsonl"]
         assert ckpt.sha256 == "abc123"
 
@@ -201,8 +202,110 @@ def test_v1_migration_adds_empty_generations():
         (state_dir / "state.json").write_text(json.dumps(v1_data))
 
         store = CheckpointStore(state_dir=state_dir)
-        assert store._state.version == 2
+        assert store._state.version == 3
         assert store._state.generations == {}
+
+
+def test_v2_to_v3_migration_wraps_single_record_in_list():
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        state_dir.mkdir()
+
+        v2_data = {
+            "version": 2,
+            "checkpoints": {},
+            "generations": {
+                "cursor": {
+                    "generated_at": "2026-04-01T00:00:00+00:00",
+                    "conversations_analyzed": 7,
+                    "output_path": "/tmp/out.md",
+                }
+            },
+        }
+        (state_dir / "state.json").write_text(json.dumps(v2_data))
+
+        store = CheckpointStore(state_dir=state_dir)
+        assert store._state.version == 3
+        history = store.get_generation_history("cursor")
+        assert len(history) == 1
+        assert history[0].conversations_analyzed == 7
+        # New fields default to empty
+        assert history[0].content == ""
+        assert history[0].output_hash == ""
+        assert store._state.feedback == {}
+
+
+def test_v3_generation_history_is_newest_last():
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        store = CheckpointStore(state_dir=state_dir)
+
+        store.record_generation(
+            "cursor",
+            conversations_analyzed=1,
+            output_path="/a",
+            content="first",
+        )
+        store.record_generation(
+            "cursor",
+            conversations_analyzed=2,
+            output_path="/a",
+            content="second",
+        )
+        store.save()
+
+        store2 = CheckpointStore(state_dir=state_dir)
+        history = store2.get_generation_history("cursor")
+        assert len(history) == 2
+        assert history[0].content == "first"
+        assert history[1].content == "second"
+        assert store2.get_generation("cursor") is not None
+        latest = store2.get_generation("cursor")
+        assert latest is not None
+        assert latest.content == "second"
+
+
+def test_pop_generation_returns_and_removes_latest():
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        store = CheckpointStore(state_dir=state_dir)
+
+        store.record_generation("cursor", conversations_analyzed=1, output_path="/a", content="v1")
+        store.record_generation("cursor", conversations_analyzed=2, output_path="/a", content="v2")
+
+        popped = store.pop_generation("cursor")
+        assert popped is not None
+        assert popped.content == "v2"
+
+        remaining = store.get_generation("cursor")
+        assert remaining is not None
+        assert remaining.content == "v1"
+
+
+def test_pop_generation_on_empty_returns_none():
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        store = CheckpointStore(state_dir=state_dir)
+        assert store.pop_generation("cursor") is None
+
+
+def test_record_feedback_event_persists():
+    from vardoger.models import FeedbackEvent
+
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        store = CheckpointStore(state_dir=state_dir)
+
+        store.record_feedback_event(
+            "cursor",
+            FeedbackEvent(recorded_at="2026-04-01T00:00:00+00:00", kind="accept"),
+        )
+        store.save()
+
+        store2 = CheckpointStore(state_dir=state_dir)
+        record = store2.get_feedback("cursor")
+        assert len(record.events) == 1
+        assert record.events[0].kind == "accept"
 
 
 def test_generation_metadata_per_platform():

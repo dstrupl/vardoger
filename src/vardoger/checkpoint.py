@@ -7,10 +7,19 @@ a SHA-256 content hash per file. On subsequent runs, files whose hash
 hasn't changed are skipped.
 
 Also records per-platform generation metadata (timestamp, conversation
-count, output path) so that staleness detection can determine whether
-the personalization needs refreshing.
+count, output path, output content + hash, confidence metadata) and
+user feedback (accept / reject / edit events) so staleness detection,
+feedback diffing, and the reject-revert flow can all work off the same
+state file.
 
-State is persisted to ~/.vardoger/state.json.
+Schema versions:
+  v1 — checkpoints only
+  v2 — adds ``generations`` as a single ``GenerationRecord`` per platform
+  v3 — promotes ``generations`` to a list (history), adds ``feedback``,
+       and extends ``GenerationRecord`` with ``output_hash`` / ``content``
+       / ``confidence`` / ``min_confidence_written``.
+
+State is persisted to ``~/.vardoger/state.json``.
 """
 
 from __future__ import annotations
@@ -23,12 +32,20 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from vardoger.models import CheckpointState, FileCheckpoint, GenerationRecord
+from vardoger.models import (
+    CheckpointState,
+    ConfidenceLevel,
+    FeedbackEvent,
+    FeedbackRecord,
+    FileCheckpoint,
+    GenerationRecord,
+    RuleConfidence,
+)
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_STATE_DIR = Path.home() / ".vardoger"
-STATE_VERSION = 2
+STATE_VERSION = 3
 HASH_ALGORITHM = "sha256"
 READ_CHUNK_SIZE = 65536
 
@@ -42,6 +59,11 @@ def file_hash(path: Path) -> str:
     return h.hexdigest()
 
 
+def content_hash(text: str) -> str:
+    """Compute the SHA-256 hex digest of a string."""
+    return hashlib.new(HASH_ALGORITHM, text.encode("utf-8")).hexdigest()
+
+
 class CheckpointStore:
     """Manages per-platform checkpoint state for incremental processing."""
 
@@ -53,10 +75,21 @@ class CheckpointStore:
     @staticmethod
     def _migrate(data: dict) -> dict:
         """Migrate older state versions to the current schema."""
-        version = data.get("version")
+        version = data.get("version", 1)
         if version == 1:
-            data["version"] = STATE_VERSION
-            data.setdefault("generations", {})
+            data["generations"] = {}
+            version = 2
+        if version == 2:
+            legacy = data.get("generations", {})
+            migrated: dict[str, list[dict]] = {}
+            if isinstance(legacy, dict):
+                for platform, record in legacy.items():
+                    if isinstance(record, dict):
+                        migrated[platform] = [record]
+            data["generations"] = migrated
+            data.setdefault("feedback", {})
+            version = 3
+        data["version"] = version
         return data
 
     def _load(self) -> CheckpointState:
@@ -104,6 +137,8 @@ class CheckpointStore:
             f.write("\n")
         tmp_path.replace(self._state_path)
 
+    # -- per-file checkpoints --
+
     def is_changed(self, platform: str, rel_path: str, abs_path: Path) -> bool:
         """Return True if the file is new or its content has changed."""
         current_hash = file_hash(abs_path)
@@ -120,22 +155,45 @@ class CheckpointStore:
             processed_at=datetime.now(UTC).isoformat(),
         )
 
+    # -- generation history --
+
     def record_generation(
         self,
         platform: str,
         conversations_analyzed: int,
         output_path: str,
+        content: str = "",
+        output_hash: str | None = None,
+        confidence: list[RuleConfidence] | None = None,
+        min_confidence_written: ConfidenceLevel = "low",
     ) -> None:
-        """Record that a personalization was generated for a platform."""
-        self._state.generations[platform] = GenerationRecord(
+        """Append a new generation record for a platform (newest-last)."""
+        record = GenerationRecord(
             generated_at=datetime.now(UTC).isoformat(),
             conversations_analyzed=conversations_analyzed,
             output_path=output_path,
+            output_hash=output_hash if output_hash is not None else content_hash(content),
+            content=content,
+            confidence=confidence or [],
+            min_confidence_written=min_confidence_written,
         )
+        self._state.generations.setdefault(platform, []).append(record)
 
     def get_generation(self, platform: str) -> GenerationRecord | None:
-        """Return generation metadata for a platform, or None if never generated."""
-        return self._state.generations.get(platform)
+        """Return the most recent generation record for a platform, or None."""
+        history = self._state.generations.get(platform, [])
+        return history[-1] if history else None
+
+    def get_generation_history(self, platform: str) -> list[GenerationRecord]:
+        """Return the full (newest-last) generation history for a platform."""
+        return list(self._state.generations.get(platform, []))
+
+    def pop_generation(self, platform: str) -> GenerationRecord | None:
+        """Remove and return the most recent generation record, or None."""
+        history = self._state.generations.get(platform)
+        if not history:
+            return None
+        return history.pop()
 
     def get_checkpoint(self, platform: str, rel_path: str) -> FileCheckpoint | None:
         """Return checkpoint for a specific file, or None if not tracked."""
@@ -147,3 +205,13 @@ class CheckpointStore:
             self._state.checkpoints.pop(platform, None)
         else:
             self._state.checkpoints = {}
+
+    # -- feedback --
+
+    def get_feedback(self, platform: str) -> FeedbackRecord:
+        """Return the feedback record for a platform, creating one if needed."""
+        return self._state.feedback.setdefault(platform, FeedbackRecord())
+
+    def record_feedback_event(self, platform: str, event: FeedbackEvent) -> None:
+        """Append a feedback event for a platform."""
+        self.get_feedback(platform).events.append(event)

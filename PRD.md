@@ -335,15 +335,15 @@ The core analysis logic must be shared across all three platform integrations. P
 
 > **Status:** Implemented via two-stage skill-driven pipeline (prepare/summarize/synthesize/write). Prompts define five pattern categories. Host AI model performs all reasoning.
 
-### Phase 3 — Refinement Loop [ ]
+### Phase 3 — Refinement Loop [x]
 
 **Goal:** Make personalization continuous and self-improving.
 
 **Deliverables:**
 - [x] Staleness detection and automatic refresh suggestions
-- [ ] User feedback mechanism (accept/reject/edit generated rules)
-- [ ] Confidence scoring for extracted patterns
-- [ ] A/B style comparison (before/after personalization quality)
+- [x] User feedback mechanism (accept/reject/edit generated rules) — `vardoger feedback accept|reject` with auto-revert, edit detection via bullet-level diffs fed back into the synthesis prompt
+- [x] Confidence scoring for extracted patterns — synthesis now emits YAML frontmatter per-rule (`high`/`medium`/`low`); low-confidence rules are marked `(tentative)` in the written output
+- [x] A/B style comparison (before/after personalization quality) — `vardoger compare` buckets conversations around the latest generation and reports correction/satisfaction/emoji/restart heuristics
 
 **Success criteria:** The system improves its personalization over time without requiring manual intervention.
 

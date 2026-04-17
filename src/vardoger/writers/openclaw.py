@@ -29,6 +29,15 @@ workflow so the assistant can better match how you work.
 """
 
 
+def _skill_path(scope: str, project_path: Path | None) -> Path:
+    if scope == "project":
+        base = project_path or Path.cwd()
+        skill_dir = base / "skills" / SKILL_DIR_NAME
+    else:
+        skill_dir = Path.home() / ".openclaw" / "skills" / SKILL_DIR_NAME
+    return skill_dir / "SKILL.md"
+
+
 def write_openclaw_rules(
     content: str,
     scope: str = "global",
@@ -41,15 +50,36 @@ def write_openclaw_rules(
 
     Returns the path of the written file.
     """
-    if scope == "project":
-        base = project_path or Path.cwd()
-        skill_dir = base / "skills" / SKILL_DIR_NAME
-    else:
-        skill_dir = Path.home() / ".openclaw" / "skills" / SKILL_DIR_NAME
-
-    skill_dir.mkdir(parents=True, exist_ok=True)
-    output_path = skill_dir / "SKILL.md"
+    output_path = _skill_path(scope, project_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(SKILL_HEADER + content, encoding="utf-8")
 
     logger.info("Wrote OpenClaw skill to %s", output_path)
     return output_path
+
+
+def read_openclaw_rules(
+    scope: str = "global",
+    project_path: Path | None = None,
+) -> str | None:
+    """Return the current SKILL.md body (with the fixed header stripped)."""
+    output_path = _skill_path(scope, project_path)
+    if not output_path.is_file():
+        return None
+    text = output_path.read_text(encoding="utf-8")
+    if text.startswith(SKILL_HEADER):
+        return text[len(SKILL_HEADER) :]
+    return text
+
+
+def clear_openclaw_rules(
+    scope: str = "global",
+    project_path: Path | None = None,
+) -> bool:
+    """Delete the vardoger SKILL.md file if it exists. Returns True if removed."""
+    output_path = _skill_path(scope, project_path)
+    if output_path.is_file():
+        output_path.unlink()
+        logger.info("Removed OpenClaw skill at %s", output_path)
+        return True
+    return False

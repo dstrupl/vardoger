@@ -5,7 +5,11 @@
 import tempfile
 from pathlib import Path
 
-from vardoger.writers.openclaw import write_openclaw_rules
+from vardoger.writers.openclaw import (
+    clear_openclaw_rules,
+    read_openclaw_rules,
+    write_openclaw_rules,
+)
 
 
 def test_creates_skill_md_project_scope():
@@ -55,3 +59,27 @@ def test_idempotent_overwrite():
         text = (project / "skills" / "vardoger-personalization" / "SKILL.md").read_text()
         assert "second pass" in text
         assert "first pass" not in text
+
+
+def test_round_trip_strips_header():
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp) / "proj"
+        project.mkdir()
+        body = "Some body content.\n"
+        write_openclaw_rules(body, scope="project", project_path=project)
+        assert read_openclaw_rules(scope="project", project_path=project) == body
+
+
+def test_read_returns_none_when_absent():
+    with tempfile.TemporaryDirectory() as tmp:
+        assert read_openclaw_rules(scope="project", project_path=Path(tmp) / "no") is None
+
+
+def test_clear_removes_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp) / "proj"
+        project.mkdir()
+        write_openclaw_rules("x", scope="project", project_path=project)
+        assert clear_openclaw_rules(scope="project", project_path=project) is True
+        assert read_openclaw_rules(scope="project", project_path=project) is None
+        assert clear_openclaw_rules(scope="project", project_path=project) is False

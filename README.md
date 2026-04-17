@@ -35,6 +35,17 @@ vardoger setup cursor        # or claude-code, codex, openclaw
 
 Then tell your assistant: **"Personalize my assistant."**
 
+## CLI Commands
+
+| Command | Purpose |
+|---|---|
+| `vardoger setup <platform>` | Register vardoger with a platform (`cursor`, `claude-code`, `codex`, `openclaw`). |
+| `vardoger status [--platform X] [--json]` | Report whether each personalization is fresh or stale. |
+| `vardoger prepare --platform X [--batch N] [--synthesize]` | Produce the batched prompts used by the AI-driven skill pipeline. |
+| `vardoger write --platform X` | Read synthesized personalization from stdin and write it to the platform's rules file (supports YAML-frontmatter confidence metadata). |
+| `vardoger feedback accept\|reject --platform X [--reason TEXT]` | Record whether you kept or rejected the last generation. `reject` auto-reverts to the prior generation. |
+| `vardoger compare --platform X \| --all [--window DAYS] [--json]` | Compare heuristic conversation-quality metrics before vs. after the latest personalization. |
+
 ## How It Works
 
 1. **Read** — Parses conversation history already stored on disk by each platform

@@ -23,18 +23,45 @@ alwaysApply: true
 """
 
 
+def _rules_path(project_path: Path | None) -> Path:
+    base = project_path or Path.cwd()
+    return base / ".cursor" / "rules" / "vardoger.md"
+
+
 def write_cursor_rules(content: str, project_path: Path | None = None) -> Path:
     """Write the vardoger rule file into a project's .cursor/rules/ directory.
 
     If no project_path is given, uses the current working directory.
     Returns the path of the written file.
     """
-    base = project_path or Path.cwd()
-    rules_dir = base / ".cursor" / "rules"
-    rules_dir.mkdir(parents=True, exist_ok=True)
-
-    output_path = rules_dir / "vardoger.md"
+    output_path = _rules_path(project_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(FRONTMATTER + "\n" + content, encoding="utf-8")
 
     logger.info("Wrote Cursor rules to %s", output_path)
     return output_path
+
+
+def read_cursor_rules(project_path: Path | None = None) -> str | None:
+    """Return the current body of the vardoger rules file, or None if absent.
+
+    Strips the known vardoger frontmatter prefix so the returned text matches
+    what was originally passed to ``write_cursor_rules``.
+    """
+    output_path = _rules_path(project_path)
+    if not output_path.is_file():
+        return None
+    text = output_path.read_text(encoding="utf-8")
+    if text.startswith(FRONTMATTER):
+        return text[len(FRONTMATTER) :].lstrip("\n")
+    return text
+
+
+def clear_cursor_rules(project_path: Path | None = None) -> bool:
+    """Delete the vardoger rules file if it exists. Returns True if removed."""
+    output_path = _rules_path(project_path)
+    if output_path.is_file():
+        output_path.unlink()
+        logger.info("Removed Cursor rules at %s", output_path)
+        return True
+    return False

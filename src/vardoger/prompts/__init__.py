@@ -21,3 +21,29 @@ def summarize_prompt() -> str:
 
 def synthesize_prompt() -> str:
     return load_prompt("synthesize")
+
+
+def feedback_context_prompt(
+    kept_rules: list[str],
+    removed_rules: list[str],
+    added_rules: list[str],
+) -> str | None:
+    """Return a rendered feedback-context prompt, or None if no feedback is recorded.
+
+    Intended to be prepended to the synthesis prompt whenever the user has
+    previously edited the generated personalization.
+    """
+    if not (kept_rules or removed_rules or added_rules):
+        return None
+    template = load_prompt("feedback_context")
+    return template.format(
+        kept_rules=_format_bullets(kept_rules),
+        removed_rules=_format_bullets(removed_rules),
+        added_rules=_format_bullets(added_rules),
+    )
+
+
+def _format_bullets(items: list[str]) -> str:
+    if not items:
+        return "- (none)"
+    return "\n".join(f"- {item}" for item in items)

@@ -76,11 +76,13 @@ def test_stale_when_old_generation():
         store = CheckpointStore(state_dir=state_dir)
 
         old_time = (datetime.now(UTC) - timedelta(days=10)).isoformat()
-        store._state.generations["cursor"] = GenerationRecord(
-            generated_at=old_time,
-            conversations_analyzed=5,
-            output_path="/out",
-        )
+        store._state.generations["cursor"] = [
+            GenerationRecord(
+                generated_at=old_time,
+                conversations_analyzed=5,
+                output_path="/out",
+            )
+        ]
         store.save()
 
         store2 = CheckpointStore(state_dir=state_dir)

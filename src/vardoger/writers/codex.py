@@ -31,6 +31,14 @@ def _wrap(content: str) -> str:
     return f"{START_MARKER}\n{content}\n{END_MARKER}"
 
 
+def _agents_path(scope: str, project_path: Path | None) -> Path:
+    if scope == "project":
+        base = project_path or Path.cwd()
+        return base / "AGENTS.md"
+    codex_dir = Path.home() / ".codex"
+    return codex_dir / "AGENTS.md"
+
+
 def write_codex_rules(
     content: str,
     scope: str = "global",
@@ -46,13 +54,8 @@ def write_codex_rules(
 
     Returns the path of the written file.
     """
-    if scope == "project":
-        base = project_path or Path.cwd()
-        output_path = base / "AGENTS.md"
-    else:
-        codex_dir = Path.home() / ".codex"
-        codex_dir.mkdir(parents=True, exist_ok=True)
-        output_path = codex_dir / "AGENTS.md"
+    output_path = _agents_path(scope, project_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     section = _wrap(content)
 
@@ -69,3 +72,48 @@ def write_codex_rules(
 
     logger.info("Wrote Codex rules to %s", output_path)
     return output_path
+
+
+def read_codex_rules(
+    scope: str = "global",
+    project_path: Path | None = None,
+) -> str | None:
+    """Return only the content inside the vardoger-managed fenced block.
+
+    Returns ``None`` if AGENTS.md is absent or does not contain a vardoger
+    section. Other (user-authored) content in AGENTS.md is ignored.
+    """
+    output_path = _agents_path(scope, project_path)
+    if not output_path.is_file():
+        return None
+    existing = output_path.read_text(encoding="utf-8")
+    match = _SECTION_RE.search(existing)
+    if match is None:
+        return None
+    section = match.group(0)
+    inner = section[len(START_MARKER) : -len(END_MARKER)]
+    return inner.strip("\n")
+
+
+def clear_codex_rules(
+    scope: str = "global",
+    project_path: Path | None = None,
+) -> bool:
+    """Remove the vardoger-managed fenced block from AGENTS.md.
+
+    Leaves user-authored content intact. If AGENTS.md becomes empty after
+    removal, the file itself is deleted. Returns True if a block was removed.
+    """
+    output_path = _agents_path(scope, project_path)
+    if not output_path.is_file():
+        return False
+    existing = output_path.read_text(encoding="utf-8")
+    if not _SECTION_RE.search(existing):
+        return False
+    updated = _SECTION_RE.sub("", existing).strip()
+    if updated:
+        output_path.write_text(updated + "\n", encoding="utf-8")
+    else:
+        output_path.unlink()
+    logger.info("Removed Codex vardoger section from %s", output_path)
+    return True

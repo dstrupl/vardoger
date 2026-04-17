@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
     "mcp>=1.0.0",
     "pydantic>=2.0",
+    "pyyaml>=6.0.3",
 ]
 
 [project.scripts]
@@ -48,6 +49,7 @@ dev = [
     "pytest>=9.0.3",
     "pytest-cov>=6.1",
     "ruff>=0.11",
+    "types-pyyaml>=6.0.12.20260408",
 ]
 
 [tool.pytest.ini_options]

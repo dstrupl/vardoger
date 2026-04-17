@@ -21,19 +21,22 @@ from collections.abc import Callable
 from pathlib import Path
 
 from vardoger.analyze import analyze
-from vardoger.checkpoint import CheckpointStore
+from vardoger.checkpoint import CheckpointStore, content_hash
 from vardoger.digest import batch_conversations, format_batch
+from vardoger.feedback import detect_edits
 from vardoger.history.claude_code import read_claude_code_history
 from vardoger.history.codex import read_codex_history
 from vardoger.history.cursor import read_cursor_history
 from vardoger.history.models import Conversation
-from vardoger.models import HookOutput, SessionStartContext
-from vardoger.prompts import summarize_prompt, synthesize_prompt
+from vardoger.models import FeedbackEvent, HookOutput, SessionStartContext
+from vardoger.personalization import annotate_tentative, parse_personalization
+from vardoger.prompts import feedback_context_prompt, summarize_prompt, synthesize_prompt
+from vardoger.quality import compare as compare_quality
 from vardoger.staleness import check_staleness
-from vardoger.writers.claude_code import write_claude_code_rules
-from vardoger.writers.codex import write_codex_rules
-from vardoger.writers.cursor import write_cursor_rules
-from vardoger.writers.openclaw import write_openclaw_rules
+from vardoger.writers.claude_code import clear_claude_code_rules, write_claude_code_rules
+from vardoger.writers.codex import clear_codex_rules, write_codex_rules
+from vardoger.writers.cursor import clear_cursor_rules, write_cursor_rules
+from vardoger.writers.openclaw import clear_openclaw_rules, write_openclaw_rules
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +135,20 @@ def _write_platform(platform: str, content: str, scope: str, project_path: Path 
         sys.exit(1)
 
 
+def _clear_platform(platform: str, scope: str, project_path: Path | None) -> bool:
+    """Remove the vardoger-managed rules for a platform. Returns True if removed."""
+    if platform == "cursor":
+        return clear_cursor_rules(project_path=project_path)
+    if platform == "claude-code":
+        return clear_claude_code_rules(scope=scope, project_path=project_path)
+    if platform == "codex":
+        return clear_codex_rules(scope=scope, project_path=project_path)
+    if platform == "openclaw":
+        return clear_openclaw_rules(scope=scope, project_path=project_path)
+    print(f"Unknown platform: {platform}", file=sys.stderr)
+    sys.exit(1)
+
+
 def _get_reader_base(platform: str) -> Path:
     """Return the base directory for a platform's history files."""
     from vardoger.history.claude_code import DEFAULT_CLAUDE_DIR
@@ -226,10 +243,20 @@ def _run_hook_session_start(args: argparse.Namespace) -> None:
 # -- analyze (legacy placeholder) --
 
 
+def _check_for_edits(platform: str, scope: str, project_path: Path | None) -> None:
+    """Record any user edits to the current rules file before we generate new ones."""
+    store = CheckpointStore()
+    event = detect_edits(platform, store, scope=scope, project_path=project_path)
+    if event is not None:
+        store.save()
+
+
 def _run_analyze(args: argparse.Namespace) -> None:
     platform = args.platform
     scope = args.scope
     project_path = Path(args.project) if args.project else None
+
+    _check_for_edits(platform, scope, project_path)
 
     conversations, checkpoint, stats = _read_conversations(platform, args.full, args.since)
 
@@ -250,6 +277,8 @@ def _run_analyze(args: argparse.Namespace) -> None:
         PLATFORM_KEY[platform],
         conversations_analyzed=len(conversations),
         output_path=str(output),
+        content=prompt_addition,
+        output_hash=content_hash(prompt_addition),
     )
     store.save()
 
@@ -270,8 +299,20 @@ def _run_prepare(args: argparse.Namespace) -> None:
     platform = args.platform
 
     if args.synthesize:
+        store = CheckpointStore()
+        record = store.get_feedback(PLATFORM_KEY[platform])
+        context = feedback_context_prompt(
+            record.kept_rules, record.removed_rules, record.added_rules
+        )
+        if context is not None:
+            print(context)
+            print()
+            print("---")
+            print()
         print(synthesize_prompt())
         return
+
+    _check_for_edits(platform, scope="global", project_path=None)
 
     conversations, checkpoint, stats = _read_conversations(platform, args.full, args.since)
 
@@ -321,22 +362,175 @@ def _run_write(args: argparse.Namespace) -> None:
     scope = args.scope
     project_path = Path(args.project) if args.project else None
 
-    content = sys.stdin.read()
-    if not content.strip():
+    raw = sys.stdin.read()
+    if not raw.strip():
         print("No content received on stdin.", file=sys.stderr)
         sys.exit(1)
 
-    output = _write_platform(platform, content, scope, project_path)
+    doc = parse_personalization(raw)
+    rendered = annotate_tentative(doc)
+
+    output = _write_platform(platform, rendered, scope, project_path)
 
     store = CheckpointStore()
     store.record_generation(
         PLATFORM_KEY[platform],
         conversations_analyzed=0,
         output_path=str(output),
+        content=rendered,
+        output_hash=content_hash(rendered),
+        confidence=doc.confidence,
     )
     store.save()
 
     print(f"vardoger: wrote personalization to {output}")
+
+
+# -- feedback (accept / reject) --
+
+
+def _run_feedback(args: argparse.Namespace) -> None:
+    from datetime import UTC, datetime
+
+    platform = args.platform
+    action = args.action
+    scope = args.scope
+    project_path = Path(args.project) if args.project else None
+    reason = getattr(args, "reason", "") or ""
+
+    state_key = PLATFORM_KEY[platform]
+    store = CheckpointStore()
+
+    if action == "accept":
+        event = FeedbackEvent(
+            recorded_at=datetime.now(UTC).isoformat(),
+            kind="accept",
+            summary=reason,
+        )
+        store.record_feedback_event(state_key, event)
+        store.save()
+        print(f"vardoger: recorded accept for {platform}.")
+        return
+
+    if action == "reject":
+        event = FeedbackEvent(
+            recorded_at=datetime.now(UTC).isoformat(),
+            kind="reject",
+            summary=reason,
+        )
+        store.record_feedback_event(state_key, event)
+
+        rejected = store.pop_generation(state_key)
+        if rejected is None:
+            print(f"vardoger: nothing to revert for {platform}.", file=sys.stderr)
+            store.save()
+            return
+
+        previous = store.get_generation(state_key)
+        if previous is not None and previous.content:
+            output = _write_platform(platform, previous.content, scope, project_path)
+            store.save()
+            print(f"vardoger: reverted {platform} to previous generation ({output}).")
+            return
+
+        cleared = _clear_platform(platform, scope, project_path)
+        store.save()
+        if cleared:
+            print(f"vardoger: cleared {platform} personalization (no prior generation).")
+        else:
+            print(f"vardoger: no {platform} personalization file to clear.")
+        return
+
+
+# -- compare (A/B quality) --
+
+
+def _format_metric_line(name: str, before: float, after: float, higher_is_better: bool) -> str:
+    delta = after - before
+    arrow = "↑" if delta > 0 else ("↓" if delta < 0 else "→")
+    if delta == 0:
+        direction = "unchanged"
+    else:
+        direction = "better" if (delta > 0) == higher_is_better else "worse"
+    return f"  {name:<22} {before:.3f} {arrow} {after:.3f}  ({direction})"
+
+
+def _print_comparison(comp: object) -> None:
+    from vardoger.models import QualityComparison
+
+    assert isinstance(comp, QualityComparison)
+    print(f"platform: {comp.platform}")
+    print(f"cutoff:   {comp.cutoff or '(none)'}")
+
+    if comp.before is None or comp.after is None:
+        for caveat in comp.caveats:
+            print(f"  note: {caveat}")
+        return
+
+    print(
+        f"  samples (before/after): "
+        f"{comp.before.sample_conversations}/{comp.after.sample_conversations} conversations, "
+        f"{comp.before.sample_messages}/{comp.after.sample_messages} messages"
+    )
+    print(
+        _format_metric_line(
+            "correction_rate",
+            comp.before.correction_rate,
+            comp.after.correction_rate,
+            higher_is_better=False,
+        )
+    )
+    print(
+        _format_metric_line(
+            "pushback_length",
+            comp.before.pushback_length,
+            comp.after.pushback_length,
+            higher_is_better=False,
+        )
+    )
+    print(
+        _format_metric_line(
+            "satisfaction_signal",
+            comp.before.satisfaction_signal,
+            comp.after.satisfaction_signal,
+            higher_is_better=True,
+        )
+    )
+    print(
+        _format_metric_line(
+            "restart_rate",
+            comp.before.restart_rate,
+            comp.after.restart_rate,
+            higher_is_better=False,
+        )
+    )
+    print(
+        _format_metric_line(
+            "emoji_rate",
+            comp.before.emoji_rate,
+            comp.after.emoji_rate,
+            higher_is_better=False,
+        )
+    )
+    for caveat in comp.caveats:
+        print(f"  note: {caveat}")
+
+
+def _run_compare(args: argparse.Namespace) -> None:
+    platforms = PLATFORM_CHOICES if getattr(args, "all", False) else [args.platform]
+    use_json = getattr(args, "json", False)
+    window = getattr(args, "window", None)
+
+    comparisons = [compare_quality(p, window_days=window) for p in platforms]
+
+    if use_json:
+        print(json.dumps([c.model_dump() for c in comparisons], indent=2))
+        return
+
+    for i, comp in enumerate(comparisons):
+        if i > 0:
+            print()
+        _print_comparison(comp)
 
 
 # -- CLI argument parsing --
@@ -483,6 +677,65 @@ def main(argv: list[str] | None = None) -> None:
         help="Project directory path (used with --scope project).",
     )
 
+    # feedback
+    feedback_parser = subparsers.add_parser(
+        "feedback",
+        help="Record accept/reject feedback for the last generation.",
+    )
+    feedback_parser.add_argument(
+        "action",
+        choices=["accept", "reject"],
+        help="accept: keep the latest generation. reject: auto-revert to the previous one.",
+    )
+    _add_common_args(feedback_parser)
+    feedback_parser.add_argument(
+        "--scope",
+        choices=["global", "project"],
+        default="global",
+        help="Scope used when reverting (defaults to global).",
+    )
+    feedback_parser.add_argument(
+        "--project",
+        default=None,
+        help="Project directory path (used with --scope project).",
+    )
+    feedback_parser.add_argument(
+        "--reason",
+        default="",
+        help="Optional free-text reason recorded on the feedback event.",
+    )
+
+    # compare
+    compare_parser = subparsers.add_parser(
+        "compare",
+        help="Compare conversation quality before vs. after the latest personalization.",
+    )
+    compare_scope = compare_parser.add_mutually_exclusive_group(required=True)
+    compare_scope.add_argument(
+        "--platform",
+        choices=PLATFORM_CHOICES,
+        help="Compare a single platform.",
+    )
+    compare_scope.add_argument(
+        "--all",
+        action="store_true",
+        default=False,
+        help="Compare every supported platform.",
+    )
+    compare_parser.add_argument(
+        "--window",
+        type=int,
+        default=None,
+        metavar="DAYS",
+        help="Restrict each bucket to a symmetric window (days) around the cutoff.",
+    )
+    compare_parser.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Emit machine-readable JSON.",
+    )
+
     # hidden: _hook-session-start (invoked by plugin hooks, not user-facing)
     hook_parser = subparsers.add_parser("_hook-session-start")
     hook_parser.add_argument("platform", choices=PLATFORM_CHOICES)
@@ -507,6 +760,10 @@ def main(argv: list[str] | None = None) -> None:
         _run_prepare(args)
     elif args.command == "write":
         _run_write(args)
+    elif args.command == "feedback":
+        _run_feedback(args)
+    elif args.command == "compare":
+        _run_compare(args)
     else:
         parser.print_help()
         sys.exit(1)

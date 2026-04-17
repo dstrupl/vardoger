@@ -12,7 +12,29 @@ Organised by domain:
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
+
+# ---------------------------------------------------------------------------
+# Group 0: Personalization output (confidence-scored rules)
+# ---------------------------------------------------------------------------
+
+ConfidenceLevel = Literal["high", "medium", "low"]
+
+
+class RuleConfidence(BaseModel):
+    id: str
+    text: str
+    category: str
+    level: ConfidenceLevel
+    supporting_batches: list[int] = []
+
+
+class PersonalizationDoc(BaseModel):
+    confidence: list[RuleConfidence] = []
+    body: str
+
 
 # ---------------------------------------------------------------------------
 # Group 1: Checkpoint / state.json
@@ -28,12 +50,30 @@ class GenerationRecord(BaseModel):
     generated_at: str
     conversations_analyzed: int
     output_path: str
+    output_hash: str = ""
+    content: str = ""
+    confidence: list[RuleConfidence] = []
+    min_confidence_written: ConfidenceLevel = "low"
+
+
+class FeedbackEvent(BaseModel):
+    recorded_at: str
+    kind: Literal["accept", "reject", "edit"]
+    summary: str = ""
+
+
+class FeedbackRecord(BaseModel):
+    events: list[FeedbackEvent] = []
+    kept_rules: list[str] = []
+    removed_rules: list[str] = []
+    added_rules: list[str] = []
 
 
 class CheckpointState(BaseModel):
-    version: int = 2
+    version: int = 3
     checkpoints: dict[str, dict[str, FileCheckpoint]] = {}
-    generations: dict[str, GenerationRecord] = {}
+    generations: dict[str, list[GenerationRecord]] = {}
+    feedback: dict[str, FeedbackRecord] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +189,30 @@ class StalenessReport(BaseModel):
     new_conversations: int
     changed_conversations: int
     reason: str
+
+
+# ---------------------------------------------------------------------------
+# Group 4b: Quality comparison (A/B before/after personalization)
+# ---------------------------------------------------------------------------
+
+
+class QualityMetrics(BaseModel):
+    correction_rate: float
+    pushback_length: float
+    satisfaction_signal: float
+    restart_rate: float
+    emoji_rate: float
+    sample_conversations: int
+    sample_messages: int
+
+
+class QualityComparison(BaseModel):
+    platform: str
+    cutoff: str | None
+    before: QualityMetrics | None
+    after: QualityMetrics | None
+    delta_notes: list[str] = []
+    caveats: list[str] = []
 
 
 # ---------------------------------------------------------------------------
