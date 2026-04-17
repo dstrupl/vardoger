@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 from vardoger.checkpoint import CheckpointStore
 from vardoger.models import GenerationRecord, StalenessReport
-from vardoger.staleness import check_staleness
+from vardoger.staleness import _describe, check_staleness
 
 
 def _write_file(path: Path, content: str) -> None:
@@ -144,6 +144,29 @@ def test_changed_vs_new_conversations():
 
         assert report.changed_conversations == 1
         assert report.new_conversations == 1
+
+
+def test_describe_fresh_mentions_days_and_new_count():
+    reason = _describe(is_stale=False, total_new=3, days_since=2, new_threshold=5)
+    assert "fresh" in reason
+    assert "2 days ago" in reason
+    assert "3 new conversations" in reason
+
+
+def test_describe_fresh_without_new_conversations_omits_count():
+    reason = _describe(is_stale=False, total_new=0, days_since=1, new_threshold=5)
+    assert reason == "fresh (last updated 1 day ago)"
+
+
+def test_describe_stale_new_threshold_branch():
+    reason = _describe(is_stale=True, total_new=6, days_since=3, new_threshold=5)
+    assert reason.startswith("stale (6 new/changed conversations")
+    assert "3 days ago" in reason
+
+
+def test_describe_stale_days_threshold_branch():
+    reason = _describe(is_stale=True, total_new=0, days_since=10, new_threshold=5)
+    assert reason == "stale (last updated 10 days ago)"
 
 
 def test_report_dataclass_fields():

@@ -46,6 +46,40 @@ def _discover_files(platform: str) -> list[tuple]:
     return []
 
 
+def _count_new_and_changed(
+    store: CheckpointStore,
+    platform_key: str,
+    files: list[tuple],
+) -> tuple[int, int]:
+    """Return (new_count, changed_count) across the discovered files."""
+    new_count = 0
+    changed_count = 0
+    for abs_path, rel_path in files:
+        if not store.is_changed(platform_key, rel_path, abs_path):
+            continue
+        if store.get_checkpoint(platform_key, rel_path) is not None:
+            changed_count += 1
+        else:
+            new_count += 1
+    return new_count, changed_count
+
+
+def _describe(is_stale: bool, total_new: int, days_since: int, new_threshold: int) -> str:
+    """Format the human-readable ``reason`` field for a staleness report."""
+    if not is_stale:
+        parts = [f"last updated {days_since} day{'s' if days_since != 1 else ''} ago"]
+        if total_new > 0:
+            parts.append(f"{total_new} new conversation{'s' if total_new != 1 else ''}")
+        return "fresh (" + ", ".join(parts) + ")"
+    if total_new >= new_threshold:
+        return (
+            f"stale ({total_new} new/changed conversation"
+            f"{'s' if total_new != 1 else ''}"
+            f", last updated {days_since} day{'s' if days_since != 1 else ''} ago)"
+        )
+    return f"stale (last updated {days_since} days ago)"
+
+
 def check_staleness(
     platform: str,
     checkpoint: CheckpointStore | None = None,
@@ -76,33 +110,11 @@ def check_staleness(
     generated_at = datetime.fromisoformat(generation.generated_at)
     days_since = (datetime.now(UTC) - generated_at).days
 
-    files = _discover_files(platform)
-    new_count = 0
-    changed_count = 0
-    for abs_path, rel_path in files:
-        if store.is_changed(platform_key, rel_path, abs_path):
-            existing_ckpt = store.get_checkpoint(platform_key, rel_path)
-            if existing_ckpt is not None:
-                changed_count += 1
-            else:
-                new_count += 1
-
+    new_count, changed_count = _count_new_and_changed(
+        store, platform_key, _discover_files(platform)
+    )
     total_new = new_count + changed_count
     is_stale = total_new >= new_threshold or days_since >= days_threshold
-
-    if not is_stale:
-        parts = [f"last updated {days_since} day{'s' if days_since != 1 else ''} ago"]
-        if total_new > 0:
-            parts.append(f"{total_new} new conversation{'s' if total_new != 1 else ''}")
-        reason = "fresh (" + ", ".join(parts) + ")"
-    elif total_new >= new_threshold:
-        reason = (
-            f"stale ({total_new} new/changed conversation"
-            f"{'s' if total_new != 1 else ''}"
-            f", last updated {days_since} day{'s' if days_since != 1 else ''} ago)"
-        )
-    else:
-        reason = f"stale (last updated {days_since} days ago)"
 
     return StalenessReport(
         platform=platform,
@@ -110,5 +122,5 @@ def check_staleness(
         days_since_generation=days_since,
         new_conversations=new_count,
         changed_conversations=changed_count,
-        reason=reason,
+        reason=_describe(is_stale, total_new, days_since, new_threshold),
     )

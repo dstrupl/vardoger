@@ -55,11 +55,11 @@ def _parse_transcript(path: Path, project_slug: str, rel_path: str) -> Conversat
     try:
         with open(path, encoding="utf-8") as f:
             for line in f:
-                line = line.strip()
-                if not line:
+                stripped = line.strip()
+                if not stripped:
                     continue
                 try:
-                    entry = CursorEntry.model_validate_json(line)
+                    entry = CursorEntry.model_validate_json(stripped)
                 except ValidationError:
                     continue
 

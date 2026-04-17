@@ -59,11 +59,11 @@ def _parse_session(path: Path, agent_id: str, rel_path: str) -> Conversation | N
     try:
         with open(path, encoding="utf-8") as f:
             for line in f:
-                line = line.strip()
-                if not line:
+                stripped = line.strip()
+                if not stripped:
                     continue
                 try:
-                    entry = OpenClawEntry.model_validate_json(line)
+                    entry = OpenClawEntry.model_validate_json(stripped)
                 except ValidationError:
                     continue
 

@@ -17,7 +17,7 @@ A sessions-index.json in each project dir provides a manifest.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -88,48 +88,57 @@ def discover_claude_code_files(
     return results
 
 
-def _parse_session(path: Path, project_name: str, rel_path: str) -> Conversation | None:
-    """Parse a single Claude Code session JSONL file."""
-    messages: list[Message] = []
-    session_id = path.stem
-
+def _iter_entries(path: Path) -> Iterator[ClaudeCodeEntry]:
+    """Yield validated ClaudeCodeEntry rows from a JSONL file, skipping bad lines."""
     try:
         with open(path, encoding="utf-8") as f:
             for line in f:
-                line = line.strip()
-                if not line:
+                stripped = line.strip()
+                if not stripped:
                     continue
                 try:
-                    entry = ClaudeCodeEntry.model_validate_json(line)
+                    yield ClaudeCodeEntry.model_validate_json(stripped)
                 except ValidationError:
                     continue
-
-                if entry.type not in RELEVANT_TYPES:
-                    continue
-
-                msg = entry.message
-                if not isinstance(msg, dict):
-                    continue
-
-                role = msg.get("role", entry.type)
-                if not isinstance(role, str) or role not in ("user", "assistant"):
-                    continue
-
-                raw_content = msg.get("content", [])
-                content: list[ContentBlock | str]
-                if isinstance(raw_content, list):
-                    content = raw_content
-                elif isinstance(raw_content, str):
-                    content = [raw_content]
-                else:
-                    continue
-
-                text = extract_text(content)
-                if text.strip():
-                    messages.append(Message(role=role, content=text))
     except OSError as exc:
         logger.warning("Could not read %s: %s", path, exc)
+
+
+def _entry_to_message(entry: ClaudeCodeEntry) -> Message | None:
+    """Convert one ClaudeCodeEntry into a Message, or return None if not a user/assistant turn."""
+    if entry.type not in RELEVANT_TYPES:
         return None
+
+    msg = entry.message
+    if not isinstance(msg, dict):
+        return None
+
+    role = msg.get("role", entry.type)
+    if not isinstance(role, str) or role not in ("user", "assistant"):
+        return None
+
+    raw_content = msg.get("content", [])
+    content: list[ContentBlock | str]
+    if isinstance(raw_content, list):
+        content = raw_content
+    elif isinstance(raw_content, str):
+        content = [raw_content]
+    else:
+        return None
+
+    text = extract_text(content)
+    if not text.strip():
+        return None
+    return Message(role=role, content=text)
+
+
+def _parse_session(path: Path, project_name: str, rel_path: str) -> Conversation | None:
+    """Parse a single Claude Code session JSONL file."""
+    messages: list[Message] = []
+    for entry in _iter_entries(path):
+        message = _entry_to_message(entry)
+        if message is not None:
+            messages.append(message)
 
     if not messages:
         return None
@@ -138,7 +147,7 @@ def _parse_session(path: Path, project_name: str, rel_path: str) -> Conversation
         messages=messages,
         platform="claude_code",
         project=project_name,
-        session_id=session_id,
+        session_id=path.stem,
         source_path=rel_path,
     )
 

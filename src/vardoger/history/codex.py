@@ -13,7 +13,7 @@ Subsequent lines are messages: {"type": "message", "role": "user"|"assistant", "
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -43,38 +43,47 @@ def discover_codex_files(
     return results
 
 
+def _iter_entries(path: Path) -> Iterator[CodexEntry]:
+    """Yield validated CodexEntry rows from a JSONL file, skipping bad lines."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                try:
+                    yield CodexEntry.model_validate_json(stripped)
+                except ValidationError:
+                    continue
+    except OSError as exc:
+        logger.warning("Could not read %s: %s", path, exc)
+
+
+def _entry_to_message_or_session(
+    entry: CodexEntry, session_id: str | None
+) -> tuple[Message | None, str | None]:
+    """Turn an entry into either a Message (for turns) or an updated session_id (for headers)."""
+    if entry.id and entry.timestamp and not entry.type:
+        return None, entry.id
+
+    if entry.type != "message" or entry.role not in ("user", "assistant"):
+        return None, session_id
+
+    text = extract_text(entry.content, text_types=CODEX_TEXT_TYPES)
+    if not text.strip():
+        return None, session_id
+    return Message(role=entry.role, content=text), session_id
+
+
 def _parse_rollout(path: Path, rel_path: str) -> Conversation | None:
     """Parse a single Codex rollout JSONL file."""
     messages: list[Message] = []
     session_id: str | None = None
 
-    try:
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = CodexEntry.model_validate_json(line)
-                except ValidationError:
-                    continue
-
-                if entry.id and entry.timestamp and not entry.type:
-                    session_id = entry.id
-                    continue
-
-                if entry.type != "message":
-                    continue
-
-                if entry.role not in ("user", "assistant"):
-                    continue
-
-                text = extract_text(entry.content, text_types=CODEX_TEXT_TYPES)
-                if text.strip():
-                    messages.append(Message(role=entry.role, content=text))
-    except OSError as exc:
-        logger.warning("Could not read %s: %s", path, exc)
-        return None
+    for entry in _iter_entries(path):
+        message, session_id = _entry_to_message_or_session(entry, session_id)
+        if message is not None:
+            messages.append(message)
 
     if not messages:
         return None
