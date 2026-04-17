@@ -90,3 +90,15 @@ exclude = ["tests/"]
 [[tool.mypy.overrides]]
 module = ["mcp.*"]
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["vardoger"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = [
+    "@overload",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+show_missing = true
