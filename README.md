@@ -35,6 +35,16 @@ vardoger setup cursor        # or claude-code, codex, openclaw
 
 Then tell your assistant: **"Personalize my assistant."**
 
+> **Trying the beta?** vardoger is still pre-1.0. Pre-releases are not picked up by default, so use one of:
+>
+> ```bash
+> pipx install --pip-args="--pre" vardoger
+> # or pin a specific pre-release:
+> pipx install vardoger==0.1.0b1
+> # or run without installing:
+> uvx vardoger@0.1.0b1 --help
+> ```
+
 ## CLI Commands
 
 | Command | Purpose |
