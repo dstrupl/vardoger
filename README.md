@@ -105,6 +105,19 @@ Run the full bundle locally before pushing:
 uv run ruff check . && uv run ruff format --check . && uv run mypy src/ && uv run pytest --cov=vardoger --cov-fail-under=80
 ```
 
+## Contributing
+
+Contributions are welcome. Short version:
+
+1. Fork `dstrupl/vardoger` on GitHub and clone your fork.
+2. `uv sync` and create a topic branch.
+3. Make your changes with tests and run the quality-gate one-liner above.
+4. Push to your fork and open a PR against `main`.
+
+CI (`test` on Python 3.11/3.12/3.13 plus a `security` job) will run automatically on the PR. First-time contributors may need a maintainer to click **Approve and run** before the first workflow execution.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full walkthrough and [AGENTS.md](AGENTS.md) for coding standards and commit-message conventions.
+
 ## Releasing to PyPI
 
 CI runs automatically on every push and PR (lint, type check, tests across Python 3.11–3.13). To publish a new version:
