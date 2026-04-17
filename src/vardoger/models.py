@@ -154,12 +154,27 @@ class ClaudePluginManifest(BaseModel):
     author: PluginAuthor
 
 
+class CodexPluginInterface(BaseModel):
+    displayName: str
+    shortDescription: str
+    longDescription: str
+    developerName: str
+    category: str = "Productivity"
+    capabilities: list[str] = []
+    websiteURL: str | None = None
+
+
 class CodexPluginManifest(BaseModel):
     name: str
     version: str
     description: str
     author: PluginAuthor
+    homepage: str | None = None
+    repository: str | None = None
+    license: str | None = None
+    keywords: list[str] = []
     skills: str = "./skills/"
+    interface: CodexPluginInterface | None = None
 
 
 class MarketplacePluginSource(BaseModel):
@@ -167,13 +182,25 @@ class MarketplacePluginSource(BaseModel):
     path: str
 
 
+class MarketplacePluginPolicy(BaseModel):
+    installation: str = "AVAILABLE"
+    authentication: str = "ON_INSTALL"
+
+
 class MarketplacePlugin(BaseModel, extra="ignore"):
     name: str
     source: MarketplacePluginSource | None = None
+    policy: MarketplacePluginPolicy | None = None
+    category: str | None = None
+
+
+class MarketplaceInterface(BaseModel):
+    displayName: str
 
 
 class CodexMarketplace(BaseModel, extra="allow"):
     name: str = "local"
+    interface: MarketplaceInterface | None = None
     plugins: list[MarketplacePlugin] = []
 
 

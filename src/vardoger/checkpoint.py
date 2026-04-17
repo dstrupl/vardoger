@@ -129,13 +129,32 @@ class CheckpointStore:
             return CheckpointState()
 
     def save(self) -> None:
-        """Persist current checkpoint state to disk."""
-        self._state_dir.mkdir(parents=True, exist_ok=True)
-        tmp_path = self._state_path.with_suffix(".tmp")
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            f.write(self._state.model_dump_json(indent=2))
-            f.write("\n")
-        tmp_path.replace(self._state_path)
+        """Persist current checkpoint state to disk.
+
+        If the state directory cannot be written — e.g. when vardoger is run
+        inside a sandboxed shell (Codex, Claude Code) whose write access is
+        restricted to the workspace — we log a warning instead of raising.
+        The caller still sees the in-memory state, and the next run recomputes
+        whatever was lost, which is always safe (at most, a few files get
+        re-analyzed).
+        """
+        try:
+            self._state_dir.mkdir(parents=True, exist_ok=True)
+            tmp_path = self._state_path.with_suffix(".tmp")
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                f.write(self._state.model_dump_json(indent=2))
+                f.write("\n")
+            tmp_path.replace(self._state_path)
+        except OSError as exc:
+            logger.warning(
+                "Could not persist checkpoint state to %s: %s. "
+                "vardoger will continue, but the next run may re-analyze "
+                "already-processed conversations. If you're running under a "
+                "sandboxed shell (Codex/Claude), approve write access beyond "
+                "the workspace.",
+                self._state_path,
+                exc,
+            )
 
     # -- per-file checkpoints --
 

@@ -3,8 +3,12 @@
 """Tests for the checkpoint store."""
 
 import json
+import logging
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 from vardoger.checkpoint import CheckpointStore, file_hash
 
@@ -80,6 +84,29 @@ def test_save_creates_state_dir():
         store = CheckpointStore(state_dir=state_dir)
         store.save()
         assert (state_dir / "state.json").is_file()
+
+
+def test_save_sandbox_denied_logs_warning_and_does_not_raise(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Running vardoger inside a sandboxed shell (Codex/Claude) may forbid writes
+    to ``~/.vardoger/``. In that case `save()` must degrade gracefully: warn the
+    user and keep going. Otherwise the whole `prepare` pipeline aborts with a
+    scary stack trace after doing useful work."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        store = CheckpointStore(state_dir=state_dir)
+        with patch(
+            "vardoger.checkpoint.open",
+            side_effect=PermissionError(1, "Operation not permitted"),
+        ):
+            caplog.clear()
+            with caplog.at_level(logging.WARNING, logger="vardoger.checkpoint"):
+                store.save()
+    assert any("Could not persist checkpoint state" in rec.message for rec in caplog.records), (
+        caplog.text
+    )
+    assert not (state_dir / "state.json").exists()
 
 
 def test_load_corrupt_state_starts_fresh():

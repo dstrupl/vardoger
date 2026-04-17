@@ -40,9 +40,9 @@ Then tell your assistant: **"Personalize my assistant."**
 > ```bash
 > pipx install --pip-args="--pre" vardoger
 > # or pin a specific pre-release:
-> pipx install vardoger==0.1.0b1
+> pipx install vardoger==0.1.0b3
 > # or run without installing:
-> uvx vardoger@0.1.0b1 --help
+> uvx vardoger@0.1.0b3 --help
 > ```
 
 ## CLI Commands
