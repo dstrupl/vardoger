@@ -19,9 +19,12 @@ from pydantic import ValidationError
 from vardoger.models import (
     ClaudePluginManifest,
     CodexMarketplace,
+    CodexPluginInterface,
     CodexPluginManifest,
     CursorMcpConfig,
+    MarketplaceInterface,
     MarketplacePlugin,
+    MarketplacePluginPolicy,
     MarketplacePluginSource,
     McpServerConfig,
     PluginAuthor,
@@ -44,6 +47,24 @@ CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
         "history and generating tailored instructions"
     ),
     author=PluginAuthor(name="dstrupl"),
+    homepage="https://github.com/dstrupl/vardoger",
+    repository="https://github.com/dstrupl/vardoger",
+    license="Apache-2.0",
+    keywords=["personalization", "productivity", "assistant"],
+    interface=CodexPluginInterface(
+        displayName="Vardoger",
+        shortDescription="Personalize your assistant from your own conversation history",
+        longDescription=(
+            "Vardoger reads your Codex conversation history locally, extracts "
+            "behavioral patterns, and generates a personalized AGENTS.md "
+            "addition so the assistant adapts to how you actually work. "
+            "All processing happens on your machine — no data leaves it."
+        ),
+        developerName="dstrupl",
+        category="Productivity",
+        capabilities=["Read", "Write"],
+        websiteURL="https://github.com/dstrupl/vardoger",
+    ),
 )
 
 
@@ -101,6 +122,22 @@ description: "{frontmatter_desc}"
 vardoger prepares your conversation history in batches. You (the assistant) \
 summarize each batch for behavioral signals, then synthesize all summaries \
 into a personalization. vardoger writes the result.
+
+## Sandbox note (read before running any command)
+
+vardoger reads and writes files **outside** the current workspace:
+
+- Reads conversation history from the platform's session directory \
+(e.g. `~/.codex/sessions/`, `~/.claude/projects/`, etc.).
+- Writes a checkpoint state file to `~/.vardoger/state.json` (created on \
+first run).
+- Writes the final personalization to the platform's rules file \
+(e.g. `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`).
+
+When the host asks to approve a `vardoger` command, approve it with \
+write access beyond the workspace. Otherwise the first `vardoger prepare` \
+call will fail with `PermissionError: ... ~/.vardoger/state.tmp` because \
+the sandbox blocks writes outside the current working directory.
 
 ## Steps
 
@@ -245,19 +282,29 @@ def setup_claude_code() -> None:
 
 
 def setup_codex() -> None:
-    """Create the Codex plugin directory and register in marketplace.json."""
-    plugin_dir = _vardoger_plugin_dir() / "codex"
+    """Create the Codex plugin directory and register in marketplace.json.
+
+    Codex resolves each plugin's ``source.path`` relative to the *parent* of
+    the ``.agents/`` directory that holds ``marketplace.json`` (e.g. ``$HOME``
+    for the personal marketplace) — not the ``.agents/plugins/`` folder
+    itself. We therefore install the plugin under ``~/.codex/plugins/vardoger``
+    and reference it as ``./.codex/plugins/vardoger`` so Codex can locate the
+    manifest and show the plugin with its display name, description, and an
+    install button in ``/plugins``.
+    """
+    marketplace_path = Path.home() / ".agents" / "plugins" / "marketplace.json"
+    marketplace_path.parent.mkdir(parents=True, exist_ok=True)
+    plugin_rel_path = "./.codex/plugins/vardoger"
+    plugin_dir = Path.home() / ".codex" / "plugins" / "vardoger"
 
     manifest_dir = plugin_dir / ".codex-plugin"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     (manifest_dir / "plugin.json").write_text(
-        CODEX_PLUGIN_MANIFEST.model_dump_json(indent=2) + "\n", encoding="utf-8"
+        CODEX_PLUGIN_MANIFEST.model_dump_json(indent=2, exclude_none=True) + "\n",
+        encoding="utf-8",
     )
 
     _write_skill(plugin_dir, "codex")
-
-    marketplace_path = Path.home() / ".agents" / "plugins" / "marketplace.json"
-    marketplace_path.parent.mkdir(parents=True, exist_ok=True)
 
     if marketplace_path.is_file():
         raw = marketplace_path.read_text(encoding="utf-8")
@@ -268,19 +315,30 @@ def setup_codex() -> None:
     else:
         marketplace = CodexMarketplace()
 
+    if marketplace.interface is None:
+        marketplace.interface = MarketplaceInterface(displayName="Local Plugins")
+
     marketplace.plugins = [p for p in marketplace.plugins if p.name != "vardoger"]
     marketplace.plugins.append(
         MarketplacePlugin(
             name="vardoger",
-            source=MarketplacePluginSource(source="local", path=str(plugin_dir)),
+            source=MarketplacePluginSource(source="local", path=plugin_rel_path),
+            policy=MarketplacePluginPolicy(
+                installation="AVAILABLE",
+                authentication="ON_INSTALL",
+            ),
+            category="Productivity",
         )
     )
 
-    marketplace_path.write_text(marketplace.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    marketplace_path.write_text(
+        marketplace.model_dump_json(indent=2, exclude_none=True) + "\n",
+        encoding="utf-8",
+    )
 
     print(f"Created Codex plugin at {plugin_dir}")
     print(f"Registered in {marketplace_path}")
-    print("Open Codex and run /plugins to activate.")
+    print("Restart Codex, run /plugins, pick the 'Local Plugins' marketplace, and install.")
     print()
     _print_getting_started()
 

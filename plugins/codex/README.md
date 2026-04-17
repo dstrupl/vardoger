@@ -14,28 +14,54 @@ pipx install vardoger
 vardoger setup codex
 ```
 
-This creates the plugin directory at `~/.vardoger/plugins/codex/` and registers it in `~/.agents/plugins/marketplace.json`. Open Codex and run `/plugins` to activate.
+This creates the plugin directory at `~/.codex/plugins/vardoger/` and registers it in `~/.agents/plugins/marketplace.json`.
+
+Then:
+
+1. **Restart Codex** so it re-reads the marketplace file.
+2. Run `/plugins`, switch the source to **Local Plugins**, and install vardoger.
+
+> Codex resolves `source.path` relative to the parent of the `.agents/`
+> directory holding `marketplace.json` — i.e. `$HOME` for the personal
+> marketplace. That is why the entry below points to `./.codex/plugins/vardoger`
+> rather than `./vardoger`.
 
 ## Local Development Install
 
-If you're developing vardoger from source, create or edit `~/.agents/plugins/marketplace.json` manually:
+If you're developing vardoger from source, copy the plugin to
+`~/.codex/plugins/vardoger/` and register it in `~/.agents/plugins/marketplace.json`:
+
+```bash
+mkdir -p ~/.codex/plugins
+cp -R /path/to/vardoger/plugins/codex ~/.codex/plugins/vardoger
+```
+
+Then create or edit `~/.agents/plugins/marketplace.json`:
 
 ```json
 {
-  "name": "local-dev",
+  "name": "local",
+  "interface": {
+    "displayName": "Local Plugins"
+  },
   "plugins": [
     {
       "name": "vardoger",
       "source": {
         "source": "local",
-        "path": "/path/to/vardoger/plugins/codex"
-      }
+        "path": "./.codex/plugins/vardoger"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
     }
   ]
 }
 ```
 
-Then open Codex and run `/plugins` to install from the local marketplace.
+Restart Codex and run `/plugins` to install from the local marketplace.
 
 Make sure you have run `uv sync` ([install uv](https://docs.astral.sh/uv/getting-started/installation/)) in the vardoger repo root first so the CLI is available.
 

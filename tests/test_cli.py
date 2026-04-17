@@ -56,12 +56,30 @@ def test_setup_codex_creates_plugin_and_marketplace(
     fake_home: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     main(["setup", "codex"])
-    plugin_dir = fake_home / ".vardoger" / "plugins" / "codex"
+    plugin_dir = fake_home / ".codex" / "plugins" / "vardoger"
     marketplace = fake_home / ".agents" / "plugins" / "marketplace.json"
-    assert (plugin_dir / ".codex-plugin" / "plugin.json").is_file()
+    manifest_path = plugin_dir / ".codex-plugin" / "plugin.json"
+    assert manifest_path.is_file()
     assert marketplace.is_file()
+
+    manifest = json.loads(manifest_path.read_text())
+    assert manifest["name"] == "vardoger"
+    assert manifest["version"]
+    interface = manifest["interface"]
+    assert interface["displayName"] == "Vardoger"
+    assert interface["shortDescription"]
+    assert interface["longDescription"]
+    assert interface["developerName"]
+    assert interface["category"]
+
     data = json.loads(marketplace.read_text())
-    assert any(p["name"] == "vardoger" for p in data["plugins"])
+    assert data.get("interface", {}).get("displayName")
+    entry = next(p for p in data["plugins"] if p["name"] == "vardoger")
+    assert entry["source"]["path"] == "./.codex/plugins/vardoger"
+    assert entry["source"]["source"] == "local"
+    assert entry["policy"]["installation"] == "AVAILABLE"
+    assert entry["policy"]["authentication"] == "ON_INSTALL"
+    assert entry["category"]
     assert "Created Codex plugin" in capsys.readouterr().out
 
 
@@ -78,7 +96,7 @@ def test_setup_openclaw_installs_skill(
     ("platform", "skill_path_parts"),
     [
         ("claude-code", (".vardoger", "plugins", "claude-code", "skills", "analyze", "SKILL.md")),
-        ("codex", (".vardoger", "plugins", "codex", "skills", "analyze", "SKILL.md")),
+        ("codex", (".codex", "plugins", "vardoger", "skills", "analyze", "SKILL.md")),
         (
             "openclaw",
             (".openclaw", "skills", "vardoger", "skills", "analyze", "SKILL.md"),
@@ -117,6 +135,14 @@ def test_setup_skill_has_valid_frontmatter(
     assert "uvx vardoger" in text
     assert "pipx.pypa.io" in text
     assert "github.com/dstrupl/vardoger" in text
+
+    # The skill must warn hosts up-front that vardoger writes outside the
+    # workspace. Otherwise sandboxed shells (Codex, Claude Code) surface a
+    # scary mid-flow PermissionError on ~/.vardoger/state.tmp before
+    # prompting the user for the right permission.
+    assert "Sandbox note" in text
+    assert "outside" in text
+    assert "~/.vardoger/state.json" in text
 
 
 # ---------------------------------------------------------------------------
