@@ -90,6 +90,21 @@ tests/                 # all tests, mirroring src/ structure
 
 See [AGENTS.md](AGENTS.md) for full coding standards and quality checks.
 
+### Quality gates
+
+CI enforces a combined quality bar on every push and pull request:
+
+- `ruff check` / `ruff format --check` — lint (incl. complexity, pylint, return, pathlib, tryceratops rules) and formatting.
+- `mypy src/` — strict type checking.
+- `pytest --cov=vardoger --cov-fail-under=80` — tests across Python 3.11–3.13 with a **combined 80% coverage floor**.
+- A parallel security job runs `bandit -r src/` and `pip-audit --skip-editable` to catch common code smells and dependency CVEs.
+
+Run the full bundle locally before pushing:
+
+```bash
+uv run ruff check . && uv run ruff format --check . && uv run mypy src/ && uv run pytest --cov=vardoger --cov-fail-under=80
+```
+
 ## Releasing to PyPI
 
 CI runs automatically on every push and PR (lint, type check, tests across Python 3.11–3.13). To publish a new version:

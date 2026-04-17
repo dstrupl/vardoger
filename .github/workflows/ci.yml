@@ -32,4 +32,22 @@ jobs:
         run: uv run mypy src/
 
       - name: Test
-        run: uv run pytest tests/ --tb=short -q
+        run: uv run pytest tests/ --tb=short -q --cov=vardoger --cov-fail-under=80
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Static security scan (bandit)
+        run: uv run --with bandit bandit -r src/ -q
+
+      - name: Dependency CVE scan (pip-audit)
+        run: uv run --with pip-audit pip-audit --skip-editable

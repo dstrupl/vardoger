@@ -457,7 +457,8 @@ def _format_metric_line(name: str, before: float, after: float, higher_is_better
 def _print_comparison(comp: object) -> None:
     from vardoger.models import QualityComparison
 
-    assert isinstance(comp, QualityComparison)
+    if not isinstance(comp, QualityComparison):
+        raise TypeError(type(comp).__name__)
     print(f"platform: {comp.platform}")
     print(f"cutoff:   {comp.cutoff or '(none)'}")
 
