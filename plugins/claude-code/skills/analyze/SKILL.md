@@ -1,3 +1,8 @@
+---
+name: analyze
+description: "Use when the user asks to personalize their assistant, to use vardoger, or to analyze their Claude Code conversation history. Runs the vardoger CLI to read past conversations and generate tailored rules."
+---
+
 # Analyze conversation history and generate personalized rules
 
 Use this skill to read your Claude Code conversation history, extract behavioral patterns, and generate a personalized rule file that helps the assistant better understand your preferences and working style.

@@ -74,6 +74,41 @@ def test_setup_openclaw_installs_skill(
     assert "Installed vardoger skill" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize(
+    ("platform", "skill_path_parts"),
+    [
+        ("claude-code", (".vardoger", "plugins", "claude-code", "skills", "analyze", "SKILL.md")),
+        ("codex", (".vardoger", "plugins", "codex", "skills", "analyze", "SKILL.md")),
+        (
+            "openclaw",
+            (".openclaw", "skills", "vardoger", "skills", "analyze", "SKILL.md"),
+        ),
+    ],
+)
+def test_setup_skill_has_valid_frontmatter(
+    platform: str,
+    skill_path_parts: tuple[str, ...],
+    fake_home: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The generated SKILL.md must begin with YAML frontmatter so Claude Code /
+    Codex / OpenClaw can auto-discover and fire the skill on user intent."""
+    main(["setup", platform])
+    capsys.readouterr()
+    skill = fake_home.joinpath(*skill_path_parts)
+    text = skill.read_text(encoding="utf-8")
+
+    lines = text.splitlines()
+    assert lines[0] == "---", f"expected frontmatter fence, got: {lines[0]!r}"
+    closing_idx = lines.index("---", 1)
+    frontmatter = "\n".join(lines[1:closing_idx])
+
+    assert "name: analyze" in frontmatter
+    assert "description:" in frontmatter
+    assert "personalize" in frontmatter
+    assert "vardoger" in frontmatter
+
+
 # ---------------------------------------------------------------------------
 # status & hook
 # ---------------------------------------------------------------------------
