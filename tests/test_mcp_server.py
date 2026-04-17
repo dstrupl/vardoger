@@ -90,7 +90,7 @@ def test_vardoger_prepare_reuses_cache(
     mcp_server.vardoger_prepare()
     mcp_server.vardoger_prepare()
     assert calls["count"] == 1
-    assert mcp_server._cached_batches is not None
+    assert mcp_server._get_batches.cache_info().currsize == 1
 
 
 # ---------------------------------------------------------------------------

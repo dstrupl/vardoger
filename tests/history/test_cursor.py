@@ -108,7 +108,7 @@ def test_file_filter_skips():
             ],
         )
 
-        def reject_all(abs_path: Path, rel_path: str) -> bool:
+        def reject_all(_abs_path: Path, _rel_path: str) -> bool:
             return False
 
         convos = read_cursor_history(cursor_dir=base, file_filter=reject_all)

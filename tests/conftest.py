@@ -101,8 +101,8 @@ def stdin_feeder(monkeypatch: pytest.MonkeyPatch) -> Callable[[str], None]:
 
 
 @pytest.fixture
-def reset_mcp_cache(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Ensure ``vardoger.mcp_server._cached_batches`` starts fresh each test."""
+def reset_mcp_cache() -> None:
+    """Clear the ``_get_batches`` LRU cache so each test starts fresh."""
     import vardoger.mcp_server as mcp_mod
 
-    monkeypatch.setattr(mcp_mod, "_cached_batches", None)
+    mcp_mod._get_batches.cache_clear()

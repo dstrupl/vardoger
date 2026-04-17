@@ -91,7 +91,7 @@ def discover_claude_code_files(
 def _iter_entries(path: Path) -> Iterator[ClaudeCodeEntry]:
     """Yield validated ClaudeCodeEntry rows from a JSONL file, skipping bad lines."""
     try:
-        with open(path, encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             for line in f:
                 stripped = line.strip()
                 if not stripped:

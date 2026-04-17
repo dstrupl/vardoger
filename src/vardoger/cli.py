@@ -124,15 +124,14 @@ def _write_platform(platform: str, content: str, scope: str, project_path: Path 
     """Write content to the appropriate platform rules location."""
     if platform == "cursor":
         return write_cursor_rules(content, project_path=project_path)
-    elif platform == "claude-code":
+    if platform == "claude-code":
         return write_claude_code_rules(content, scope=scope, project_path=project_path)
-    elif platform == "codex":
+    if platform == "codex":
         return write_codex_rules(content, scope=scope, project_path=project_path)
-    elif platform == "openclaw":
+    if platform == "openclaw":
         return write_openclaw_rules(content, scope=scope, project_path=project_path)
-    else:
-        print(f"Unknown platform: {platform}", file=sys.stderr)
-        sys.exit(1)
+    print(f"Unknown platform: {platform}", file=sys.stderr)
+    sys.exit(1)
 
 
 def _clear_platform(platform: str, scope: str, project_path: Path | None) -> bool:

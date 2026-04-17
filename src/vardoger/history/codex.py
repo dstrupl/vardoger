@@ -46,7 +46,7 @@ def discover_codex_files(
 def _iter_entries(path: Path) -> Iterator[CodexEntry]:
     """Yield validated CodexEntry rows from a JSONL file, skipping bad lines."""
     try:
-        with open(path, encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             for line in f:
                 stripped = line.strip()
                 if not stripped:

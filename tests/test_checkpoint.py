@@ -218,7 +218,7 @@ def test_v2_to_v3_migration_wraps_single_record_in_list():
                 "cursor": {
                     "generated_at": "2026-04-01T00:00:00+00:00",
                     "conversations_analyzed": 7,
-                    "output_path": "/tmp/out.md",
+                    "output_path": str(state_dir / "out.md"),
                 }
             },
         }

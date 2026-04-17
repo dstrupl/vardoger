@@ -53,7 +53,7 @@ def _parse_transcript(path: Path, project_slug: str, rel_path: str) -> Conversat
     session_id = path.stem
 
     try:
-        with open(path, encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             for line in f:
                 stripped = line.strip()
                 if not stripped:

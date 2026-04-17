@@ -16,6 +16,8 @@ Usage (direct):
 
 from __future__ import annotations
 
+import functools
+
 from mcp.server.fastmcp import FastMCP
 
 from vardoger.digest import batch_conversations, format_batch
@@ -113,15 +115,16 @@ def vardoger_personalize() -> str:
     return _ORCHESTRATION_INSTRUCTIONS
 
 
-_cached_batches: list | None = None
-
-
+@functools.lru_cache(maxsize=1)
 def _get_batches() -> list:
-    global _cached_batches
-    if _cached_batches is None:
-        conversations = read_cursor_history()
-        _cached_batches = batch_conversations(conversations)
-    return _cached_batches
+    """Return the current Cursor history split into batches.
+
+    Wrapped in ``lru_cache`` so the (relatively expensive) history read runs
+    once per process; tests can clear the cache via
+    ``_get_batches.cache_clear()``.
+    """
+    conversations = read_cursor_history()
+    return batch_conversations(conversations)
 
 
 @mcp.tool()

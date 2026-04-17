@@ -63,18 +63,40 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "UP",  # pyupgrade
-    "B",   # flake8-bugbear
-    "SIM", # flake8-simplify
-    "RUF", # ruff-specific
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+    "C90",  # mccabe complexity
+    "PL",   # pylint
+    "RET",  # flake8-return
+    "PTH",  # flake8-use-pathlib
+    "TRY",  # tryceratops
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["vardoger"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 7
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "PLC0415", "PLR0913", "PTH123"]
+# Deferred imports in these modules avoid import cycles and keep CLI startup fast.
+"src/vardoger/cli.py" = ["PLR0915", "PLC0415"]
+"src/vardoger/mcp_server.py" = ["PLC0415"]
+"src/vardoger/quality.py" = ["PLC0415"]
+"src/vardoger/staleness.py" = ["PLC0415"]
+"src/vardoger/feedback.py" = ["PLC0415"]
+# checkpoint state migrations compare against historical schema numbers.
+"src/vardoger/checkpoint.py" = ["PLR2004", "PTH123"]
 
 [tool.mypy]
 python_version = "3.11"

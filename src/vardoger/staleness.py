@@ -35,15 +35,14 @@ def _discover_files(platform: str) -> list[tuple]:
     from vardoger.history.cursor import discover_cursor_files
     from vardoger.history.openclaw import discover_openclaw_files
 
-    if platform == "cursor":
-        return discover_cursor_files()
-    elif platform == "claude-code":
-        return discover_claude_code_files()
-    elif platform == "codex":
-        return discover_codex_files()
-    elif platform == "openclaw":
-        return discover_openclaw_files()
-    return []
+    dispatch = {
+        "cursor": discover_cursor_files,
+        "claude-code": discover_claude_code_files,
+        "codex": discover_codex_files,
+        "openclaw": discover_openclaw_files,
+    }
+    discover = dispatch.get(platform)
+    return discover() if discover is not None else []
 
 
 def _count_new_and_changed(

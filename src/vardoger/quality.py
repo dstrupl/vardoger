@@ -32,6 +32,14 @@ _EMOJI_RE = re.compile("[\U0001f300-\U0001faff\U00002600-\U000027bf\U0001f600-\U
 _SMALL_SAMPLE_THRESHOLD = 5
 
 
+class UnknownPlatformError(ValueError):
+    """Raised when a platform identifier is not recognized."""
+
+    def __init__(self, platform: str) -> None:
+        super().__init__(f"Unknown platform: {platform}")
+        self.platform = platform
+
+
 # ---------------------------------------------------------------------------
 # Metric helpers (public for tests)
 # ---------------------------------------------------------------------------
@@ -171,9 +179,8 @@ def _partition(
         if ts < cutoff:
             if window is None or ts >= cutoff - window:
                 before.append(conv)
-        else:
-            if window is None or ts < cutoff + window:
-                after.append(conv)
+        elif window is None or ts < cutoff + window:
+            after.append(conv)
     return before, after
 
 
@@ -200,7 +207,7 @@ def _read_conversations_for(platform: str) -> list[Conversation]:
         from vardoger.history.openclaw import read_openclaw_history
 
         return read_openclaw_history()
-    raise ValueError(f"Unknown platform: {platform}")
+    raise UnknownPlatformError(platform)
 
 
 _PLATFORM_STATE_KEY = {
