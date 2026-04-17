@@ -259,6 +259,47 @@ def test_prepare_no_conversations_prints_json_zero(
     assert "No conversation history" in captured.err
 
 
+def test_prepare_only_checkpoints_after_final_batch(
+    fake_home: Path,
+    make_conversations: object,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Iterating through batches must not checkpoint mid-way.
+
+    Historical bug: saving the checkpoint on every ``--batch N`` meant the next
+    ``prepare --batch N+1`` call saw a smaller (filtered) history and reported
+    a different total batch count, rejecting later batches as out-of-range.
+    Only the final batch in the iteration should trigger the checkpoint save.
+    """
+    import vardoger.cli as cli_mod
+
+    convs = make_conversations(count=15)  # type: ignore[operator]
+    monkeypatch.setattr("vardoger.cli.read_cursor_history", lambda **_: convs)
+
+    calls: list[int] = []
+    original = cli_mod._save_checkpoint
+
+    def spy(ckpt: object, convos: list, platform: str) -> None:
+        calls.append(len(convos) if convos else 0)
+        original(ckpt, convos, platform)
+
+    monkeypatch.setattr("vardoger.cli._save_checkpoint", spy)
+
+    main(["prepare", "--platform", "cursor"])
+    payload = json.loads(capsys.readouterr().out)
+    assert payload == {"batches": 2, "total_conversations": 15}
+    assert calls == []
+
+    main(["prepare", "--platform", "cursor", "--batch", "1"])
+    capsys.readouterr()
+    assert calls == []
+
+    main(["prepare", "--platform", "cursor", "--batch", "2"])
+    capsys.readouterr()
+    assert calls == [15]
+
+
 # ---------------------------------------------------------------------------
 # write
 # ---------------------------------------------------------------------------

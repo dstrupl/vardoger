@@ -350,7 +350,12 @@ def _run_prepare(args: argparse.Namespace) -> None:
     print()
     print(batch_text)
 
-    _save_checkpoint(checkpoint, conversations, platform)
+    # Only checkpoint after the assistant has iterated through every batch.
+    # Saving on earlier batches would cause the next `prepare --batch N+1` call
+    # to see a smaller history and report a different total batch count,
+    # breaking the iteration mid-way.
+    if args.batch == len(batches):
+        _save_checkpoint(checkpoint, conversations, platform)
 
 
 # -- write (AI pipeline stage 2) --
