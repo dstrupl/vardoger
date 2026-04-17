@@ -1,3 +1,8 @@
+---
+name: analyze
+description: "Use when the user asks to personalize their assistant, to use vardoger, or to analyze their Codex conversation history. Runs the vardoger CLI to read past conversations and generate tailored instructions."
+---
+
 # Analyze conversation history and generate personalized instructions
 
 Use this skill to read your Codex conversation history, extract behavioral patterns, and generate personalized instructions that help the assistant better understand your preferences and working style.

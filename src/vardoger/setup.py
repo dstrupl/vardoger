@@ -80,7 +80,18 @@ def _write_skill(plugin_dir: Path, platform: str) -> None:
             "preferences and working style."
         )
 
+    frontmatter_desc = (
+        f"Use when the user asks to personalize their assistant, to use vardoger, "
+        f"or to analyze their {label} conversation history. Runs the vardoger CLI "
+        f"to read past conversations and generate tailored {artifact}."
+    )
+
     skill = f"""\
+---
+name: analyze
+description: "{frontmatter_desc}"
+---
+
 # {title}
 
 {desc}
