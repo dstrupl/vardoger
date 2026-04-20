@@ -152,6 +152,13 @@ class ClaudePluginManifest(BaseModel):
     name: str
     description: str
     author: PluginAuthor
+    version: str | None = None
+    homepage: str | None = None
+    repository: str | None = None
+    license: str | None = None
+    keywords: list[str] = []
+    skills: str | None = None
+    hooks: str | None = None
 
 
 class CodexPluginInterface(BaseModel):

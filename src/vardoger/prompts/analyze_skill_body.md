@@ -1,17 +1,6 @@
----
-name: analyze
-description: "Use when the user asks to personalize their assistant, to use vardoger, or to analyze their OpenClaw conversation history. Runs the vardoger CLI to read past conversations and generate tailored instructions."
-version: "0.1.0"
-homepage: "https://github.com/dstrupl/vardoger"
-metadata:
-  openclaw:
-    requires:
-      bins:
-        - vardoger
----
 # Analyze conversation history and generate personalized instructions
 
-Use this skill to read your OpenClaw conversation history, extract behavioral patterns, and generate personalized instructions that help the assistant better understand your preferences and working style.
+Use this skill to read your {PLATFORM_NAME} conversation history, extract behavioral patterns, and generate personalized instructions that help the assistant better understand your preferences and working style.
 
 ## How it works
 
@@ -60,7 +49,7 @@ fi
 ### 2. Check if a refresh is needed
 
 ```bash
-vardoger status --platform openclaw --json
+vardoger status --platform {PLATFORM_SLUG} --json
 ```
 
 If the output shows `"is_stale": false`, tell the user their personalization is up to date and ask if they want to re-run anyway. If stale or never generated, continue with the analysis.
@@ -68,7 +57,7 @@ If the output shows `"is_stale": false`, tell the user their personalization is 
 ### 3. Get batch metadata
 
 ```bash
-vardoger prepare --platform openclaw
+vardoger prepare --platform {PLATFORM_SLUG}
 ```
 
 This prints JSON like `{"batches": 3, "total_conversations": 29}`. Note the number of batches. Tell the user: "Found N conversations in M batches. Analyzing..."
@@ -78,7 +67,7 @@ This prints JSON like `{"batches": 3, "total_conversations": 29}`. Note the numb
 For each batch number from 1 to N, run:
 
 ```bash
-vardoger prepare --platform openclaw --batch 1
+vardoger prepare --platform {PLATFORM_SLUG} --batch 1
 ```
 
 The output contains a summarization prompt and conversation data. Read the output carefully and produce a concise bullet-point summary of the behavioral signals you observe in that batch. Keep your summary for later.
@@ -90,7 +79,7 @@ Repeat for all batches (--batch 2, --batch 3, etc.).
 ### 5. Get the synthesis prompt
 
 ```bash
-vardoger prepare --platform openclaw --synthesize
+vardoger prepare --platform {PLATFORM_SLUG} --synthesize
 ```
 
 ### 6. Synthesize the personalization
@@ -102,7 +91,7 @@ Following the synthesis prompt, combine all your batch summaries into a single p
 Pipe your personalization to vardoger:
 
 ```bash
-echo "YOUR_PERSONALIZATION_HERE" | vardoger write --platform openclaw --scope global
+echo "YOUR_PERSONALIZATION_HERE" | vardoger write --platform {PLATFORM_SLUG} --scope global
 ```
 
 Replace `YOUR_PERSONALIZATION_HERE` with the actual personalization markdown you generated.

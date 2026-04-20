@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "vardoger": {
+      "command": "uvx",
+      "args": ["vardoger", "mcp"]
+    }
+  }
+}

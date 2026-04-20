@@ -11,9 +11,9 @@
   "keywords": [
     "personalization",
     "productivity",
-    "skills",
+    "mcp",
     "local-first"
   ],
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "logo": "assets/logo.svg",
+  "mcpServers": "./mcp.json"
 }

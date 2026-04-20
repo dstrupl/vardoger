@@ -222,7 +222,7 @@ Self-serve publishing to the official directory is listed as "coming soon."
 
 ---
 
-### 5.4 OpenClaw [ ]
+### 5.4 OpenClaw [x]
 
 #### Conversation History Storage
 
@@ -306,7 +306,7 @@ The core analysis logic must be shared across all three platform integrations. P
 
 **Deliverables:**
 - [x] History reader adapters for Cursor, Claude Code, and Codex (JSONL parsers)
-- [ ] History reader adapter for OpenClaw (JSONL parser)
+- [x] History reader adapter for OpenClaw (JSONL parser)
 - [ ] ~~History reader adapters for SQLite sources (Cursor chat DB, Codex state DB)~~ — **Deferred.** Cursor SQLite stores contain non-agent UI state in undocumented formats; Codex SQLite indexes the same JSONL files. JSONL provides cleaner data.
 - [x] A unified internal representation of conversation data
 - [x] Platform-native prompt writers that produce valid configuration files
@@ -314,11 +314,11 @@ The core analysis logic must be shared across all three platform integrations. P
 - [x] Distribution via `pipx install vardoger` verified; `vardoger_personalize` MCP entry-point tool guides Cursor agent through the analysis flow
 - [x] A placeholder analysis step that produces a minimal, hard-coded prompt addition (proving the pipeline works end-to-end)
 - [x] Local plugin install for all three platforms (Cursor MCP, Claude Code plugin, Codex plugin)
-- [ ] Local skill install for OpenClaw
+- [x] Local skill install for OpenClaw
 
 **Success criteria:** A user can install vardoger via `pipx install vardoger`, run `vardoger setup <platform>`, and see a vardoger-authored rule file appear in the correct location — no marketplace required.
 
-> **Status:** Complete for Cursor, Claude Code, and Codex. OpenClaw integration pending. Marketplace publishing deferred to Phase 4 (after limited beta).
+> **Status:** Complete for Cursor, Claude Code, Codex, and OpenClaw. Marketplace publishing deferred to Phase 4 (after limited beta).
 
 ### Phase 2 — Intelligence: AI-Powered Analysis [x]
 

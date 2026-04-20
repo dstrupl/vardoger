@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="vardoger logo">
+  <title>vardoger</title>
+  <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Outer mark: a V, echoing the "vardoger" wordmark and the Scandinavian rune Fehu tilted forward -->
+    <path d="M28 32 L64 96 L100 32" />
+    <!-- Trailing strokes: the spirit that "arrives before you" -->
+    <path d="M16 40 L22 58" opacity="0.55" />
+    <path d="M8 48 L14 62" opacity="0.35" />
+    <!-- Forward-motion dot -->
+    <circle cx="100" cy="32" r="4" fill="currentColor" stroke="none" />
+  </g>
+</svg>

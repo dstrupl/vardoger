@@ -1,15 +1,24 @@
 ---
 name: analyze
-description: "Use when the user asks to personalize their assistant, to use vardoger, or to analyze their Claude Code conversation history. Runs the vardoger CLI to read past conversations and generate tailored rules."
+description: "Use when the user asks to personalize their assistant, to use vardoger, or to analyze their Claude Code conversation history. Runs the vardoger CLI to read past conversations and generate tailored instructions."
 ---
+# Analyze conversation history and generate personalized instructions
 
-# Analyze conversation history and generate personalized rules
-
-Use this skill to read your Claude Code conversation history, extract behavioral patterns, and generate a personalized rule file that helps the assistant better understand your preferences and working style.
+Use this skill to read your Claude Code conversation history, extract behavioral patterns, and generate personalized instructions that help the assistant better understand your preferences and working style.
 
 ## How it works
 
 vardoger prepares your conversation history in batches. You (the assistant) summarize each batch for behavioral signals, then synthesize all summaries into a personalization. vardoger writes the result.
+
+## Sandbox note (read before running any command)
+
+vardoger reads and writes files **outside** the current workspace:
+
+- Reads conversation history from the platform's session directory (e.g. `~/.codex/sessions/`, `~/.claude/projects/`, `~/.cursor/projects/`, `~/.openclaw/agents/`).
+- Writes a checkpoint state file to `~/.vardoger/state.json` (created on first run).
+- Writes the final personalization to the platform's rules file (e.g. `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`, `.cursor/rules/vardoger.md`, `~/.openclaw/skills/vardoger-personalization/SKILL.md`).
+
+When the host asks to approve a `vardoger` command, approve it with write access beyond the workspace. Otherwise the first `vardoger prepare` call will fail with `PermissionError: ... ~/.vardoger/state.tmp` because the sandbox blocks writes outside the current working directory.
 
 ## Steps
 
@@ -25,10 +34,7 @@ write a personalization file, so the CLI must be on PATH.
 
 Install options:
 
-  # Recommended while vardoger is in beta (pre-1.0):
-  pipx install --pip-args="--pre" vardoger
-
-  # Once vardoger reaches 1.0, the --pip-args flag is not needed:
+  # Recommended:
   pipx install vardoger
 
   # Or run without installing:

@@ -24,13 +24,16 @@ jobs:
         run: uv sync --python ${{ matrix.python-version }}
 
       - name: Lint
-        run: uv run ruff check src/ tests/
+        run: uv run ruff check src/ tests/ scripts/
 
       - name: Format check
-        run: uv run ruff format --check src/ tests/
+        run: uv run ruff format --check src/ tests/ scripts/
 
       - name: Type check
         run: uv run mypy src/
+
+      - name: Check rendered plugin skills are in sync
+        run: uv run scripts/render-skills.py --check
 
       - name: Test
         run: uv run pytest tests/ --tb=short -q --cov=vardoger --cov-fail-under=80
