@@ -151,6 +151,11 @@ The `publish.yml` workflow builds the package and uploads it to PyPI via [truste
 
 Early development. See [PRD.md](PRD.md) for the full product requirements document.
 
+## Privacy and security
+
+- [PRIVACY.md](PRIVACY.md) — what vardoger reads, writes, and (importantly) does not send anywhere.
+- [SECURITY.md](SECURITY.md) — how to report a vulnerability privately.
+
 ## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).

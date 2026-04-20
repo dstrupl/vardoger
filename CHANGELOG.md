@@ -8,6 +8,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `PRIVACY.md` documenting what vardoger reads, writes, and does not
+  transmit. Linked from `README.md` and `SECURITY.md`. Needed for the
+  Claude Code plugin directory submission ("Privacy Policy URL" is
+  required for Anthropic-verified listings).
+
+### Added
+
 - Public Codex custom-marketplace manifest at `plugins/codex/marketplace.json`,
   installable with `codex marketplace add https://github.com/dstrupl/vardoger.git --sparse plugins/codex`
   ([openai/codex#17087](https://github.com/openai/codex/pull/17087)).
