@@ -362,7 +362,7 @@ The core analysis logic must be shared across all platform integrations. Platfor
 
 **Success criteria:** A user can discover and install vardoger through each platform's native marketplace UI.
 
-### Phase 5 — Tier 1 Platform Expansion [ ]
+### Phase 5 — Tier 1 Platform Expansion [x]
 
 **Goal:** Extend vardoger to the three most popular AI coding assistants that are not yet supported. These cover the largest remaining segment of developers for whom local, history-driven personalization makes sense, and each already exposes both a machine-readable local conversation store and a file-based instructions/rules hook that vardoger can write to non-destructively.
 
@@ -376,12 +376,12 @@ The core analysis logic must be shared across all platform integrations. Platfor
 
 **Deliverables:**
 
-- [ ] History reader adapter per platform (`src/vardoger/history/<platform>.py`)
-- [ ] Platform-native prompt writer per platform (`src/vardoger/writers/<platform>.py`) with fenced, idempotent output analogous to the existing Codex `AGENTS.md` writer
-- [ ] `vardoger setup <platform>` subcommand per platform, covering install-time registration where required
-- [ ] Checkpoint-store namespace per platform, consistent with the existing per-platform scheme in `~/.vardoger/state.json`
-- [ ] Tests mirroring existing adapter/writer coverage and respecting the 80% combined-coverage floor
-- [ ] Updates to `README.md`, `PRIVACY.md` (paths read and written), and `SECURITY.md` (scope of the new adapters/writers)
+- [x] History reader adapter per platform (`src/vardoger/history/<platform>.py`)
+- [x] Platform-native prompt writer per platform (`src/vardoger/writers/<platform>.py`) with fenced, idempotent output analogous to the existing Codex `AGENTS.md` writer
+- [x] `vardoger setup <platform>` subcommand per platform, covering install-time registration where required
+- [x] Checkpoint-store namespace per platform, consistent with the existing per-platform scheme in `~/.vardoger/state.json`
+- [x] Tests mirroring existing adapter/writer coverage and respecting the 80% combined-coverage floor
+- [x] Updates to `README.md`, `PRIVACY.md` (paths read and written), and `SECURITY.md` (scope of the new adapters/writers)
 
 **Prerequisites:**
 

@@ -1,6 +1,6 @@
 # vardoger
 
-A cross-platform plugin for AI coding assistants (Cursor, Claude Code, OpenAI Codex, OpenClaw) that reads your conversation history, extracts behavioral patterns, and generates personalized system prompt additions — making the assistant progressively better suited to how you work.
+A cross-platform plugin for AI coding assistants (Cursor, Claude Code, OpenAI Codex, OpenClaw, GitHub Copilot CLI, Windsurf, Cline) that reads your conversation history, extracts behavioral patterns, and generates personalized system prompt additions — making the assistant progressively better suited to how you work.
 
 All processing happens locally. No data ever leaves your machine.
 
@@ -30,7 +30,7 @@ Recommended for installing vardoger as an isolated CLI tool. Full instructions a
 
 ```bash
 pipx install vardoger
-vardoger setup cursor        # or claude-code, codex, openclaw
+vardoger setup cursor        # or claude-code, codex, openclaw, copilot, windsurf, cline
 ```
 
 Then tell your assistant: **"Personalize my assistant."**
@@ -56,7 +56,7 @@ Then tell your assistant: **"Personalize my assistant."**
 
 | Command | Purpose |
 |---|---|
-| `vardoger setup <platform>` | Register vardoger with a platform (`cursor`, `claude-code`, `codex`, `openclaw`). |
+| `vardoger setup <platform>` | Register vardoger with a platform (`cursor`, `claude-code`, `codex`, `openclaw`, `copilot`, `windsurf`, `cline`). |
 | `vardoger status [--platform X] [--json]` | Report whether each personalization is fresh or stale. |
 | `vardoger prepare --platform X [--batch N] [--synthesize]` | Produce the batched prompts used by the AI-driven skill pipeline. |
 | `vardoger write --platform X` | Read synthesized personalization from stdin and write it to the platform's rules file (supports YAML-frontmatter confidence metadata). |
@@ -78,6 +78,9 @@ Then tell your assistant: **"Personalize my assistant."**
 | **Claude Code** | Session JSONL | `.claude/rules/vardoger.md` | Plugin with skill |
 | **OpenAI Codex** | Session rollout JSONL | `~/.codex/AGENTS.md` | Plugin with skill |
 | **OpenClaw** | Session JSONL | `~/.openclaw/skills/vardoger-personalization/SKILL.md` | Skill |
+| **GitHub Copilot CLI** | `~/.copilot/session-state/*.jsonl` | `~/.copilot/copilot-instructions.md` (global) or `<project>/.github/copilot-instructions.md` (project) — managed inside a `<!-- vardoger:start -->` fenced section | CLI-only |
+| **Windsurf** | `~/.codeium/windsurf/**/*.jsonl` | `~/.codeium/windsurf/memories/global_rules.md` (global, fenced section) or `<project>/.windsurf/rules/vardoger.md` (project, dedicated file) | CLI-only |
+| **Cline** | VS Code `globalStorage/.../tasks/*/api_conversation_history.json` | `<project>/.clinerules/vardoger.md` if `.clinerules` is a directory, otherwise a fenced section in `<project>/.clinerules` (project-only) | CLI-only |
 
 ## Development
 

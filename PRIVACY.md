@@ -4,7 +4,8 @@
 
 This document describes how the vardoger project handles data. vardoger is a
 free, open-source, Apache-2.0–licensed plugin for AI coding assistants
-(Cursor, Claude Code, OpenAI Codex, OpenClaw). This policy applies to the
+(Cursor, Claude Code, OpenAI Codex, OpenClaw, GitHub Copilot CLI, Windsurf,
+Cline). This policy applies to the
 vardoger CLI and every plugin published under
 [github.com/dstrupl/vardoger](https://github.com/dstrupl/vardoger).
 
@@ -22,10 +23,13 @@ assistant already stores on your own disk:
 
 | Platform     | Path read                                                             |
 | ------------ | --------------------------------------------------------------------- |
-| Cursor       | `~/.cursor/projects/<project>/agent-transcripts/*.jsonl`              |
-| Claude Code  | `~/.claude/projects/<project>/*.jsonl`                                |
-| Codex        | `~/.codex/sessions/**/*.jsonl`                                        |
-| OpenClaw     | `~/.openclaw/agents/<agent>/sessions/*.jsonl`                         |
+| Cursor          | `~/.cursor/projects/<project>/agent-transcripts/*.jsonl`           |
+| Claude Code     | `~/.claude/projects/<project>/*.jsonl`                             |
+| Codex           | `~/.codex/sessions/**/*.jsonl`                                     |
+| OpenClaw        | `~/.openclaw/agents/<agent>/sessions/*.jsonl`                      |
+| GitHub Copilot  | `~/.copilot/session-state/*.jsonl`                                 |
+| Windsurf        | `~/.codeium/windsurf/**/*.jsonl`                                   |
+| Cline           | VS Code `globalStorage/.../tasks/*/api_conversation_history.json`  |
 
 These files are produced by the AI assistant itself; vardoger only reads
 them. vardoger never reaches into other directories, the system password
@@ -41,9 +45,18 @@ vardoger writes to two locations on your machine:
    copy it, or delete it at any time.
 2. **The platform's personalization file**, e.g.
    `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`,
-   `.cursor/rules/vardoger.md`, or
-   `~/.openclaw/skills/vardoger-personalization/SKILL.md`. This is the only
-   on-disk output the host AI assistant will read back.
+   `.cursor/rules/vardoger.md`,
+   `~/.openclaw/skills/vardoger-personalization/SKILL.md`,
+   `~/.copilot/copilot-instructions.md` (or the project-scoped
+   `<project>/.github/copilot-instructions.md`),
+   `~/.codeium/windsurf/memories/global_rules.md` (or the project-scoped
+   `<project>/.windsurf/rules/vardoger.md`), or
+   `<project>/.clinerules` / `<project>/.clinerules/vardoger.md`. For
+   Copilot, Windsurf's global rules, and Cline's single-file mode vardoger
+   only manages a section delimited by `<!-- vardoger:start -->` and
+   `<!-- vardoger:end -->` so it never overwrites hand-authored
+   instructions. This is the only on-disk output the host AI assistant
+   will read back.
 
 The checkpoint file is staged in a `.tmp` sibling and atomically renamed
 into place, so a crashed run cannot corrupt it. Each generation of the
@@ -74,8 +87,8 @@ vardoger implements the "summarize each batch, then synthesize" workflow by
 calling back into the **host AI assistant** (the one the user is already
 chatting with). When you run `vardoger prepare --batch 1`, vardoger prints a
 batch of your own conversation excerpts to stdout and the host assistant —
-Claude Code, Cursor, Codex, or OpenClaw — reads them in order to produce a
-summary.
+Claude Code, Cursor, Codex, OpenClaw, GitHub Copilot CLI, Windsurf, or
+Cline — reads them in order to produce a summary.
 
 That means any model-side processing of your conversation data happens
 under the **host assistant's** privacy policy, not under vardoger's. vardoger
@@ -90,6 +103,11 @@ policies:
 - **OpenAI Codex:**
   [openai.com/policies/privacy-policy](https://openai.com/policies/privacy-policy)
 - **OpenClaw:** refer to the OpenClaw project's published policy.
+- **GitHub Copilot CLI:**
+  [docs.github.com/site-policy/privacy-policies/github-general-privacy-statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)
+- **Windsurf (Codeium):**
+  [codeium.com/privacy-policy](https://codeium.com/privacy-policy)
+- **Cline:** refer to the Cline project's published policy.
 
 If you want stricter control, you can disable the relevant assistant's
 cloud features (e.g., "Privacy Mode" in Cursor, enterprise settings in
