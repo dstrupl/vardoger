@@ -1,6 +1,6 @@
 {
   "name": "vardoger",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Personalizes your AI assistant by analyzing conversation history and generating tailored rules. Runs entirely on your machine.",
   "author": {
     "name": "David Strupl"
