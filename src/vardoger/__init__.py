@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: Apache-2.0
 """vardoger - Personalize AI coding assistants by analyzing conversation history."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
