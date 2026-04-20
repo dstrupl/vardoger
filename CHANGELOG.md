@@ -8,6 +8,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Phase 5 Tier 1 platform expansion: GitHub Copilot CLI, Windsurf, and
+  Cline are now first-class platforms. Each ships a history adapter
+  (`src/vardoger/history/{copilot,windsurf,cline}.py`) that parses the
+  platform's native local session storage, a prompt writer
+  (`src/vardoger/writers/{copilot,windsurf,cline}.py`) that emits an
+  idempotent fenced section (or dedicated file, where the platform
+  prefers that) so hand-authored instructions are never overwritten,
+  and a `vardoger setup <platform>` flow. Checkpointing, staleness,
+  feedback, and A/B quality comparison all treat the three new
+  platforms the same as the original four. Project-scope only for
+  Cline (it does not define a global rules location).
 - `PRIVACY.md` documenting what vardoger reads, writes, and does not
   transmit. Linked from `README.md` and `SECURITY.md`. Needed for the
   Claude Code plugin directory submission ("Privacy Policy URL" is

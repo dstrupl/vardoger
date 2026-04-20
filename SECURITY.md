@@ -34,7 +34,8 @@ Please do **not** open a public GitHub issue for security-sensitive reports.
 1. Email the maintainer at `dstrupl@gmail.com` with:
    - A description of the issue and its impact.
    - Minimal reproduction steps (include vardoger version, Python version, and
-     host platform — Cursor / Claude Code / Codex / OpenClaw).
+     host platform — Cursor / Claude Code / Codex / OpenClaw / GitHub
+     Copilot CLI / Windsurf / Cline).
    - Any logs, payloads, or screenshots relevant to the report. Redact
      conversation content; vardoger does not need it to reproduce most bugs.
 2. Expect an acknowledgement within 3 business days.
@@ -59,7 +60,8 @@ Out of scope:
 - Bugs that require the user to already have arbitrary code execution on
   their own machine.
 - Issues in the upstream AI assistants (report those to Cursor, Anthropic,
-  OpenAI, or OpenClaw directly).
+  OpenAI, OpenClaw, GitHub/Microsoft, Codeium, or the Cline project
+  directly).
 
 ## Acknowledgements
 
