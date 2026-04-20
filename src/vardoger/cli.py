@@ -745,6 +745,11 @@ def main(argv: list[str] | None = None) -> None:
     hook_parser = subparsers.add_parser("_hook-session-start")
     hook_parser.add_argument("platform", choices=PLATFORM_CHOICES)
 
+    subparsers.add_parser(
+        "mcp",
+        help="Run the vardoger MCP server over stdio (used by the Cursor plugin).",
+    )
+
     args = parser.parse_args(argv)
 
     verbose = getattr(args, "verbose", False)
@@ -769,9 +774,18 @@ def main(argv: list[str] | None = None) -> None:
         _run_feedback(args)
     elif args.command == "compare":
         _run_compare(args)
+    elif args.command == "mcp":
+        _run_mcp()
     else:
         parser.print_help()
         sys.exit(1)
+
+
+def _run_mcp() -> None:
+    """Run the MCP server over stdio. Used by the Cursor plugin's mcp.json."""
+    from vardoger.mcp_server import mcp
+
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

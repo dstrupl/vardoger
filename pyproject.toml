@@ -1,6 +1,6 @@
 [project]
 name = "vardoger"
-version = "0.1.0b3"
+version = "0.1.0"
 description = "Personalize AI coding assistants by analyzing conversation history"
 readme = "README.md"
 license = "Apache-2.0"
@@ -10,7 +10,7 @@ authors = [
 ]
 keywords = ["ai", "coding-assistant", "personalization", "cursor", "claude", "codex", "openclaw"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
@@ -32,9 +32,11 @@ dependencies = [
 vardoger = "vardoger.cli:main"
 
 [project.urls]
+Homepage = "https://github.com/dstrupl/vardoger"
 Repository = "https://github.com/dstrupl/vardoger"
 Issues = "https://github.com/dstrupl/vardoger/issues"
 Documentation = "https://github.com/dstrupl/vardoger#readme"
+Changelog = "https://github.com/dstrupl/vardoger/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]

@@ -128,9 +128,7 @@ def test_setup_skill_has_valid_frontmatter(
 
     # The "vardoger CLI not installed" guard must give the user actionable
     # install instructions, not just "install with pipx install vardoger".
-    # Marketplace users may not have pipx or may not know about the --pre
-    # flag required during the beta.
-    assert 'pipx install --pip-args="--pre" vardoger' in text
+    # Marketplace users may not have pipx on PATH, so document uvx too.
     assert "pipx install vardoger" in text
     assert "uvx vardoger" in text
     assert "pipx.pypa.io" in text

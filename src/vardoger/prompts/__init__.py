@@ -23,6 +23,19 @@ def synthesize_prompt() -> str:
     return load_prompt("synthesize")
 
 
+def analyze_skill_body(platform_slug: str, platform_name: str) -> str:
+    """Return the analyze/SKILL.md body with platform placeholders filled in.
+
+    The frontmatter is composed separately by each caller because it varies
+    between marketplaces (e.g., ClawHub requires `version` and
+    `metadata.openclaw.requires.bins`).
+    """
+    template = load_prompt("analyze_skill_body")
+    return template.replace("{PLATFORM_NAME}", platform_name).replace(
+        "{PLATFORM_SLUG}", platform_slug
+    )
+
+
 def feedback_context_prompt(
     kept_rules: list[str],
     removed_rules: list[str],

@@ -25,6 +25,12 @@ echo "  venv ready at $REPO_ROOT/.venv"
 echo "  CLI available at $VARDOGER_CLI"
 echo ""
 
+# Keep the per-platform plugins/*/skills/analyze/SKILL.md files in sync with
+# the shared src/vardoger/prompts/analyze_skill_body.md template. CI enforces
+# the same check with `--check`.
+(cd "$REPO_ROOT" && uv run scripts/render-skills.py)
+echo ""
+
 # ------------------------------------------------------------------
 # Step 2: Cursor — register MCP server
 # ------------------------------------------------------------------

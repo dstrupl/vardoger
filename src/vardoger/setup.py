@@ -29,14 +29,20 @@ from vardoger.models import (
     McpServerConfig,
     PluginAuthor,
 )
+from vardoger.prompts import analyze_skill_body
 
 CLAUDE_PLUGIN_MANIFEST = ClaudePluginManifest(
     name="vardoger",
+    version="0.1.0",
     description=(
         "Personalizes your AI assistant by analyzing conversation "
-        "history and generating tailored rules"
+        "history and generating tailored rules. Runs entirely on your machine."
     ),
-    author=PluginAuthor(name="dstrupl"),
+    author=PluginAuthor(name="David Strupl"),
+    homepage="https://github.com/dstrupl/vardoger",
+    repository="https://github.com/dstrupl/vardoger",
+    license="Apache-2.0",
+    keywords=["personalization", "productivity", "skills", "local-first"],
 )
 
 CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
@@ -44,13 +50,13 @@ CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
     version="0.1.0",
     description=(
         "Personalizes your AI assistant by analyzing conversation "
-        "history and generating tailored instructions"
+        "history and generating tailored instructions. Runs entirely on your machine."
     ),
-    author=PluginAuthor(name="dstrupl"),
+    author=PluginAuthor(name="David Strupl"),
     homepage="https://github.com/dstrupl/vardoger",
     repository="https://github.com/dstrupl/vardoger",
     license="Apache-2.0",
-    keywords=["personalization", "productivity", "assistant"],
+    keywords=["personalization", "productivity", "skills", "local-first"],
     interface=CodexPluginInterface(
         displayName="Vardoger",
         shortDescription="Personalize your assistant from your own conversation history",
@@ -72,166 +78,30 @@ def _vardoger_plugin_dir() -> Path:
     return Path.home() / ".vardoger" / "plugins"
 
 
+_PLATFORM_LABELS: dict[str, str] = {
+    "claude-code": "Claude Code",
+    "codex": "Codex",
+    "openclaw": "OpenClaw",
+}
+
+
+def _render_skill(platform: str) -> str:
+    """Compose frontmatter + shared body into a full SKILL.md for a platform."""
+    label = _PLATFORM_LABELS.get(platform, platform)
+    description = (
+        f"Use when the user asks to personalize their assistant, to use vardoger, "
+        f"or to analyze their {label} conversation history. Runs the vardoger CLI "
+        f"to read past conversations and generate tailored instructions."
+    )
+    frontmatter = f'---\nname: analyze\ndescription: "{description}"\n---\n'
+    return frontmatter + analyze_skill_body(platform, label)
+
+
 def _write_skill(plugin_dir: Path, platform: str) -> None:
     """Write the SKILL.md file for a CLI-based platform."""
     skill_dir = plugin_dir / "skills" / "analyze"
     skill_dir.mkdir(parents=True, exist_ok=True)
-
-    platform_labels = {
-        "claude-code": ("Claude Code", "rules"),
-        "codex": ("Codex", "instructions"),
-        "openclaw": ("OpenClaw", "instructions"),
-    }
-    label, artifact = platform_labels.get(platform, (platform, "instructions"))
-
-    if platform == "claude-code":
-        title = f"Analyze conversation history and generate personalized {artifact}"
-        desc = (
-            f"Use this skill to read your {label} conversation history, "
-            "extract behavioral patterns, and generate a personalized rule "
-            "file that helps the assistant better understand your preferences "
-            "and working style."
-        )
-    else:
-        title = f"Analyze conversation history and generate personalized {artifact}"
-        desc = (
-            f"Use this skill to read your {label} conversation history, "
-            "extract behavioral patterns, and generate personalized "
-            "instructions that help the assistant better understand your "
-            "preferences and working style."
-        )
-
-    frontmatter_desc = (
-        f"Use when the user asks to personalize their assistant, to use vardoger, "
-        f"or to analyze their {label} conversation history. Runs the vardoger CLI "
-        f"to read past conversations and generate tailored {artifact}."
-    )
-
-    skill = f"""\
----
-name: analyze
-description: "{frontmatter_desc}"
----
-
-# {title}
-
-{desc}
-
-## How it works
-
-vardoger prepares your conversation history in batches. You (the assistant) \
-summarize each batch for behavioral signals, then synthesize all summaries \
-into a personalization. vardoger writes the result.
-
-## Sandbox note (read before running any command)
-
-vardoger reads and writes files **outside** the current workspace:
-
-- Reads conversation history from the platform's session directory \
-(e.g. `~/.codex/sessions/`, `~/.claude/projects/`, etc.).
-- Writes a checkpoint state file to `~/.vardoger/state.json` (created on \
-first run).
-- Writes the final personalization to the platform's rules file \
-(e.g. `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`).
-
-When the host asks to approve a `vardoger` command, approve it with \
-write access beyond the workspace. Otherwise the first `vardoger prepare` \
-call will fail with `PermissionError: ... ~/.vardoger/state.tmp` because \
-the sandbox blocks writes outside the current working directory.
-
-## Steps
-
-### 1. Verify vardoger is installed
-
-```bash
-if ! command -v vardoger >/dev/null 2>&1; then
-  cat <<'INSTALL_EOF'
-vardoger CLI is not installed.
-
-This skill calls the vardoger CLI to read your conversation history and
-write a personalization file, so the CLI must be on PATH.
-
-Install options:
-
-  # Recommended while vardoger is in beta (pre-1.0):
-  pipx install --pip-args="--pre" vardoger
-
-  # Once vardoger reaches 1.0, the --pip-args flag is not needed:
-  pipx install vardoger
-
-  # Or run without installing:
-  uvx vardoger --help
-
-If you do not have pipx, see https://pipx.pypa.io/stable/installation/.
-
-Project page: https://github.com/dstrupl/vardoger
-
-After installing, re-run the personalization request.
-INSTALL_EOF
-  exit 1
-fi
-```
-
-### 2. Get batch metadata
-
-```bash
-vardoger prepare --platform {platform}
-```
-
-This prints JSON like `{{"batches": 3, "total_conversations": 29}}`. Note the \
-number of batches. Tell the user: "Found N conversations in M batches. Analyzing..."
-
-### 3. Summarize each batch
-
-For each batch number from 1 to N, run:
-
-```bash
-vardoger prepare --platform {platform} --batch 1
-```
-
-The output contains a summarization prompt and conversation data. Read the \
-output carefully and produce a concise bullet-point summary of the behavioral \
-signals you observe in that batch. Keep your summary for later.
-
-Tell the user which batch you are processing: "Analyzing batch 1 of N..."
-
-Repeat for all batches (--batch 2, --batch 3, etc.).
-
-### 4. Get the synthesis prompt
-
-```bash
-vardoger prepare --platform {platform} --synthesize
-```
-
-### 5. Synthesize the personalization
-
-Following the synthesis prompt, combine all your batch summaries into a \
-single personalization. The output should be clean markdown with actionable \
-instructions for an AI assistant.
-
-### 6. Write the result
-
-Pipe your personalization to vardoger:
-
-```bash
-echo "YOUR_PERSONALIZATION_HERE" | vardoger write --platform {platform} --scope global
-```
-
-Replace `YOUR_PERSONALIZATION_HERE` with the actual personalization markdown \
-you generated.
-
-### 7. Report to the user
-
-Tell the user what was written and where. Mention they can ask you to re-run \
-vardoger any time to update the personalization.
-
-## When to use
-
-- When the user asks to personalize their assistant
-- When the user asks to analyze their conversation history
-- When the user mentions "vardoger"
-"""
-    (skill_dir / "SKILL.md").write_text(skill, encoding="utf-8")
+    (skill_dir / "SKILL.md").write_text(_render_skill(platform), encoding="utf-8")
 
 
 def setup_cursor() -> None:
@@ -268,7 +138,8 @@ def setup_claude_code() -> None:
     manifest_dir = plugin_dir / ".claude-plugin"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     (manifest_dir / "plugin.json").write_text(
-        CLAUDE_PLUGIN_MANIFEST.model_dump_json(indent=2) + "\n", encoding="utf-8"
+        CLAUDE_PLUGIN_MANIFEST.model_dump_json(indent=2, exclude_none=True) + "\n",
+        encoding="utf-8",
     )
 
     _write_skill(plugin_dir, "claude-code")
