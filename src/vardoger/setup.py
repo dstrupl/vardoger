@@ -230,9 +230,14 @@ def setup_openclaw() -> None:
 def setup_copilot() -> None:
     """Prepare the GitHub Copilot CLI instructions path for vardoger output.
 
-    Copilot has no plugin or MCP registry to hook into, so this command just
-    makes sure ``~/.copilot/copilot-instructions.md`` exists (creating a short
-    placeholder when absent) and prints next steps.
+    Copilot CLI does have a plugin marketplace (see ``plugins/copilot/`` in
+    this repo) but plugin installation goes through ``copilot plugin install``
+    rather than a ``vardoger setup`` flow. This command focuses on the
+    personalization surface: it ensures ``~/.copilot/copilot-instructions.md``
+    exists (creating a short placeholder when absent) so that
+    ``vardoger analyze --platform copilot`` can write a fenced
+    ``<!-- vardoger:start --> ... <!-- vardoger:end -->`` block without
+    clobbering user-authored instructions.
     """
     instructions_path = Path.home() / ".copilot" / "copilot-instructions.md"
     instructions_path.parent.mkdir(parents=True, exist_ok=True)
@@ -249,6 +254,11 @@ def setup_copilot() -> None:
 
     print(f"Prepared Copilot instructions at {instructions_path}")
     print("Run `vardoger analyze --platform copilot` to generate a personalization.")
+    print()
+    print("Optional: install the analyze skill as a Copilot CLI plugin so you can")
+    print("invoke it from inside Copilot.")
+    print("  copilot plugin marketplace add dstrupl/vardoger:plugins/copilot")
+    print("  copilot plugin install vardoger@vardoger")
     print()
     _print_getting_started()
 

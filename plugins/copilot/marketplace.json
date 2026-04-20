@@ -1,0 +1,28 @@
+{
+  "name": "vardoger",
+  "owner": {
+    "name": "David Strupl"
+  },
+  "metadata": {
+    "description": "Personalizes your AI assistant by analyzing local conversation history and generating tailored instructions. Runs entirely on your machine.",
+    "version": "0.2.1"
+  },
+  "plugins": [
+    {
+      "name": "vardoger",
+      "description": "Personalizes your AI assistant by analyzing conversation history and generating tailored instructions. Runs entirely on your machine.",
+      "version": "0.2.1",
+      "source": ".",
+      "homepage": "https://github.com/dstrupl/vardoger",
+      "repository": "https://github.com/dstrupl/vardoger",
+      "license": "Apache-2.0",
+      "category": "Productivity",
+      "keywords": [
+        "personalization",
+        "productivity",
+        "skills",
+        "local-first"
+      ]
+    }
+  ]
+}

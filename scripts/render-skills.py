@@ -63,13 +63,18 @@ _TARGETS: tuple[PluginTarget, ...] = (
         output=REPO_ROOT / "plugins" / "codex" / "skills" / "analyze" / "SKILL.md",
     ),
     PluginTarget(
+        platform_slug="copilot",
+        platform_name="GitHub Copilot CLI",
+        output=REPO_ROOT / "plugins" / "copilot" / "skills" / "analyze" / "SKILL.md",
+    ),
+    PluginTarget(
         platform_slug="openclaw",
         platform_name="OpenClaw",
         output=REPO_ROOT / "plugins" / "openclaw" / "skills" / "analyze" / "SKILL.md",
         # ClawHub requires version + metadata.openclaw.requires.* (see
         # openclaw/clawhub docs/skill-format.md).
         frontmatter=(
-            'version: "0.2.0"',
+            'version: "0.2.1"',
             'homepage: "https://github.com/dstrupl/vardoger"',
             "metadata:",
             "  openclaw:",
