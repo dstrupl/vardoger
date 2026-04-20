@@ -1,0 +1,19 @@
+{
+  "name": "vardoger",
+  "version": "0.2.1",
+  "description": "Personalizes your AI assistant by analyzing conversation history and generating tailored instructions. Runs entirely on your machine.",
+  "author": {
+    "name": "David Strupl"
+  },
+  "homepage": "https://github.com/dstrupl/vardoger",
+  "repository": "https://github.com/dstrupl/vardoger",
+  "license": "Apache-2.0",
+  "keywords": [
+    "personalization",
+    "productivity",
+    "skills",
+    "local-first"
+  ],
+  "category": "Productivity",
+  "skills": "./skills/"
+}
