@@ -25,7 +25,7 @@ assistant already stores on your own disk:
 | Cursor       | `~/.cursor/projects/<project>/agent-transcripts/*.jsonl`              |
 | Claude Code  | `~/.claude/projects/<project>/*.jsonl`                                |
 | Codex        | `~/.codex/sessions/**/*.jsonl`                                        |
-| OpenClaw     | `~/.openclaw/agents/<agent>/conversations/*.jsonl`                    |
+| OpenClaw     | `~/.openclaw/agents/<agent>/sessions/*.jsonl`                         |
 
 These files are produced by the AI assistant itself; vardoger only reads
 them. vardoger never reaches into other directories, the system password

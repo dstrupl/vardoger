@@ -291,7 +291,7 @@ vardoger must never modify user-authored configuration files. It writes only to 
 
 ### 6.5 Cross-Platform Portability [x]
 
-The core analysis logic must be shared across all three platform integrations. Platform-specific code should be limited to:
+The core analysis logic must be shared across all platform integrations. Platform-specific code should be limited to:
 - History discovery and parsing (adapters per platform)
 - Prompt output formatting and delivery (writers per platform)
 - Plugin packaging and distribution
@@ -302,7 +302,7 @@ The core analysis logic must be shared across all three platform integrations. P
 
 ### Phase 1 — Foundation: Read and Contribute [x]
 
-**Goal:** Ship a working plugin on all three platforms that can read conversation history and write a (placeholder) system prompt addition.
+**Goal:** Ship a working plugin on every supported platform that can read conversation history and write a (placeholder) system prompt addition.
 
 **Deliverables:**
 - [x] History reader adapters for Cursor, Claude Code, and Codex (JSONL parsers)
@@ -313,7 +313,7 @@ The core analysis logic must be shared across all three platform integrations. P
 - [x] `vardoger setup` CLI command for post-install platform registration (Cursor MCP, Claude Code plugin dir, Codex marketplace.json)
 - [x] Distribution via `pipx install vardoger` verified; `vardoger_personalize` MCP entry-point tool guides Cursor agent through the analysis flow
 - [x] A placeholder analysis step that produces a minimal, hard-coded prompt addition (proving the pipeline works end-to-end)
-- [x] Local plugin install for all three platforms (Cursor MCP, Claude Code plugin, Codex plugin)
+- [x] Local plugin install for Cursor (MCP), Claude Code, and Codex
 - [x] Local skill install for OpenClaw
 
 **Success criteria:** A user can install vardoger via `pipx install vardoger`, run `vardoger setup <platform>`, and see a vardoger-authored rule file appear in the correct location — no marketplace required.
@@ -361,6 +361,41 @@ The core analysis logic must be shared across all three platform integrations. P
 **Prerequisites:** Limited beta with direct installs (`pipx install vardoger && vardoger setup <platform>`) validates the UX and analysis quality across real users.
 
 **Success criteria:** A user can discover and install vardoger through each platform's native marketplace UI.
+
+### Phase 5 — Tier 1 Platform Expansion [ ]
+
+**Goal:** Extend vardoger to the three most popular AI coding assistants that are not yet supported. These cover the largest remaining segment of developers for whom local, history-driven personalization makes sense, and each already exposes both a machine-readable local conversation store and a file-based instructions/rules hook that vardoger can write to non-destructively.
+
+**Target platforms (unranked within Tier 1):**
+
+| Platform | Vendor | Rationale |
+|---|---|---|
+| **GitHub Copilot** | GitHub / Microsoft | Largest absolute install base among AI coding tools (~4.7M paid subscribers, ~20M total users, ~90% Fortune-100 adoption as of early 2026). Well-defined per-user instructions file (`~/.copilot/copilot-instructions.md`) and per-repo file (`.github/copilot-instructions.md`). Local CLI session data lives under `~/.copilot/session-state/`; VS Code chat history lives in workspace storage. |
+| **Windsurf** | Codeium / Cognition | ~1M+ users; the strongest Cursor alternative in the AI-native IDE category. Clean, file-based rules model: `global_rules.md` for user-wide personalization and `.windsurf/rules/*.md` per workspace. Cascade memories and per-workspace conversation data are already stored locally. |
+| **Cline** | Cline (open-source VS Code extension) | ~5M VS Code installs and ~58k GitHub stars as of 2026 — the largest open-source agent by adoption. Conversation history stored as JSON per-task under `globalStorage/saoudrizwan.claude-dev/tasks/<task-id>/`. Rules hook: `.clinerules`. Adding a Cline adapter also makes a future port to its downstream forks (Roo Code, Kilo Code) near-trivial, which is captured as a follow-on in Phase 6 rather than here. |
+
+**Deliverables:**
+
+- [ ] History reader adapter per platform (`src/vardoger/history/<platform>.py`)
+- [ ] Platform-native prompt writer per platform (`src/vardoger/writers/<platform>.py`) with fenced, idempotent output analogous to the existing Codex `AGENTS.md` writer
+- [ ] `vardoger setup <platform>` subcommand per platform, covering install-time registration where required
+- [ ] Checkpoint-store namespace per platform, consistent with the existing per-platform scheme in `~/.vardoger/state.json`
+- [ ] Tests mirroring existing adapter/writer coverage and respecting the 80% combined-coverage floor
+- [ ] Updates to `README.md`, `PRIVACY.md` (paths read and written), and `SECURITY.md` (scope of the new adapters/writers)
+
+**Prerequisites:**
+
+Phases 2 and 3 must be complete (they are). Phase 4 (marketplace publishing for the original four platforms) does not need to block Phase 5; the two tracks can proceed in parallel, since Phase 5 ships additional adapters/writers through the same `pipx install vardoger && vardoger setup <platform>` flow that Phase 1 established.
+
+**Success criteria:**
+
+A user on any Tier 1 platform can run `pipx install vardoger && vardoger setup <platform>` and observe a vardoger-authored rule/instructions file appear in the platform's native location, with all conversation-history reading and analysis remaining strictly local.
+
+**Explicitly out of scope for Phase 5:**
+
+- **Tier 2 platforms** (Roo Code, Kilo Code, Zed, Aider) — tracked for a later phase. Roo Code and Kilo Code are expected to be near-mechanical extensions of the Cline adapter; Zed already recognises several rules filenames vardoger emits for other platforms.
+- **Platforms whose history storage or instructions mechanism is still in flux** as of early 2026 (Gemini CLI, Qwen Code, Continue.dev, JetBrains Junie, Amazon Q Developer, Block Goose, TRAE, OpenHands, Sourcegraph Cody, Plandex). These are revisited once their on-disk contracts stabilise.
+- **Marketplace / extension-store publishing for Tier 1 platforms** — Phase 5 targets only the direct-install flow (`pipx install vardoger`), mirroring the Phase 1 success criterion. Marketplace submission for these platforms is a separate follow-on.
 
 ---
 
@@ -429,7 +464,7 @@ How much conversation history should vardoger analyze by default?
 | **History adapter** | A vardoger component that reads and normalizes conversation history from a specific platform's storage format. |
 | **Prompt writer** | A vardoger component that formats and delivers the generated prompt addition to a specific platform's configuration mechanism. |
 | **Checkpoint store** | A local record of which conversations have already been processed, enabling incremental analysis without reprocessing old data. |
-| **JSONL** | JSON Lines format — one complete JSON object per line, used by all three platforms for conversation storage. |
+| **JSONL** | JSON Lines format — one complete JSON object per line, used by every currently supported platform for conversation storage. |
 
 ## Appendix B: Platform File Paths Summary
 
