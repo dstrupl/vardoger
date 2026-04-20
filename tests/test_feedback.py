@@ -108,6 +108,101 @@ def test_detect_edits_classifies_changes(tmp_path):
     assert "Avoid emojis in production docs." in record.added_rules
 
 
+def _seed_generation(store: CheckpointStore, platform: str, output: Path, content: str) -> None:
+    """Record a generation whose hash matches what ``read_*_rules`` will echo back.
+
+    Each platform's read helper strips whitespace/fences, so record the
+    post-round-trip content rather than the raw input so edit detection only
+    fires on real user changes.
+    """
+    store.record_generation(
+        platform,
+        conversations_analyzed=0,
+        output_path=str(output),
+        content=content,
+        output_hash=content_hash(content),
+    )
+
+
+def test_detect_edits_covers_copilot(tmp_path):
+    from vardoger.writers.copilot import read_copilot_rules, write_copilot_rules
+
+    project = tmp_path / "proj"
+    store = CheckpointStore(state_dir=tmp_path / "state")
+
+    output = write_copilot_rules(GENERATED, scope="project", project_path=project)
+    round_tripped = read_copilot_rules(scope="project", project_path=project)
+    assert round_tripped is not None
+    _seed_generation(store, "copilot", output, round_tripped)
+
+    assert detect_edits("copilot", store, scope="project", project_path=project) is None
+
+    edited = round_tripped + "\n- custom user rule"
+    write_copilot_rules(edited, scope="project", project_path=project)
+
+    event = detect_edits("copilot", store, scope="project", project_path=project)
+    assert event is not None
+    record = store.get_feedback("copilot")
+    assert "custom user rule" in record.added_rules
+
+
+def test_detect_edits_covers_windsurf(tmp_path):
+    from vardoger.writers.windsurf import read_windsurf_rules, write_windsurf_rules
+
+    project = tmp_path / "proj"
+    store = CheckpointStore(state_dir=tmp_path / "state")
+
+    output = write_windsurf_rules(GENERATED, scope="project", project_path=project)
+    round_tripped = read_windsurf_rules(scope="project", project_path=project)
+    assert round_tripped is not None
+    _seed_generation(store, "windsurf", output, round_tripped)
+
+    assert detect_edits("windsurf", store, scope="project", project_path=project) is None
+
+    edited = round_tripped + "\n- windsurf extra"
+    write_windsurf_rules(edited, scope="project", project_path=project)
+
+    event = detect_edits("windsurf", store, scope="project", project_path=project)
+    assert event is not None
+    record = store.get_feedback("windsurf")
+    assert "windsurf extra" in record.added_rules
+
+
+def test_detect_edits_covers_cline(tmp_path):
+    from vardoger.writers.cline import read_cline_rules, write_cline_rules
+
+    project = tmp_path / "proj"
+    store = CheckpointStore(state_dir=tmp_path / "state")
+
+    output = write_cline_rules(GENERATED, scope="project", project_path=project)
+    round_tripped = read_cline_rules(scope="project", project_path=project)
+    assert round_tripped is not None
+    _seed_generation(store, "cline", output, round_tripped)
+
+    assert detect_edits("cline", store, scope="project", project_path=project) is None
+
+    edited = round_tripped + "\n- cline extra rule"
+    write_cline_rules(edited, scope="project", project_path=project)
+
+    event = detect_edits("cline", store, scope="project", project_path=project)
+    assert event is not None
+    record = store.get_feedback("cline")
+    assert "cline extra rule" in record.added_rules
+
+
+def test_detect_edits_cline_skips_global_scope(tmp_path):
+    store = CheckpointStore(state_dir=tmp_path / "state")
+    store.record_generation(
+        "cline",
+        conversations_analyzed=0,
+        output_path="/tmp/ignored",
+        content=GENERATED,
+        output_hash=content_hash(GENERATED),
+    )
+    # Global scope is not supported for Cline: detect_edits returns None instead of raising.
+    assert detect_edits("cline", store, scope="global") is None
+
+
 def test_detect_edits_is_idempotent_after_reverting(tmp_path):
     from vardoger.writers.cursor import write_cursor_rules
 

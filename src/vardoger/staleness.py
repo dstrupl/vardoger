@@ -22,6 +22,9 @@ PLATFORM_KEY = {
     "claude-code": "claude_code",
     "codex": "codex",
     "openclaw": "openclaw",
+    "copilot": "copilot",
+    "windsurf": "windsurf",
+    "cline": "cline",
 }
 
 DEFAULT_NEW_CONVERSATION_THRESHOLD = 5
@@ -31,15 +34,21 @@ DEFAULT_DAYS_THRESHOLD = 7
 def _discover_files(platform: str) -> list[tuple]:
     """Return (abs_path, rel_path) pairs for a platform's history files."""
     from vardoger.history.claude_code import discover_claude_code_files
+    from vardoger.history.cline import discover_cline_files
     from vardoger.history.codex import discover_codex_files
+    from vardoger.history.copilot import discover_copilot_files
     from vardoger.history.cursor import discover_cursor_files
     from vardoger.history.openclaw import discover_openclaw_files
+    from vardoger.history.windsurf import discover_windsurf_files
 
     dispatch = {
         "cursor": discover_cursor_files,
         "claude-code": discover_claude_code_files,
         "codex": discover_codex_files,
         "openclaw": discover_openclaw_files,
+        "copilot": discover_copilot_files,
+        "windsurf": discover_windsurf_files,
+        "cline": discover_cline_files,
     }
     discover = dispatch.get(platform)
     return discover() if discover is not None else []

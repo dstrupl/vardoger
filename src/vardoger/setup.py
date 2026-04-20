@@ -227,5 +227,73 @@ def setup_openclaw() -> None:
     _print_getting_started()
 
 
+def setup_copilot() -> None:
+    """Prepare the GitHub Copilot CLI instructions path for vardoger output.
+
+    Copilot has no plugin or MCP registry to hook into, so this command just
+    makes sure ``~/.copilot/copilot-instructions.md`` exists (creating a short
+    placeholder when absent) and prints next steps.
+    """
+    instructions_path = Path.home() / ".copilot" / "copilot-instructions.md"
+    instructions_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not instructions_path.is_file():
+        instructions_path.write_text(
+            "# Copilot CLI instructions\n\n"
+            "This file is read by GitHub Copilot CLI. vardoger will manage a\n"
+            "fenced section below marked by `<!-- vardoger:start -->` and\n"
+            "`<!-- vardoger:end -->`. Everything outside that section is\n"
+            "yours to edit.\n",
+            encoding="utf-8",
+        )
+
+    print(f"Prepared Copilot instructions at {instructions_path}")
+    print("Run `vardoger analyze --platform copilot` to generate a personalization.")
+    print()
+    _print_getting_started()
+
+
+def setup_windsurf() -> None:
+    """Prepare Windsurf rules directories for vardoger output.
+
+    Windsurf has no plugin registry. This command ensures both the global
+    memories directory and the project ``.windsurf/rules`` directory exist so
+    the writer can drop files in without surprising the user on first run.
+    """
+    global_dir = Path.home() / ".codeium" / "windsurf" / "memories"
+    global_dir.mkdir(parents=True, exist_ok=True)
+
+    rules_path = global_dir / "global_rules.md"
+    if not rules_path.is_file():
+        rules_path.write_text(
+            "# Windsurf global rules\n\n"
+            "This file is read by Windsurf cascade. vardoger will manage a\n"
+            "fenced section below marked by `<!-- vardoger:start -->` and\n"
+            "`<!-- vardoger:end -->`. Everything outside that section is\n"
+            "yours to edit.\n",
+            encoding="utf-8",
+        )
+
+    print(f"Prepared Windsurf global rules at {rules_path}")
+    print("Run `vardoger analyze --platform windsurf` to generate a personalization.")
+    print()
+    _print_getting_started()
+
+
+def setup_cline() -> None:
+    """Prepare Cline rules path for vardoger output.
+
+    Cline has no global rules path and no plugin registry. This command just
+    prints guidance; the writer creates ``.clinerules`` on first analyze.
+    """
+    print("Cline uses project-local rules only.")
+    print("Run `vardoger analyze --platform cline --scope project --project .`")
+    print("inside a project directory to generate a personalization.")
+    print("The writer will create ``.clinerules`` (or ``.clinerules/vardoger.md``")
+    print("if a ``.clinerules/`` directory already exists).")
+    print()
+    _print_getting_started()
+
+
 def _print_getting_started() -> None:
     print('Getting started: say "personalize my assistant" to your AI assistant.')

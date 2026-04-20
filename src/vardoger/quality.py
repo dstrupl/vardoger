@@ -189,25 +189,65 @@ def _partition(
 # ---------------------------------------------------------------------------
 
 
+def _cursor_history() -> list[Conversation]:
+    from vardoger.history.cursor import read_cursor_history
+
+    return read_cursor_history()
+
+
+def _claude_code_history() -> list[Conversation]:
+    from vardoger.history.claude_code import read_claude_code_history
+
+    return read_claude_code_history()
+
+
+def _codex_history() -> list[Conversation]:
+    from vardoger.history.codex import read_codex_history
+
+    return read_codex_history()
+
+
+def _openclaw_history() -> list[Conversation]:
+    from vardoger.history.openclaw import read_openclaw_history
+
+    return read_openclaw_history()
+
+
+def _copilot_history() -> list[Conversation]:
+    from vardoger.history.copilot import read_copilot_history
+
+    return read_copilot_history()
+
+
+def _windsurf_history() -> list[Conversation]:
+    from vardoger.history.windsurf import read_windsurf_history
+
+    return read_windsurf_history()
+
+
+def _cline_history() -> list[Conversation]:
+    from vardoger.history.cline import read_cline_history
+
+    return read_cline_history()
+
+
+_HISTORY_DISPATCH = {
+    "cursor": _cursor_history,
+    "claude-code": _claude_code_history,
+    "codex": _codex_history,
+    "openclaw": _openclaw_history,
+    "copilot": _copilot_history,
+    "windsurf": _windsurf_history,
+    "cline": _cline_history,
+}
+
+
 def _read_conversations_for(platform: str) -> list[Conversation]:
     """Load every available conversation for a platform (no checkpoint filter)."""
-    if platform == "cursor":
-        from vardoger.history.cursor import read_cursor_history
-
-        return read_cursor_history()
-    if platform == "claude-code":
-        from vardoger.history.claude_code import read_claude_code_history
-
-        return read_claude_code_history()
-    if platform == "codex":
-        from vardoger.history.codex import read_codex_history
-
-        return read_codex_history()
-    if platform == "openclaw":
-        from vardoger.history.openclaw import read_openclaw_history
-
-        return read_openclaw_history()
-    raise UnknownPlatformError(platform)
+    reader = _HISTORY_DISPATCH.get(platform)
+    if reader is None:
+        raise UnknownPlatformError(platform)
+    return reader()
 
 
 _PLATFORM_STATE_KEY = {
@@ -215,6 +255,9 @@ _PLATFORM_STATE_KEY = {
     "claude-code": "claude_code",
     "codex": "codex",
     "openclaw": "openclaw",
+    "copilot": "copilot",
+    "windsurf": "windsurf",
+    "cline": "cline",
 }
 
 

@@ -92,6 +92,42 @@ def test_setup_openclaw_installs_skill(
     assert "Installed vardoger skill" in capsys.readouterr().out
 
 
+def test_setup_copilot_prepares_instructions(
+    fake_home: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["setup", "copilot"])
+    instructions = fake_home / ".copilot" / "copilot-instructions.md"
+    assert instructions.is_file()
+    assert "vardoger" in instructions.read_text()
+    assert "Prepared Copilot instructions" in capsys.readouterr().out
+
+
+def test_setup_copilot_preserves_existing_instructions(
+    fake_home: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    instructions = fake_home / ".copilot" / "copilot-instructions.md"
+    instructions.parent.mkdir(parents=True)
+    instructions.write_text("# Team rules\n\nKeep.\n")
+    main(["setup", "copilot"])
+    assert "Keep." in instructions.read_text()
+
+
+def test_setup_windsurf_prepares_rules(
+    fake_home: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["setup", "windsurf"])
+    rules = fake_home / ".codeium" / "windsurf" / "memories" / "global_rules.md"
+    assert rules.is_file()
+    assert "Prepared Windsurf global rules" in capsys.readouterr().out
+
+
+def test_setup_cline_prints_guidance(fake_home: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    main(["setup", "cline"])
+    out = capsys.readouterr().out
+    assert "project-local" in out
+    assert ".clinerules" in out
+
+
 @pytest.mark.parametrize(
     ("platform", "skill_path_parts"),
     [
@@ -153,9 +189,17 @@ def test_status_default_covers_all_platforms(
 ) -> None:
     main(["status"])
     out = capsys.readouterr().out
-    for platform in ("cursor", "claude-code", "codex", "openclaw"):
+    for platform in (
+        "cursor",
+        "claude-code",
+        "codex",
+        "openclaw",
+        "copilot",
+        "windsurf",
+        "cline",
+    ):
         assert platform in out
-        assert "never generated" in out
+    assert out.count("never generated") >= 7
 
 
 def test_status_single_platform_json(fake_home: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -206,6 +250,57 @@ def test_analyze_writes_personalization(
     out = capsys.readouterr().out
     assert "wrote personalization" in out
     assert "conversations" in out
+
+
+def test_analyze_writes_copilot_personalization(
+    fake_home: Path,
+    project_cwd: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    make_conversations,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        "vardoger.history.copilot.read_copilot_history",
+        lambda **_: make_conversations(),
+    )
+    main(["analyze", "--platform", "copilot", "--scope", "project", "--full"])
+    rules = project_cwd / ".github" / "copilot-instructions.md"
+    assert rules.is_file()
+    assert "<!-- vardoger:start -->" in rules.read_text()
+    assert "wrote personalization" in capsys.readouterr().out
+
+
+def test_analyze_writes_windsurf_personalization(
+    fake_home: Path,
+    project_cwd: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    make_conversations,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        "vardoger.history.windsurf.read_windsurf_history",
+        lambda **_: make_conversations(),
+    )
+    main(["analyze", "--platform", "windsurf", "--scope", "project", "--full"])
+    rules = project_cwd / ".windsurf" / "rules" / "vardoger.md"
+    assert rules.is_file()
+
+
+def test_analyze_writes_cline_personalization(
+    fake_home: Path,
+    project_cwd: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    make_conversations,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        "vardoger.history.cline.read_cline_history",
+        lambda **_: make_conversations(),
+    )
+    main(["analyze", "--platform", "cline", "--scope", "project", "--full"])
+    rules = project_cwd / ".clinerules"
+    assert rules.is_file()
+    assert "<!-- vardoger:start -->" in rules.read_text()
 
 
 def test_analyze_no_conversations(
@@ -480,6 +575,9 @@ def test_compare_all_json_lists_every_platform(
         "claude-code",
         "codex",
         "openclaw",
+        "copilot",
+        "windsurf",
+        "cline",
     }
 
 

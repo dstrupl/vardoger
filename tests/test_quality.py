@@ -194,6 +194,44 @@ def test_compare_window_restricts_both_buckets():
         assert comp.after.sample_conversations == 1
 
 
+def test_read_conversations_for_routes_to_new_adapters(monkeypatch):
+    """``_read_conversations_for`` must dispatch to copilot/windsurf/cline readers."""
+    from vardoger.quality import _read_conversations_for
+
+    called: list[str] = []
+
+    def _make(name: str):
+        def _reader(**_):
+            called.append(name)
+            return []
+
+        return _reader
+
+    monkeypatch.setattr("vardoger.history.copilot.read_copilot_history", _make("copilot"))
+    monkeypatch.setattr("vardoger.history.windsurf.read_windsurf_history", _make("windsurf"))
+    monkeypatch.setattr("vardoger.history.cline.read_cline_history", _make("cline"))
+
+    for platform in ("copilot", "windsurf", "cline"):
+        assert _read_conversations_for(platform) == []
+    assert called == ["copilot", "windsurf", "cline"]
+
+
+def test_compare_never_personalized_for_each_platform():
+    """Every supported platform yields a ``never personalized`` comparison."""
+    from vardoger.quality import _PLATFORM_STATE_KEY
+
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        store = CheckpointStore(state_dir=state_dir)
+
+        for platform in _PLATFORM_STATE_KEY:
+            comp = compare(platform, conversations=[], store=store)
+            assert comp.platform == platform
+            assert comp.before is None
+            assert comp.after is None
+            assert any("never personalized" in c for c in comp.caveats)
+
+
 def test_compare_returns_empty_when_never_personalized():
     with tempfile.TemporaryDirectory() as tmp:
         state_dir = Path(tmp) / "state"

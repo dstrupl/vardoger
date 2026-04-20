@@ -34,9 +34,12 @@ from vardoger.prompts import feedback_context_prompt, summarize_prompt, synthesi
 from vardoger.quality import compare as compare_quality
 from vardoger.staleness import check_staleness
 from vardoger.writers.claude_code import clear_claude_code_rules, write_claude_code_rules
+from vardoger.writers.cline import clear_cline_rules, write_cline_rules
 from vardoger.writers.codex import clear_codex_rules, write_codex_rules
+from vardoger.writers.copilot import clear_copilot_rules, write_copilot_rules
 from vardoger.writers.cursor import clear_cursor_rules, write_cursor_rules
 from vardoger.writers.openclaw import clear_openclaw_rules, write_openclaw_rules
+from vardoger.writers.windsurf import clear_windsurf_rules, write_windsurf_rules
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +48,20 @@ PLATFORM_KEY = {
     "claude-code": "claude_code",
     "codex": "codex",
     "openclaw": "openclaw",
+    "copilot": "copilot",
+    "windsurf": "windsurf",
+    "cline": "cline",
 }
 
-PLATFORM_CHOICES = ["cursor", "claude-code", "codex", "openclaw"]
+PLATFORM_CHOICES = [
+    "cursor",
+    "claude-code",
+    "codex",
+    "openclaw",
+    "copilot",
+    "windsurf",
+    "cline",
+]
 
 
 def _make_file_filter(
@@ -79,6 +93,65 @@ def _make_file_filter(
     return _filter, stats
 
 
+_FileFilter = Callable[[Path, str], bool]
+
+
+def _cursor_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    return read_cursor_history(file_filter=file_filter)
+
+
+def _claude_code_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    return read_claude_code_history(file_filter=file_filter)
+
+
+def _codex_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    return read_codex_history(file_filter=file_filter)
+
+
+def _openclaw_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    from vardoger.history.openclaw import read_openclaw_history
+
+    return read_openclaw_history(file_filter=file_filter)
+
+
+def _copilot_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    from vardoger.history.copilot import read_copilot_history
+
+    return read_copilot_history(file_filter=file_filter)
+
+
+def _windsurf_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    from vardoger.history.windsurf import read_windsurf_history
+
+    return read_windsurf_history(file_filter=file_filter)
+
+
+def _cline_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    from vardoger.history.cline import read_cline_history
+
+    return read_cline_history(file_filter=file_filter)
+
+
+_HISTORY_DISPATCH: dict[str, Callable[..., list[Conversation]]] = {
+    "cursor": _cursor_reader,
+    "claude-code": _claude_code_reader,
+    "codex": _codex_reader,
+    "openclaw": _openclaw_reader,
+    "copilot": _copilot_reader,
+    "windsurf": _windsurf_reader,
+    "cline": _cline_reader,
+}
+
+
+def _history_reader(platform: str) -> Callable[..., list[Conversation]]:
+    """Return the platform-specific ``read_<platform>_history`` callable."""
+    reader = _HISTORY_DISPATCH.get(platform)
+    if reader is None:
+        print(f"Unknown platform: {platform}", file=sys.stderr)
+        sys.exit(1)
+    return reader
+
+
 def _read_conversations(
     platform: str, full: bool, since_days: int | None
 ) -> tuple[list[Conversation], CheckpointStore | None, dict[str, int]]:
@@ -99,67 +172,90 @@ def _read_conversations(
     file_filter, stats = _make_file_filter(checkpoint, platform_key, since_seconds)
     filter_fn = None if full else file_filter
 
-    reader_kwargs: dict = {}
-    if filter_fn:
-        reader_kwargs["file_filter"] = filter_fn
-
-    if platform == "cursor":
-        conversations = read_cursor_history(**reader_kwargs)
-    elif platform == "claude-code":
-        conversations = read_claude_code_history(**reader_kwargs)
-    elif platform == "codex":
-        conversations = read_codex_history(**reader_kwargs)
-    elif platform == "openclaw":
-        from vardoger.history.openclaw import read_openclaw_history
-
-        conversations = read_openclaw_history(**reader_kwargs)
-    else:
-        print(f"Unknown platform: {platform}", file=sys.stderr)
-        sys.exit(1)
-
+    reader = _history_reader(platform)
+    conversations = reader(file_filter=filter_fn)
     return conversations, checkpoint, stats
+
+
+_WRITE_DISPATCH: dict[str, Callable[..., Path]] = {
+    "cursor": lambda content, scope, project_path: write_cursor_rules(
+        content, project_path=project_path
+    ),
+    "claude-code": lambda content, scope, project_path: write_claude_code_rules(
+        content, scope=scope, project_path=project_path
+    ),
+    "codex": lambda content, scope, project_path: write_codex_rules(
+        content, scope=scope, project_path=project_path
+    ),
+    "openclaw": lambda content, scope, project_path: write_openclaw_rules(
+        content, scope=scope, project_path=project_path
+    ),
+    "copilot": lambda content, scope, project_path: write_copilot_rules(
+        content, scope=scope, project_path=project_path
+    ),
+    "windsurf": lambda content, scope, project_path: write_windsurf_rules(
+        content, scope=scope, project_path=project_path
+    ),
+    "cline": lambda content, scope, project_path: write_cline_rules(
+        content, scope=scope, project_path=project_path
+    ),
+}
+
+_CLEAR_DISPATCH: dict[str, Callable[..., bool]] = {
+    "cursor": lambda scope, project_path: clear_cursor_rules(project_path=project_path),
+    "claude-code": lambda scope, project_path: clear_claude_code_rules(
+        scope=scope, project_path=project_path
+    ),
+    "codex": lambda scope, project_path: clear_codex_rules(scope=scope, project_path=project_path),
+    "openclaw": lambda scope, project_path: clear_openclaw_rules(
+        scope=scope, project_path=project_path
+    ),
+    "copilot": lambda scope, project_path: clear_copilot_rules(
+        scope=scope, project_path=project_path
+    ),
+    "windsurf": lambda scope, project_path: clear_windsurf_rules(
+        scope=scope, project_path=project_path
+    ),
+    "cline": lambda scope, project_path: clear_cline_rules(scope=scope, project_path=project_path),
+}
 
 
 def _write_platform(platform: str, content: str, scope: str, project_path: Path | None) -> Path:
     """Write content to the appropriate platform rules location."""
-    if platform == "cursor":
-        return write_cursor_rules(content, project_path=project_path)
-    if platform == "claude-code":
-        return write_claude_code_rules(content, scope=scope, project_path=project_path)
-    if platform == "codex":
-        return write_codex_rules(content, scope=scope, project_path=project_path)
-    if platform == "openclaw":
-        return write_openclaw_rules(content, scope=scope, project_path=project_path)
-    print(f"Unknown platform: {platform}", file=sys.stderr)
-    sys.exit(1)
+    handler = _WRITE_DISPATCH.get(platform)
+    if handler is None:
+        print(f"Unknown platform: {platform}", file=sys.stderr)
+        sys.exit(1)
+    return handler(content, scope, project_path)
 
 
 def _clear_platform(platform: str, scope: str, project_path: Path | None) -> bool:
     """Remove the vardoger-managed rules for a platform. Returns True if removed."""
-    if platform == "cursor":
-        return clear_cursor_rules(project_path=project_path)
-    if platform == "claude-code":
-        return clear_claude_code_rules(scope=scope, project_path=project_path)
-    if platform == "codex":
-        return clear_codex_rules(scope=scope, project_path=project_path)
-    if platform == "openclaw":
-        return clear_openclaw_rules(scope=scope, project_path=project_path)
-    print(f"Unknown platform: {platform}", file=sys.stderr)
-    sys.exit(1)
+    handler = _CLEAR_DISPATCH.get(platform)
+    if handler is None:
+        print(f"Unknown platform: {platform}", file=sys.stderr)
+        sys.exit(1)
+    return handler(scope, project_path)
 
 
 def _get_reader_base(platform: str) -> Path:
     """Return the base directory for a platform's history files."""
     from vardoger.history.claude_code import DEFAULT_CLAUDE_DIR
+    from vardoger.history.cline import DEFAULT_CLINE_DIR
     from vardoger.history.codex import DEFAULT_CODEX_DIR
+    from vardoger.history.copilot import DEFAULT_COPILOT_DIR
     from vardoger.history.cursor import DEFAULT_CURSOR_DIR
     from vardoger.history.openclaw import DEFAULT_OPENCLAW_DIR
+    from vardoger.history.windsurf import DEFAULT_WINDSURF_DIR
 
     return {
         "cursor": DEFAULT_CURSOR_DIR,
         "claude-code": DEFAULT_CLAUDE_DIR,
         "codex": DEFAULT_CODEX_DIR,
         "openclaw": DEFAULT_OPENCLAW_DIR,
+        "copilot": DEFAULT_COPILOT_DIR,
+        "windsurf": DEFAULT_WINDSURF_DIR,
+        "cline": DEFAULT_CLINE_DIR,
     }[platform]
 
 
@@ -183,7 +279,15 @@ def _save_checkpoint(
 
 
 def _run_setup(args: argparse.Namespace) -> None:
-    from vardoger.setup import setup_claude_code, setup_codex, setup_cursor, setup_openclaw
+    from vardoger.setup import (
+        setup_claude_code,
+        setup_cline,
+        setup_codex,
+        setup_copilot,
+        setup_cursor,
+        setup_openclaw,
+        setup_windsurf,
+    )
 
     platform = args.platform
     if platform == "cursor":
@@ -194,6 +298,12 @@ def _run_setup(args: argparse.Namespace) -> None:
         setup_codex()
     elif platform == "openclaw":
         setup_openclaw()
+    elif platform == "copilot":
+        setup_copilot()
+    elif platform == "windsurf":
+        setup_windsurf()
+    elif platform == "cline":
+        setup_cline()
 
 
 # -- status --

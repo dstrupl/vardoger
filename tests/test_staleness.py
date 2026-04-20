@@ -169,6 +169,53 @@ def test_describe_stale_days_threshold_branch():
     assert reason == "stale (last updated 10 days ago)"
 
 
+def test_check_staleness_covers_every_platform():
+    """Every platform listed in ``PLATFORM_KEY`` must return a report."""
+    from vardoger.staleness import PLATFORM_KEY
+
+    with tempfile.TemporaryDirectory() as tmp:
+        state_dir = Path(tmp) / "state"
+        store = CheckpointStore(state_dir=state_dir)
+
+        for platform in PLATFORM_KEY:
+            with patch("vardoger.staleness._discover_files", return_value=[]):
+                report = check_staleness(platform, checkpoint=store)
+            assert report.platform == platform
+            assert report.is_stale
+            assert "never generated" in report.reason
+
+
+def test_discover_files_dispatches_for_new_platforms(monkeypatch):
+    """``_discover_files`` must route Copilot/Windsurf/Cline to their adapters."""
+    from vardoger.staleness import _discover_files
+
+    called: dict[str, bool] = {}
+
+    def make_discover(name: str):
+        def _discover():
+            called[name] = True
+            return []
+
+        return _discover
+
+    monkeypatch.setattr(
+        "vardoger.history.copilot.discover_copilot_files",
+        make_discover("copilot"),
+    )
+    monkeypatch.setattr(
+        "vardoger.history.windsurf.discover_windsurf_files",
+        make_discover("windsurf"),
+    )
+    monkeypatch.setattr(
+        "vardoger.history.cline.discover_cline_files",
+        make_discover("cline"),
+    )
+
+    for platform in ("copilot", "windsurf", "cline"):
+        assert _discover_files(platform) == []
+    assert called == {"copilot": True, "windsurf": True, "cline": True}
+
+
 def test_report_dataclass_fields():
     report = StalenessReport(
         platform="cursor",
