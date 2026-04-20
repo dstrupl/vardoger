@@ -6,6 +6,37 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-04-20
+
+### Added
+
+- GitHub Copilot CLI plugin directory at `plugins/copilot/`, with a
+  marketplace manifest (`marketplace.json`) and plugin manifest
+  (`.github/plugin/plugin.json`) installable via
+  `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot` or the
+  one-line direct install `copilot plugin install dstrupl/vardoger:plugins/copilot`.
+  `scripts/render-skills.py` gained a Copilot target so the shared skill
+  template emits `plugins/copilot/skills/analyze/SKILL.md` alongside the
+  other platforms.
+- Windsurf install reference at `plugins/windsurf/README.md` with a
+  ready-to-merge `mcp_config.json` snippet.
+- Cline install reference at `plugins/cline/README.md` plus a
+  `plugins/cline/llms-install.md` tailored to the Cline MCP marketplace's
+  LLM-driven install flow.
+- `docs/marketplace-status.md` now tracks Copilot CLI (custom + the
+  `awesome-copilot` list), Windsurf, and Cline rows, and refreshes the
+  PyPI row with the 0.2.0 / 0.2.1 release tags.
+
+### Changed
+
+- Bumped plugin manifest versions (`plugins/{cursor,claude-code,codex,copilot}`
+  plugin.json and the OpenClaw SKILL frontmatter) to `0.2.1` in lock-step
+  with the Python package.
+- `setup_copilot()` docstring and console prose now point users at the new
+  Copilot plugin marketplace entry; the existing
+  `~/.copilot/copilot-instructions.md` behavior is unchanged, so 0.1.0 and
+  0.2.0 users do not need to upgrade.
+
 ## [0.2.0] — 2026-04-20
 
 ### Added
