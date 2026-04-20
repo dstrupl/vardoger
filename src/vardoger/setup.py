@@ -33,7 +33,7 @@ from vardoger.prompts import analyze_skill_body
 
 CLAUDE_PLUGIN_MANIFEST = ClaudePluginManifest(
     name="vardoger",
-    version="0.1.0",
+    version="0.2.0",
     description=(
         "Personalizes your AI assistant by analyzing conversation "
         "history and generating tailored rules. Runs entirely on your machine."
@@ -47,7 +47,7 @@ CLAUDE_PLUGIN_MANIFEST = ClaudePluginManifest(
 
 CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
     name="vardoger",
-    version="0.1.0",
+    version="0.2.0",
     description=(
         "Personalizes your AI assistant by analyzing conversation "
         "history and generating tailored instructions. Runs entirely on your machine."
