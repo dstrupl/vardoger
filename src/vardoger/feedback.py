@@ -35,31 +35,78 @@ _PLATFORM_STATE_KEY = {
     "claude-code": "claude_code",
     "codex": "codex",
     "openclaw": "openclaw",
+    "copilot": "copilot",
+    "windsurf": "windsurf",
+    "cline": "cline",
 }
 
 _BULLET_RE = re.compile(r"^\s*[-*]\s+(?P<text>.+?)\s*$")
 _HEADING_RE = re.compile(r"^\s*#{1,6}\s+(?P<text>.+?)\s*$")
 
 
+def _cursor_reader(scope: str, project_path: Path | None) -> str | None:
+    from vardoger.writers.cursor import read_cursor_rules
+
+    return read_cursor_rules(project_path=project_path)
+
+
+def _claude_code_reader(scope: str, project_path: Path | None) -> str | None:
+    from vardoger.writers.claude_code import read_claude_code_rules
+
+    return read_claude_code_rules(scope=scope, project_path=project_path)
+
+
+def _codex_reader(scope: str, project_path: Path | None) -> str | None:
+    from vardoger.writers.codex import read_codex_rules
+
+    return read_codex_rules(scope=scope, project_path=project_path)
+
+
+def _openclaw_reader(scope: str, project_path: Path | None) -> str | None:
+    from vardoger.writers.openclaw import read_openclaw_rules
+
+    return read_openclaw_rules(scope=scope, project_path=project_path)
+
+
+def _copilot_reader(scope: str, project_path: Path | None) -> str | None:
+    from vardoger.writers.copilot import read_copilot_rules
+
+    return read_copilot_rules(scope=scope, project_path=project_path)
+
+
+def _windsurf_reader(scope: str, project_path: Path | None) -> str | None:
+    from vardoger.writers.windsurf import read_windsurf_rules
+
+    return read_windsurf_rules(scope=scope, project_path=project_path)
+
+
+def _cline_reader(scope: str, project_path: Path | None) -> str | None:
+    # Cline has no user-level rules; quietly no-op for the global scope
+    # rather than surfacing a hard error during routine edit detection.
+    if scope != "project":
+        return None
+    from vardoger.writers.cline import read_cline_rules
+
+    return read_cline_rules(scope=scope, project_path=project_path)
+
+
+_READ_RULES_DISPATCH = {
+    "cursor": _cursor_reader,
+    "claude-code": _claude_code_reader,
+    "codex": _codex_reader,
+    "openclaw": _openclaw_reader,
+    "copilot": _copilot_reader,
+    "windsurf": _windsurf_reader,
+    "cline": _cline_reader,
+}
+
+
 def _read_current_rules(platform: str, scope: str, project_path: Path | None) -> str | None:
     """Dispatch to the platform's read_<platform>_rules helper."""
-    if platform == "cursor":
-        from vardoger.writers.cursor import read_cursor_rules
-
-        return read_cursor_rules(project_path=project_path)
-    if platform == "claude-code":
-        from vardoger.writers.claude_code import read_claude_code_rules
-
-        return read_claude_code_rules(scope=scope, project_path=project_path)
-    if platform == "codex":
-        from vardoger.writers.codex import read_codex_rules
-
-        return read_codex_rules(scope=scope, project_path=project_path)
-    if platform == "openclaw":
-        from vardoger.writers.openclaw import read_openclaw_rules
-
-        return read_openclaw_rules(scope=scope, project_path=project_path)
-    return None
+    reader = _READ_RULES_DISPATCH.get(platform)
+    if reader is None:
+        return None
+    return reader(scope, project_path)
 
 
 def extract_bullets(markdown: str) -> list[str]:
