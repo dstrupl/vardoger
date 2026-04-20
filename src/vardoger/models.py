@@ -130,6 +130,58 @@ class OpenClawEntry(BaseModel, extra="ignore"):
     metadata: OpenClawMessageMetadata = OpenClawMessageMetadata()
 
 
+class CopilotEntryData(BaseModel, extra="ignore"):
+    """Payload carried by a Copilot CLI session entry."""
+
+    content: str = ""
+
+
+class CopilotEntry(BaseModel, extra="ignore"):
+    """One line of a Copilot CLI ``~/.copilot/session-state/*.jsonl`` file.
+
+    Each line wraps a ``type`` (``user.message``, ``assistant.message``,
+    ``session.start``, ``session.info``, etc.) with a nested ``data`` object.
+    Only message types carry content we want to analyze.
+    """
+
+    type: str = ""
+    id: str = ""
+    timestamp: str = ""
+    parentId: str | None = None
+    data: CopilotEntryData = CopilotEntryData()
+
+
+class WindsurfEntry(BaseModel, extra="ignore"):
+    """One line of a Windsurf cascade conversation JSONL file.
+
+    Windsurf stores turns under ``~/.codeium/windsurf/`` with a per-workspace
+    layout. Schemas have shifted across releases, so we parse defensively:
+    only ``role`` and ``content`` are required, and ``content`` may be either
+    a plain string or a list of content blocks (Anthropic/OpenAI-style).
+    """
+
+    role: str = ""
+    content: list[ContentBlock | str] | str = ""
+    timestamp: str | float | None = None
+
+
+class ClineMessage(BaseModel, extra="ignore"):
+    """One entry of Cline's ``api_conversation_history.json``.
+
+    Cline persists Anthropic-format message arrays per task. ``content`` is
+    either a plain string or a list of content blocks.
+    """
+
+    role: str = ""
+    content: list[ContentBlock | str] | str = ""
+
+
+class ClineConversation(BaseModel, extra="ignore"):
+    """The top-level JSON array of a Cline task's api_conversation_history file."""
+
+    messages: list[ClineMessage] = []
+
+
 # ---------------------------------------------------------------------------
 # Group 3: Setup / config models
 # ---------------------------------------------------------------------------
