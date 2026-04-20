@@ -35,6 +35,10 @@ vardoger setup cursor        # or claude-code, codex, openclaw
 
 Then tell your assistant: **"Personalize my assistant."**
 
+> Looking for the in-app plugin listings? Track review status for each
+> marketplace (Cursor, Claude Code, Codex, ClawHub) in
+> [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
 > `0.1.0` line. The beta install paths below stay here for anyone still pinning
 > an earlier release; new installs should not need them.
