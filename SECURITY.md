@@ -10,6 +10,9 @@ skill-driven pipeline (see `PRD.md`, Section 6). The only network traffic in
 the normal workflow is `pipx install vardoger` / `uvx vardoger` pulling the
 package from PyPI.
 
+See [PRIVACY.md](PRIVACY.md) for the full data-handling policy (what
+vardoger reads, writes, and never transmits).
+
 If you discover a code path that violates this constraint (e.g., a dependency
 that phones home, or a bug that exfiltrates local data), please treat it as a
 security issue and report it privately.
