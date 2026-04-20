@@ -9,6 +9,23 @@ A Codex plugin that analyzes your conversation history and generates personalize
 
 ## Install
 
+Two paths are supported. Pick one.
+
+### Option A — Public marketplace (Codex 0.x with `marketplace add`, recommended)
+
+If your Codex build includes the `codex marketplace add` command ([openai/codex#17087](https://github.com/openai/codex/pull/17087)), register the vardoger marketplace with one line:
+
+```bash
+codex marketplace add https://github.com/dstrupl/vardoger.git --sparse plugins/codex
+pipx install vardoger   # installs the `vardoger` CLI the plugin shells out to
+```
+
+Then restart Codex, run `/plugins`, pick the **vardoger** marketplace, and install the `vardoger` plugin.
+
+This pulls `plugins/codex/` out of the repo (containing `marketplace.json`, `.codex-plugin/plugin.json`, and the analyze skill), installs it under `$CODEX_HOME/.tmp/marketplaces/vardoger/`, and records the source in `$CODEX_HOME/config.toml`. Re-run the command or `codex marketplace update` to pull later releases.
+
+### Option B — Local marketplace (`pipx` + `vardoger setup codex`, always works)
+
 ```bash
 pipx install vardoger
 vardoger setup codex
@@ -23,7 +40,7 @@ Then:
 
 > Codex resolves `source.path` relative to the parent of the `.agents/`
 > directory holding `marketplace.json` — i.e. `$HOME` for the personal
-> marketplace. That is why the entry below points to `./.codex/plugins/vardoger`
+> marketplace. That is why the entry points to `./.codex/plugins/vardoger`
 > rather than `./vardoger`.
 
 ## Local Development Install

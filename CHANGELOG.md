@@ -6,6 +6,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Public Codex custom-marketplace manifest at `plugins/codex/marketplace.json`,
+  installable with `codex marketplace add https://github.com/dstrupl/vardoger.git --sparse plugins/codex`
+  ([openai/codex#17087](https://github.com/openai/codex/pull/17087)).
+- Instructions for the new install path in `plugins/codex/README.md`.
+
+### Fixed
+
+- `scripts/smoke-test-release.sh` no longer invokes the unsupported
+  `vardoger --version`; reports the installed version via `pipx runpip show`.
+
 ## [0.1.0] — 2026-04-20
 
 ### Added

@@ -38,8 +38,8 @@ pipx install --force "$INSTALL_TARGET" >/dev/null
 echo "  installed"
 echo ""
 
-echo "[2/6] vardoger --version"
-vardoger --version
+echo "[2/6] installed version"
+pipx runpip vardoger show vardoger | awk '/^Version:/ {print "  " $0}'
 echo ""
 
 for platform in cursor claude-code codex openclaw; do
