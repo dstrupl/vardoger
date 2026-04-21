@@ -36,11 +36,11 @@ vardoger setup cursor        # or claude-code, codex, openclaw, copilot, windsur
 Then tell your assistant: **"Personalize my assistant."**
 
 > Looking for the in-app plugin listings? Track review status for each
-> marketplace (Cursor, Claude Code, Codex, ClawHub) in
-> [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+> marketplace (PyPI, Cursor, Claude Code, Codex, Copilot CLI, Windsurf, Cline,
+> ClawHub) in [`docs/marketplace-status.md`](./docs/marketplace-status.md).
 
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
-> `0.1.0` line. The beta install paths below stay here for anyone still pinning
+> `0.2.x` line. The beta install paths below stay here for anyone still pinning
 > an earlier release; new installs should not need them.
 >
 > ```bash
@@ -97,10 +97,14 @@ uv sync
 
 ```
 src/vardoger/          # shared core — history reading, analysis, prompt generation
+plugins/_shared/       # shared analysis/personalization skill authored once
 plugins/cursor/        # Cursor MCP server config, install script
 plugins/claude-code/   # Claude Code plugin manifest, skills
 plugins/codex/         # Codex plugin manifest, skills
 plugins/openclaw/      # OpenClaw skill
+plugins/copilot/       # GitHub Copilot CLI plugin manifest, skills
+plugins/windsurf/      # Windsurf install snippet and rules delivery
+plugins/cline/         # Cline MCP-marketplace manifest + llms-install guide
 tests/                 # all tests, mirroring src/ structure
 ```
 
@@ -152,7 +156,9 @@ The `publish.yml` workflow builds the package and uploads it to PyPI via [truste
 
 ## Status
 
-Early development. See [PRD.md](PRD.md) for the full product requirements document.
+Public beta. The `0.2.x` line is published on PyPI and actively maintained;
+marketplace listings are rolling out per [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+See [PRD.md](PRD.md) for the full product requirements document.
 
 ## Privacy and security
 

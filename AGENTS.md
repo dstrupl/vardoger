@@ -12,10 +12,14 @@ Authoritative coding instructions for this repository. Linked from:
 
 ```
 src/vardoger/          # shared core — history reading, analysis, prompt generation
+plugins/_shared/       # shared analysis/personalization skill authored once
 plugins/cursor/        # Cursor MCP server config, install script
 plugins/claude-code/   # Claude Code plugin manifest, skills
 plugins/codex/         # Codex plugin manifest, skills
 plugins/openclaw/      # OpenClaw skill
+plugins/copilot/       # GitHub Copilot CLI plugin manifest, skills
+plugins/windsurf/      # Windsurf install snippet and rules delivery
+plugins/cline/         # Cline MCP-marketplace manifest + llms-install guide
 tests/                 # all tests, mirroring src/ structure
 ```
 

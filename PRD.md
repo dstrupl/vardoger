@@ -1,8 +1,8 @@
 # vardoger — Product Requirements Document
 
-> **Version:** 0.1.0-draft
-> **Date:** 2026-04-15
-> **Status:** Draft
+> **Version:** 0.2.2
+> **Date:** 2026-04-21
+> **Status:** Public beta (Phases 1–3 and 5 shipped; Phase 4 in progress)
 >
 > **Implementation status legend:**
 > - [x] Implemented
@@ -36,10 +36,13 @@ vardoger targets the leading AI coding environments:
 
 | Platform | Vendor | Distribution Model |
 |---|---|---|
-| **Cursor** | Anysphere | VS Code extension marketplace + MCP servers |
+| **Cursor** | Anysphere | Cursor Plugin Registry (MCP server) + `pipx install` direct-install fallback |
 | **Claude Code** | Anthropic | Claude Code plugin marketplace (GitHub-based) |
 | **OpenAI Codex** | OpenAI | Codex plugin directory + custom marketplaces |
 | **OpenClaw** | OpenClaw (open-source) | ClawHub skill registry + local skill directories |
+| **GitHub Copilot CLI** | GitHub / Microsoft | Copilot CLI plugin marketplace (custom sources) + `pipx install` direct-install fallback |
+| **Windsurf** | Codeium / Cognition | Windsurf MCP Store (editorial) + per-user `mcp_config.json` install snippet |
+| **Cline** | Cline (open-source VS Code extension) | Cline MCP Marketplace (issue submission) + `pipx install` direct-install fallback |
 
 Each platform has its own conversation storage format, system prompt contribution mechanism, and plugin distribution channel. vardoger must integrate natively with all of them.
 
@@ -49,7 +52,7 @@ Each platform has its own conversation storage format, system prompt contributio
 
 ### 4.1 Read Conversation History [x]
 
-vardoger must be able to discover and parse all locally stored conversation history for the active user across supported platforms (Cursor, Claude Code, OpenAI Codex, OpenClaw). This is read-only access to files already on disk — no network calls, no API integrations, no platform authentication required.
+vardoger must be able to discover and parse all locally stored conversation history for the active user across supported platforms (Cursor, Claude Code, OpenAI Codex, OpenClaw, GitHub Copilot CLI, Windsurf, Cline). This is read-only access to files already on disk — no network calls, no API integrations, no platform authentication required.
 
 ### 4.2 Analyze Patterns Locally [x]
 
@@ -116,7 +119,7 @@ Additionally, Cursor supports **MCP servers** configured via `~/.cursor/mcp.json
 
 **Recommended approach:** Ship as an MCP server (configured in `mcp.json`) that exposes vardoger commands as tools the agent can invoke. This aligns with Cursor's AI-native plugin model better than a traditional VS Code extension. Install via `pipx install vardoger && vardoger setup cursor`.
 
-> **Status:** [x] MCP server implemented (stdio transport) with `vardoger_personalize` entry-point tool plus `vardoger_prepare`, `vardoger_synthesize_prompt`, and `vardoger_write` implementation tools. VS Code Marketplace publishing deferred to Phase 4.
+> **Status:** [x] MCP server implemented (stdio transport) with the `vardoger_personalize` entry-point tool plus implementation tools `vardoger_status`, `vardoger_prepare`, `vardoger_synthesize_prompt`, `vardoger_write`, `vardoger_preview`, `vardoger_feedback`, and `vardoger_compare`. The server is platform-agnostic — every tool accepts a `platform` argument (or reads `VARDOGER_MCP_PLATFORM`) and routes to the correct per-platform history reader and writer, so the same server is reused by the Cursor, Claude Code, Codex, OpenClaw, Copilot CLI, Windsurf, and Cline installs. Cursor Plugin Registry publishing tracked under Phase 4; see [`docs/marketplace-status.md`](./docs/marketplace-status.md).
 
 ---
 
@@ -263,6 +266,108 @@ Install via `pipx install vardoger && vardoger setup openclaw`. ClawHub publishi
 
 ---
 
+### 5.5 GitHub Copilot CLI [x]
+
+#### Conversation History Storage [x]
+
+| Source | Location | Format |
+|---|---|---|
+| CLI session state | `~/.copilot/session-state/*.jsonl` | JSONL — one event per line capturing user turns, assistant turns, and tool invocations from `copilot` CLI sessions |
+
+**Primary source for Phase 5:** Copilot CLI session-state JSONL files. VS Code Copilot Chat history is stored in opaque workspace storage and is excluded from Phase 5.
+
+**Discovery:** Enumerate `~/.copilot/session-state/*.jsonl`.
+
+#### System Prompt Contribution [x]
+
+| Mechanism | Scope | Path |
+|---|---|---|
+| Global instructions | All projects | `~/.copilot/copilot-instructions.md` |
+| Project instructions | Per-project | `<project>/.github/copilot-instructions.md` |
+
+**vardoger target:** Write a fenced `<!-- vardoger:start --> … <!-- vardoger:end -->` block into the appropriate instructions file, leaving any user-authored content above/below the block untouched. Global is the default; project scope is selected via `--scope project` on the CLI or the `scope` argument on the MCP tools.
+
+> **Status:** Implemented — `src/vardoger/writers/copilot.py` manages the fenced section idempotently in both scopes.
+
+#### Distribution
+
+Copilot CLI supports registering third-party plugin marketplaces via `copilot plugin marketplace add <source>`.
+
+**Recommended approach:** Ship vardoger as a Copilot CLI plugin exposing an `analyze` skill, with generated output written via `vardoger write --platform copilot`.
+
+- Public marketplace manifest: `plugins/copilot/marketplace.json`
+- Plugin manifest: `plugins/copilot/.github/plugin/plugin.json`
+- One-line install: `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot`
+
+> **Status:** [x] Plugin manifest and analyze skill implemented; marketplace submission tracked in [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+
+---
+
+### 5.6 Windsurf [x]
+
+#### Conversation History Storage [x]
+
+| Source | Location | Format |
+|---|---|---|
+| Cascade transcripts | `~/.codeium/windsurf/**/*.jsonl` | JSONL — one message/event per line |
+
+**Primary source for Phase 5:** Windsurf's on-disk Cascade conversation JSONL files. vardoger walks the tree recursively to tolerate Windsurf's evolving subdirectory layout.
+
+#### System Prompt Contribution [x]
+
+| Mechanism | Scope | Path |
+|---|---|---|
+| Global memories | All projects | `~/.codeium/windsurf/memories/global_rules.md` (fenced `<!-- vardoger:start/end -->` section) |
+| Project rules | Per-project | `<project>/.windsurf/rules/vardoger.md` (dedicated file) |
+
+**vardoger target:** Default to the global scope (fenced section in `global_rules.md`). Project scope writes a standalone file under `.windsurf/rules/`.
+
+> **Status:** Implemented — `src/vardoger/writers/windsurf.py` handles both scopes.
+
+#### Distribution
+
+Windsurf's in-product MCP Store is currently editorial with no public submission form.
+
+**Recommended approach:** Ship an install snippet for `mcp_config.json` that wires vardoger as an MCP server (`VARDOGER_MCP_PLATFORM=windsurf`), plus a `vardoger setup windsurf` helper that records the install location in the checkpoint store. Revisit marketplace submission if Windsurf opens a self-serve flow.
+
+> **Status:** [x] `plugins/windsurf/README.md` contains the install snippet; `vardoger setup windsurf` registers the integration locally.
+
+---
+
+### 5.7 Cline [x]
+
+#### Conversation History Storage [x]
+
+| Source | Location | Format |
+|---|---|---|
+| Cline task transcripts | VS Code `globalStorage/saoudrizwan.claude-dev/tasks/<task-id>/api_conversation_history.json` | JSON — per-task conversation blob with user/assistant turns and tool calls |
+
+**Primary source for Phase 5:** Cline's per-task `api_conversation_history.json`. The adapter resolves the VS Code `globalStorage` root across macOS/Linux/Windows.
+
+#### System Prompt Contribution [x]
+
+| Mechanism | Scope | Path |
+|---|---|---|
+| Project `.clinerules/` directory | Per-project | `<project>/.clinerules/vardoger.md` (dedicated file) |
+| Project `.clinerules` file | Per-project | `<project>/.clinerules` (fenced `<!-- vardoger:start/end -->` section) |
+
+**vardoger target:** Project scope only — Cline does not currently expose a stable global-rules mechanism that is safe to write to. The writer detects whether `.clinerules` is a directory or a file and chooses the corresponding delivery automatically.
+
+> **Status:** Implemented — `src/vardoger/writers/cline.py` with tests covering both layouts.
+
+#### Distribution
+
+Cline publishes third-party servers through the Cline MCP Marketplace (GitHub-issue submission). Submissions require a brief server description, a link to an `llms-install.md` install guide, and a logo.
+
+**Recommended approach:** Ship an `llms-install.md` that an LLM-driven install flow can follow, plus a user-facing README.
+
+- Install guide: `plugins/cline/llms-install.md`
+- User-facing readme: `plugins/cline/README.md`
+
+> **Status:** [x] Install guide and README implemented; marketplace submission tracked in [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+
+---
+
 ## 6. Architecture Constraints
 
 ### 6.1 Local-Only Processing [x]
@@ -347,16 +452,21 @@ The core analysis logic must be shared across all platform integrations. Platfor
 
 **Success criteria:** The system improves its personalization over time without requiring manual intervention.
 
-### Phase 4 — Marketplace Publishing [ ]
+### Phase 4 — Marketplace Publishing (in progress)
 
 **Goal:** Publish vardoger to the official plugin marketplaces after validating through limited beta.
 
 **Deliverables:**
-- [ ] Plugin packaging and marketplace submission for Cursor (VS Code Marketplace VSIX)
-- [ ] Plugin packaging and marketplace submission for Claude Code (`anthropics/claude-plugins-official`)
-- [ ] Plugin packaging and marketplace submission for Codex (official plugin directory)
-- [ ] Skill publishing to ClawHub for OpenClaw
-- [ ] PyPI publishing for `pip install vardoger`
+- [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.2.2)
+- [ ] Plugin packaging and marketplace submission for Cursor Plugin Registry — **submitted, awaiting review** (`plugins/cursor/`)
+- [ ] Plugin packaging and marketplace submission for Claude Code — **submitted, awaiting review** (`plugins/claude-code/`, Claude Code Plugins directory)
+- [ ] Plugin packaging and marketplace submission for Codex (custom marketplace + official directory) — **not started**; custom-marketplace install already works via `plugins/codex/marketplace.json`
+- [ ] Skill publishing to ClawHub for OpenClaw — **not started**
+- [ ] Plugin packaging and marketplace submission for GitHub Copilot CLI — **not started**; `plugins/copilot/marketplace.json` ready
+- [ ] Windsurf MCP Store listing — **N/A today** (no public submission form); revisit if Windsurf opens self-serve submissions
+- [ ] Cline MCP Marketplace submission — **not started**; `plugins/cline/llms-install.md` ready
+
+Full per-marketplace status (with submission dates and review feedback) lives in [`docs/marketplace-status.md`](./docs/marketplace-status.md), which is the single source of truth for Phase 4 progress.
 
 **Prerequisites:** Limited beta with direct installs (`pipx install vardoger && vardoger setup <platform>`) validates the UX and analysis quality across real users.
 
@@ -428,21 +538,13 @@ These decisions are intentionally left open and will be resolved during implemen
 
 > **Decision:** All three simultaneously. Proves cross-platform architecture from the start. All three are implemented and working locally.
 
-### 9.3 Prompt Delivery Mode
+### 9.3 Prompt Delivery Mode — RESOLVED
 
-Should vardoger auto-write to platform config files, or generate text for the user to review and place?
+> **Decision:** Review-first delivery with an explicit `write` step, plus a safe rollback path. `vardoger_preview` (MCP) or `vardoger prepare --synthesize` surfaces the synthesized prompt before anything is written; `vardoger_write` / `vardoger write` commits it to the platform's native file; `vardoger_feedback reject` / `vardoger feedback reject` auto-reverts to the prior generation.
 
-- **Auto-write:** Zero friction; the user installs and runs; personalization just works
-- **Review-first:** The user sees what will be written and approves it; higher trust but more friction
-- **Both:** Default to review-first with an auto-write opt-in after the user gains trust
+### 9.4 Analysis Trigger — RESOLVED
 
-### 9.4 Analysis Trigger
-
-When should vardoger run its analysis?
-
-- **On-demand:** User explicitly invokes a skill/command
-- **Session start hook:** Automatically on each new session (with staleness check)
-- **Scheduled:** Periodic background refresh (may not be possible in all plugin models)
+> **Decision:** On-demand by default. Users invoke the `vardoger_personalize` MCP tool or the `vardoger` CLI when they want a refresh. Claude Code additionally ships a `SessionStart` hook that surfaces a staleness reminder without auto-running analysis. A scheduled / background refresh path remains out of scope for Phase 5; it would conflict with the local-only, review-first model above.
 
 ### 9.5 History Scope Defaults
 
@@ -471,13 +573,13 @@ How much conversation history should vardoger analyze by default?
 ```
 vardoger state:
   Checkpoints: ~/.vardoger/state.json (per-platform processing watermarks)
-  Plugin dirs:  ~/.vardoger/plugins/{claude-code,codex,openclaw}/ (created by vardoger setup)
+  Plugin dirs:  ~/.vardoger/plugins/{cursor,claude-code,codex,openclaw,copilot,windsurf,cline}/ (created by vardoger setup)
 
 Cursor:
   History:  ~/.cursor/projects/<slug>/agent-transcripts/<uuid>/<uuid>.jsonl
   History:  ~/.cursor/chats/<hash>/<uuid>/store.db
   Output:   <project>/.cursor/rules/vardoger.md
-  Plugin:   VS Code Marketplace (VSIX) or ~/.cursor/mcp.json (MCP server)
+  Plugin:   Cursor Plugin Registry or ~/.cursor/mcp.json (MCP server)
 
 Claude Code:
   History:  ~/.claude/projects/<encoded-path>/<session-uuid>.jsonl
@@ -496,4 +598,22 @@ OpenClaw:
   Output:   ~/.openclaw/skills/vardoger-personalization/SKILL.md (global)
             ./skills/vardoger-personalization/SKILL.md (project)
   Skill:    clawhub install (ClawHub registry) or ~/.openclaw/skills/ (local)
+
+GitHub Copilot CLI:
+  History:  ~/.copilot/session-state/*.jsonl
+  Output:   ~/.copilot/copilot-instructions.md (global, fenced section)
+            <project>/.github/copilot-instructions.md (project, fenced section)
+  Plugin:   copilot plugin marketplace add dstrupl/vardoger:plugins/copilot
+
+Windsurf:
+  History:  ~/.codeium/windsurf/**/*.jsonl
+  Output:   ~/.codeium/windsurf/memories/global_rules.md (global, fenced section)
+            <project>/.windsurf/rules/vardoger.md (project, dedicated file)
+  Plugin:   Windsurf MCP Store (editorial) — install snippet in plugins/windsurf/README.md
+
+Cline:
+  History:  <VS Code globalStorage>/saoudrizwan.claude-dev/tasks/<task-id>/api_conversation_history.json
+  Output:   <project>/.clinerules/vardoger.md (if .clinerules is a directory)
+            <project>/.clinerules (fenced section, if .clinerules is a single file)
+  Plugin:   Cline MCP Marketplace — install guide at plugins/cline/llms-install.md
 ```
