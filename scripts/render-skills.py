@@ -74,7 +74,7 @@ _TARGETS: tuple[PluginTarget, ...] = (
         # ClawHub requires version + metadata.openclaw.requires.* (see
         # openclaw/clawhub docs/skill-format.md).
         frontmatter=(
-            'version: "0.2.1"',
+            'version: "0.2.2"',
             'homepage: "https://github.com/dstrupl/vardoger"',
             "metadata:",
             "  openclaw:",

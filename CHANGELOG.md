@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-04-21
+
 ### Fixed
 
 - MCP server (`vardoger mcp`) no longer hardcodes the `cursor` platform.
@@ -28,6 +30,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (previously `"1.27.0"`). Clients that surface the connected server's
   version in their MCP panel can now trust the number they see.
   ([#13](https://github.com/dstrupl/vardoger/issues/13))
+
+### Changed
+
+- Bumped plugin manifest versions (`plugins/{cursor,claude-code,codex,copilot}`
+  plugin.json, `plugins/copilot/marketplace.json`, and the OpenClaw SKILL
+  frontmatter) to `0.2.2` in lock-step with the Python package. No
+  runtime behavior changed on top of the bug fixes above.
 
 ## [0.2.1] — 2026-04-20
 
