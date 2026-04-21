@@ -23,6 +23,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `plugins/cline/llms-install.md`) and Windsurf (`plugins/windsurf/README.md`)
   now set `VARDOGER_MCP_PLATFORM` in the MCP server `env` block so those
   clients analyze their own history and write to their own rules location.
+- MCP `initialize` handshake now reports vardoger's own version in
+  `serverInfo.version` instead of the bundled FastMCP SDK version
+  (previously `"1.27.0"`). Clients that surface the connected server's
+  version in their MCP panel can now trust the number they see.
+  ([#13](https://github.com/dstrupl/vardoger/issues/13))
 
 ## [0.2.1] — 2026-04-20
 
