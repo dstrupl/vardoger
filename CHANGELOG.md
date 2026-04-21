@@ -6,6 +6,24 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- MCP server (`vardoger mcp`) no longer hardcodes the `cursor` platform.
+  Every `@mcp.tool` gained an optional `platform` argument covering all
+  seven supported platforms (cursor, claude-code, codex, openclaw,
+  copilot, windsurf, cline). When omitted, the server resolves the
+  default from the `VARDOGER_MCP_PLATFORM` environment variable, falling
+  back to `cursor` for backwards compatibility. Tool docstrings no longer
+  say "Cursor" by name, so non-Cursor clients (Cline, Windsurf, ...) see
+  accurate descriptions in their MCP tool picker. `vardoger_write` and
+  `vardoger_feedback` now also accept an optional `scope` argument and
+  pick the platform-appropriate default (`project` for Cline, `global`
+  otherwise). ([#12](https://github.com/dstrupl/vardoger/issues/12))
+- Plugin install snippets for Cline (`plugins/cline/README.md`,
+  `plugins/cline/llms-install.md`) and Windsurf (`plugins/windsurf/README.md`)
+  now set `VARDOGER_MCP_PLATFORM` in the MCP server `env` block so those
+  clients analyze their own history and write to their own rules location.
+
 ## [0.2.1] — 2026-04-20
 
 ### Added

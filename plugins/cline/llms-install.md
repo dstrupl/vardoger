@@ -63,12 +63,20 @@ merge) the following server entry:
     "vardoger": {
       "command": "vardoger",
       "args": ["mcp"],
+      "env": {
+        "VARDOGER_MCP_PLATFORM": "cline"
+      },
       "disabled": false,
       "autoApprove": []
     }
   }
 }
 ```
+
+The `VARDOGER_MCP_PLATFORM=cline` environment variable is required — it
+tells the vardoger MCP server to analyze Cline conversation history and
+write personalization to `.clinerules/vardoger.md` rather than Cursor's
+`.cursor/rules/vardoger.md`.
 
 Use Cline's built-in MCP editor if available; do not hand-edit the JSON
 file if Cline exposes an "Add server" UI that accepts the snippet above.

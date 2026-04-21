@@ -46,11 +46,18 @@ Windsurf MCP configuration:
   "mcpServers": {
     "vardoger": {
       "command": "vardoger",
-      "args": ["mcp"]
+      "args": ["mcp"],
+      "env": {
+        "VARDOGER_MCP_PLATFORM": "windsurf"
+      }
     }
   }
 }
 ```
+
+The `VARDOGER_MCP_PLATFORM=windsurf` environment variable tells vardoger's
+MCP server to default to your Windsurf history and rules locations rather
+than Cursor's.
 
 If the file already exists, merge the `"vardoger"` entry into the existing
 `"mcpServers"` object rather than overwriting the file. Restart Windsurf;

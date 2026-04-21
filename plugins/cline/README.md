@@ -43,6 +43,9 @@ directly) and add:
     "vardoger": {
       "command": "vardoger",
       "args": ["mcp"],
+      "env": {
+        "VARDOGER_MCP_PLATFORM": "cline"
+      },
       "disabled": false,
       "autoApprove": []
     }
@@ -50,7 +53,10 @@ directly) and add:
 }
 ```
 
-Cline will pick the change up on next reload.
+The `VARDOGER_MCP_PLATFORM=cline` environment variable tells vardoger's
+MCP server to default to your Cline history and write to `.clinerules/`
+rather than Cursor's `.cursor/rules/`. Cline will pick the change up on
+next reload.
 
 ### 3. (Optional) Install via Cline's MCP marketplace
 
