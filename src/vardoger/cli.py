@@ -857,7 +857,11 @@ def main(argv: list[str] | None = None) -> None:
 
     subparsers.add_parser(
         "mcp",
-        help="Run the vardoger MCP server over stdio (used by the Cursor plugin).",
+        help=(
+            "Run the vardoger MCP server over stdio. Works with any MCP-capable "
+            "client (Cursor, Cline, Windsurf, ...). Set VARDOGER_MCP_PLATFORM to "
+            "the target platform so tool calls default to the right history."
+        ),
     )
 
     args = parser.parse_args(argv)
@@ -892,7 +896,13 @@ def main(argv: list[str] | None = None) -> None:
 
 
 def _run_mcp() -> None:
-    """Run the MCP server over stdio. Used by the Cursor plugin's mcp.json."""
+    """Run the vardoger MCP server over stdio.
+
+    Registered by each platform's MCP config (Cursor's ``mcp.json``,
+    Cline's ``cline_mcp_settings.json``, Windsurf's ``mcp_config.json``,
+    etc.). Set ``VARDOGER_MCP_PLATFORM`` in the server's environment so
+    non-Cursor clients default to the correct platform.
+    """
     from vardoger.mcp_server import mcp
 
     mcp.run(transport="stdio")

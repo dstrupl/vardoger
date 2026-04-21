@@ -18,6 +18,7 @@ import pytest
 
 from vardoger import mcp_server
 from vardoger.checkpoint import CheckpointStore
+from vardoger.history.models import Conversation, Message
 
 # ---------------------------------------------------------------------------
 # status / personalize
@@ -222,3 +223,132 @@ def test_vardoger_compare_with_window_after_generation(
     payload = json.loads(mcp_server.vardoger_compare(window_days=30))
     assert payload["platform"] == "cursor"
     assert payload["cutoff"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Platform routing (the fix for #12): the MCP surface must respect the
+# platform parameter and the VARDOGER_MCP_PLATFORM env-var default.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("platform", list(mcp_server.PLATFORM_CHOICES))
+def test_vardoger_status_honors_platform_argument(fake_home: Path, platform: str) -> None:
+    payload = json.loads(mcp_server.vardoger_status(platform=platform))
+    assert payload["platform"] == platform
+
+
+def test_vardoger_status_rejects_unknown_platform(fake_home: Path) -> None:
+    result = mcp_server.vardoger_status(platform="emacs")
+    assert "unknown platform" in result
+    assert "emacs" in result
+
+
+def test_vardoger_status_env_var_default(
+    fake_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(mcp_server._DEFAULT_PLATFORM_ENV, "cline")
+    payload = json.loads(mcp_server.vardoger_status())
+    assert payload["platform"] == "cline"
+
+
+def test_vardoger_personalize_threads_platform_through_instructions(
+    fake_home: Path,
+) -> None:
+    text = mcp_server.vardoger_personalize(platform="windsurf")
+    assert "Windsurf" in text
+    assert 'platform="windsurf"' in text
+
+
+def test_vardoger_prepare_reads_selected_platform_history(
+    fake_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    reset_mcp_cache: None,
+) -> None:
+    """Calling prepare with platform=cline must hit the cline reader,
+    not the cursor reader. This is the concrete bug from #12."""
+    cline_calls = {"count": 0}
+    cursor_calls = {"count": 0}
+
+    def _cursor(**_kwargs: object) -> list:
+        cursor_calls["count"] += 1
+        return []
+
+    def _cline(**_kwargs: object) -> list:
+        cline_calls["count"] += 1
+        return [
+            Conversation(
+                messages=[Message(role="user", content="hi")],
+                platform="cline",
+                session_id="c1",
+                source_path="c1.json",
+            )
+        ]
+
+    monkeypatch.setattr("vardoger.mcp_server.read_cursor_history", _cursor)
+    monkeypatch.setattr("vardoger.history.cline.read_cline_history", _cline)
+
+    payload = json.loads(mcp_server.vardoger_prepare(platform="cline"))
+    assert payload["platform"] == "cline"
+    assert payload["total_conversations"] == 1
+    assert cline_calls["count"] == 1
+    assert cursor_calls["count"] == 0
+
+
+def test_vardoger_write_routes_to_selected_platform_writer(
+    fake_home: Path,
+    project_cwd: Path,
+) -> None:
+    """Writing with platform=claude-code must land in Claude Code's rules
+    directory, not .cursor/rules/vardoger.md."""
+    result = mcp_server.vardoger_write(
+        "# Personalization\n\n- stay focused\n",
+        platform="claude-code",
+        scope="project",
+        project_path=str(project_cwd),
+    )
+    assert "wrote personalization" in result
+
+    cursor_out = project_cwd / ".cursor" / "rules" / "vardoger.md"
+    claude_out = project_cwd / ".claude" / "rules" / "vardoger.md"
+    assert not cursor_out.is_file()
+    assert claude_out.is_file()
+    assert "stay focused" in claude_out.read_text()
+
+    store = CheckpointStore()
+    assert store.get_generation("claude_code") is not None
+    assert store.get_generation("cursor") is None
+
+
+def test_vardoger_write_cline_defaults_to_project_scope(
+    fake_home: Path,
+    project_cwd: Path,
+) -> None:
+    """Cline has no global scope; omitting scope must not explode."""
+    result = mcp_server.vardoger_write(
+        "# Personalization\n\n- keep things local\n",
+        platform="cline",
+        project_path=str(project_cwd),
+    )
+    assert "wrote personalization" in result
+    clinerules = project_cwd / ".clinerules"
+    assert clinerules.is_file() or (clinerules / "vardoger.md").is_file()
+
+
+def test_vardoger_feedback_records_against_correct_state_key(fake_home: Path) -> None:
+    """Feedback for claude-code must not leak into the cursor state slot."""
+    mcp_server.vardoger_feedback("accept", platform="claude-code", reason="ok")
+
+    store = CheckpointStore()
+    claude_record = store.get_feedback("claude_code")
+    cursor_record = store.get_feedback("cursor")
+    assert any(e.kind == "accept" for e in claude_record.events)
+    assert not any(e.kind == "accept" for e in cursor_record.events)
+
+
+def test_vardoger_compare_honors_platform(
+    fake_home: Path,
+    patch_history_readers: object,
+) -> None:
+    payload = json.loads(mcp_server.vardoger_compare(platform="codex"))
+    assert payload["platform"] == "codex"
