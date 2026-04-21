@@ -16,9 +16,23 @@ from pathlib import Path
 
 import pytest
 
+from vardoger import __version__ as _VARDOGER_VERSION
 from vardoger import mcp_server
 from vardoger.checkpoint import CheckpointStore
 from vardoger.history.models import Conversation, Message
+
+# ---------------------------------------------------------------------------
+# initialize handshake
+# ---------------------------------------------------------------------------
+
+
+def test_initialize_response_reports_vardoger_version() -> None:
+    """`initialize` must report vardoger's version, not the FastMCP SDK version."""
+    # Regression test for https://github.com/dstrupl/vardoger/issues/13.
+    opts = mcp_server.mcp._mcp_server.create_initialization_options()
+    assert opts.server_name == "vardoger"
+    assert opts.server_version == _VARDOGER_VERSION
+
 
 # ---------------------------------------------------------------------------
 # status / personalize

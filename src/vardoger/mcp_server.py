@@ -39,6 +39,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
+from vardoger import __version__ as _VARDOGER_VERSION
 from vardoger.digest import batch_conversations, format_batch
 from vardoger.feedback import detect_edits
 from vardoger.history.cursor import read_cursor_history
@@ -48,6 +49,12 @@ from vardoger.prompts import feedback_context_prompt, summarize_prompt, synthesi
 from vardoger.staleness import check_staleness
 
 mcp = FastMCP("vardoger")
+# FastMCP (as of mcp SDK 1.27) does not expose a ``version`` kwarg, but the
+# underlying low-level ``Server`` reads ``self.version`` when building the
+# ``initialize`` response. Propagate vardoger's own version so clients see
+# "vardoger X.Y.Z" in their MCP panel instead of the bundled SDK version.
+# Regression for https://github.com/dstrupl/vardoger/issues/13.
+mcp._mcp_server.version = _VARDOGER_VERSION
 
 # ---------------------------------------------------------------------------
 # Platform registry
