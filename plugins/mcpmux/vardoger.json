@@ -1,6 +1,6 @@
 {
   "$schema": "../schemas/server-definition.schema.json",
-  "id": "io.github.dstrupl.vardoger",
+  "id": "io.github-dstrupl-vardoger",
   "name": "vardoger",
   "alias": "vardoger",
   "description": "Personalize AI coding assistants by analyzing local conversation history. Reads JSONL session logs from Cursor, Claude Code, Codex, Copilot CLI, Windsurf, Cline, and OpenClaw, extracts behavioral signals, and writes tailored rules files. Runs entirely on your machine.",
@@ -22,7 +22,7 @@
           "id": "VARDOGER_MCP_PLATFORM",
           "label": "Host platform (optional)",
           "description": "Override the platform identifier the MCP server defaults to. Leave blank to let vardoger pick based on the calling host. Valid values: cursor, claude-code, codex, copilot, windsurf, cline, openclaw.",
-          "type": "string",
+          "type": "text",
           "required": false,
           "secret": false,
           "placeholder": "cursor"
