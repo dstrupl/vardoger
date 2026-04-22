@@ -14,11 +14,22 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `cwd=$HOME`, the previous behaviour dropped the personalization at
   `~/.cursor/rules/vardoger.md` — a path Cursor never reads — making the
   whole orchestration a silent no-op. New behaviour:
-  - Omit `project_path` → vardoger returns a copy-paste block intended
-    for *Cursor Settings → Rules → User Rules* (the correct destination
-    for a personalization derived from *global* conversation history).
-    Nothing is written to disk. The returned text includes explicit
-    instructions and is safe to surface to the user verbatim.
+  - Omit `project_path` → vardoger saves the rendered block to a
+    convenience copy-source file at
+    `~/.vardoger/cursor-user-rules.md` and returns a response that leads
+    with that absolute path (Cursor renders it as a cmd+click link, so
+    users no longer have to dig for the block inside a collapsed
+    "Ran Vardoger Write in vardoger" tool-call card). The same block is
+    also inlined in the response as a fallback. The intended destination
+    is *Cursor Settings → Rules → User Rules* (the correct home for a
+    personalization derived from *global* conversation history); the
+    copy-source file is **not** loaded by Cursor — it only exists as a
+    copy source. Re-running `vardoger_write` overwrites it with the
+    latest generation; `vardoger_feedback reject` rewrites it with the
+    previous generation (if any) or deletes it otherwise. If the file
+    cannot be written (sandboxed shell, read-only FS, …) vardoger logs a
+    warning and falls back to an inline-only response so the user still
+    gets the block.
   - Pass `project_path=<workspace>` → vardoger now validates that the
     target (or one of its ancestors) contains a project marker
     (`.git`, a language manifest, `AGENTS.md`, or `.cursor/`) and

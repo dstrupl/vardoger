@@ -365,27 +365,40 @@ def _orchestration_instructions(platform: str) -> str:
 
 
 # Sentinel we stash in ``CheckpointStore.output_path`` when we generated a
-# personalization without writing it to disk (the User Rules default). Keeps
-# downstream code — staleness, feedback, compare — able to tell "generated"
-# from "generated and written."
-_USER_RULES_OUTPUT_SENTINEL = "(user-rules: no file written)"
+# personalization without writing it into a Cursor-loaded location (the User
+# Rules default). Keeps downstream code — staleness, feedback, compare — able
+# to tell "generated for User Rules" from "generated and written to
+# .cursor/rules". The deterministic helper-file copy (see
+# ``_user_rules_copy_path``) is a convenience copy source, not where Cursor
+# loads rules from, so we deliberately do NOT promote it to ``output_path``.
+_USER_RULES_OUTPUT_SENTINEL = "(user-rules: no cursor-loaded file written)"
 
 
-_USER_RULES_TEMPLATE = """\
-vardoger: personalization ready — not written to disk.
+_USER_RULES_WRITE_TEMPLATE = """\
+vardoger_write: personalization ready.
 
-The content below was synthesized from your *global* conversation history, \
-so it belongs in Cursor's **User Rules** (Settings → Rules → User Rules), \
-which apply across every project. Paste it there. Edit freely: the rules \
-below are starting points derived from patterns in your chat history, not \
-commandments.
+Saved a copy-source file to:
+{copy_path}
+
+To apply: cmd+click the path above to open it in an editor tab, copy the \
+whole file, and paste it into Cursor → Settings → Rules → User Rules. \
+Edit freely once pasted — the rules are starting points derived from your \
+global conversation history, not commandments.
+
+Why a copy-source file and not a .cursor/rules/ file? Cursor's User Rules \
+apply across every project and live in Cursor's settings database, not on \
+disk. The file above is just a convenience so you don't have to hunt for \
+this block in the collapsed tool-call card; deleting it does not \
+unpersonalize Cursor. Running ``vardoger_write`` again overwrites it with \
+the latest generation.
 
 If you'd rather also drop a project-scoped copy into a specific workspace's \
-.cursor/rules/vardoger.md, re-run the tool with \
+.cursor/rules/vardoger.md, re-run ``vardoger_write`` with \
 ``project_path="<your workspace root>"``. vardoger refuses to write into \
 directories that don't look like projects (no .git, manifest, AGENTS.md, \
-or .cursor/), which is why the default path here is copy-paste rather \
-than a silent filesystem write.
+or .cursor/).
+
+The same block is inlined below if you prefer copying it from here:
 
 --- BEGIN vardoger personalization ---
 {content}
@@ -393,8 +406,105 @@ than a silent filesystem write.
 """
 
 
-def _user_rules_response(content: str) -> str:
-    return _USER_RULES_TEMPLATE.format(content=content.rstrip() + "\n")
+_USER_RULES_PREVIEW_TEMPLATE = """\
+vardoger_preview: no project_path given — vardoger_write would deliver this \
+as a User Rules copy-paste block (nothing in ``.cursor/rules/`` would be \
+touched).
+
+It would save a copy-source file to:
+{copy_path}
+(that file is not read by Cursor — it only exists so the block is easy to \
+open and copy.)
+
+--- BEGIN vardoger personalization ---
+{content}
+--- END vardoger personalization ---
+"""
+
+
+_USER_RULES_COPY_FILENAME = "cursor-user-rules.md"
+
+
+def _user_rules_copy_path() -> Path:
+    """Return the deterministic path of the User Rules copy-source file.
+
+    Resolved at call time (not at import time) so tests that monkeypatch
+    ``vardoger.checkpoint.DEFAULT_STATE_DIR`` via the ``fake_home`` fixture
+    get the redirected location.
+    """
+    from vardoger.checkpoint import DEFAULT_STATE_DIR
+
+    return DEFAULT_STATE_DIR / _USER_RULES_COPY_FILENAME
+
+
+def _write_user_rules_copy(content: str) -> Path | None:
+    """Write the rendered block to the copy-source file; return the path.
+
+    Best-effort: on ``OSError`` (sandboxed shell with no write access outside
+    the workspace, read-only filesystem, etc.) we log a warning and return
+    ``None``. Callers fall back to the inline block in the response.
+    """
+    import logging
+
+    copy_path = _user_rules_copy_path()
+    try:
+        copy_path.parent.mkdir(parents=True, exist_ok=True)
+        copy_path.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        logging.getLogger(__name__).warning(
+            "Could not write User Rules copy-source file to %s: %s. "
+            "Users can still copy the inline block from the tool output.",
+            copy_path,
+            exc,
+        )
+        return None
+    return copy_path
+
+
+def _delete_user_rules_copy() -> Path | None:
+    """Best-effort delete of the copy-source file; return the path if it existed."""
+    import logging
+
+    copy_path = _user_rules_copy_path()
+    try:
+        if copy_path.is_file():
+            copy_path.unlink()
+            return copy_path
+    except OSError as exc:
+        logging.getLogger(__name__).warning(
+            "Could not remove stale User Rules copy-source file %s: %s",
+            copy_path,
+            exc,
+        )
+    return None
+
+
+def _user_rules_response(content: str, copy_path: Path | None) -> str:
+    """Render the ``vardoger_write`` response for a User Rules delivery.
+
+    ``copy_path`` is ``None`` when :func:`_write_user_rules_copy` failed; in
+    that case we fall back to a location-free message so the user still gets
+    the inline block.
+    """
+    rendered = content.rstrip() + "\n"
+    if copy_path is None:
+        return (
+            "vardoger_write: personalization ready (could not save a copy-source "
+            "file; see warnings above). Paste the block between the BEGIN/END "
+            "markers below into Cursor → Settings → Rules → User Rules.\n\n"
+            "--- BEGIN vardoger personalization ---\n"
+            f"{rendered}"
+            "--- END vardoger personalization ---\n"
+        )
+    return _USER_RULES_WRITE_TEMPLATE.format(copy_path=copy_path, content=rendered)
+
+
+def _user_rules_preview_response(content: str, copy_path: Path) -> str:
+    """Render the ``vardoger_preview`` response for the User Rules scenario."""
+    return _USER_RULES_PREVIEW_TEMPLATE.format(
+        copy_path=copy_path,
+        content=content.rstrip() + "\n",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -602,8 +712,14 @@ def vardoger_write(
 
     store = CheckpointStore()
 
-    # Cursor + no project_path → User Rules copy-paste, no disk write.
+    # Cursor + no project_path → User Rules delivery. We write a convenience
+    # copy-source file under ~/.vardoger/ (NOT a Cursor-loaded location) so
+    # the user gets a clickable path instead of having to dig for the block
+    # inside a collapsed "Ran Vardoger Write in vardoger" card. The
+    # ``output_path`` in state stays the sentinel because this file is not
+    # where Cursor reads rules from.
     if resolved == "cursor" and not project_path:
+        copy_path = _write_user_rules_copy(rendered)
         store.record_generation(
             _STATE_KEY[resolved],
             conversations_analyzed=0,
@@ -613,7 +729,7 @@ def vardoger_write(
             confidence=doc.confidence,
         )
         store.save()
-        return _user_rules_response(rendered)
+        return _user_rules_response(rendered, copy_path)
 
     target = Path(project_path) if project_path else None
     try:
@@ -672,12 +788,11 @@ def vardoger_preview(
     rendered = annotate_tentative(doc)
 
     # Cursor + no project_path: no file to diff against — show the
-    # User Rules copy-paste block that ``vardoger_write`` would return.
+    # User Rules copy-paste block that ``vardoger_write`` would deliver,
+    # including the deterministic path of the copy-source file it would
+    # create. Preview itself never writes.
     if resolved == "cursor" and not project_path:
-        return (
-            "vardoger: no project_path given — vardoger_write would return "
-            "the following User Rules copy-paste block:\n\n" + _user_rules_response(rendered)
-        )
+        return _user_rules_preview_response(rendered, _user_rules_copy_path())
 
     target = Path(project_path) if project_path else None
     current = _read_rules(resolved, resolved_scope, target) or ""
@@ -765,9 +880,11 @@ def _apply_reject(
     """Pop the latest generation and either revert to the prior one or clear the file.
 
     The rejected generation may have been a "User Rules copy-paste"
-    delivery (no file on disk, output_path=``_USER_RULES_OUTPUT_SENTINEL``);
-    in that case there is nothing to revert or clear on the filesystem and
-    we say so explicitly, rather than trying to write to an ad-hoc path.
+    delivery (``output_path=_USER_RULES_OUTPUT_SENTINEL``) backed by a
+    convenience copy-source file at ``_user_rules_copy_path()``. That file is
+    not where Cursor loads rules from, so removing it does not unpersonalize
+    Cursor — but it IS stale after a reject, so we delete it best-effort and
+    surface manual-removal guidance for the Cursor settings block.
     """
     rejected = store.pop_generation(state_key)
     if rejected is None:
@@ -778,22 +895,31 @@ def _apply_reject(
     previous = store.get_generation(state_key)
     if previous is not None and previous.content:
         if previous.output_path == _USER_RULES_OUTPUT_SENTINEL:
-            # Previous was also copy-paste: re-offer it, don't touch disk.
+            # Previous was also a User-Rules delivery: re-render the
+            # copy-source file with the previous content so cmd+clicking the
+            # path in the response opens the correct block, not the
+            # just-rejected one.
+            restored = _write_user_rules_copy(previous.content)
             return (
                 f"vardoger: reverted {platform} to the previous (User Rules) "
                 "personalization. Re-paste the following block if you removed "
                 "the old one from Settings → Rules → User Rules:\n\n"
-                + _user_rules_response(previous.content)
+                + _user_rules_response(previous.content, restored)
             )
         output = _write_rules(platform, previous.content, scope, project_path)
         return f"vardoger: reverted {platform} to previous generation ({output})."
 
     if rejected_was_user_rules:
+        removed = _delete_user_rules_copy()
+        removed_note = (
+            f" Also removed the stale copy-source file {removed}." if removed is not None else ""
+        )
         return (
-            f"vardoger: rejected the latest {platform} personalization. "
-            "No file was written for it (delivery was User Rules copy-paste); "
-            "remove the pasted block manually from Settings → Rules → User Rules "
-            "if you already added it."
+            f"vardoger: rejected the latest {platform} personalization."
+            f"{removed_note} "
+            "Nothing was written to a Cursor-loaded location (delivery was "
+            "User Rules copy-paste); remove the pasted block manually from "
+            "Settings → Rules → User Rules if you already added it."
         )
 
     cleared = _clear_rules(platform, scope, project_path)
