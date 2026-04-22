@@ -129,9 +129,7 @@ def test_refuses_non_project_dir(tmp_path: Path) -> None:
         write_cline_rules("content", scope="project", project_path=bare)
 
 
-def test_refuses_cwd_when_cwd_is_bare(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_refuses_cwd_when_cwd_is_bare(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """With project_path omitted, cwd is the fallback — and cwd=$HOME must refuse.
 
     This is the out-of-the-box cline-from-MCP bug: scope defaults to
