@@ -981,9 +981,11 @@ def _apply_reject(
         )
 
     cleared = _clear_rules(platform, scope, project_path)
-    if cleared:
-        return f"vardoger: cleared {platform} personalization (no prior generation)."
-    return f"vardoger: no {platform} personalization file to clear."
+    return (
+        f"vardoger: cleared {platform} personalization (no prior generation)."
+        if cleared
+        else f"vardoger: no {platform} personalization file to clear."
+    )
 
 
 @mcp.tool()
