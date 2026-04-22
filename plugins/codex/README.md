@@ -86,6 +86,11 @@ Make sure you have run `uv sync` ([install uv](https://docs.astral.sh/uv/getting
 
 Once installed, ask Codex to "analyze my conversation history" or use `@vardoger`.
 
+### Where the personalization lands
+
+- **Default — user-global scope:** writes to `~/.codex/AGENTS.md` (or appends a `<!-- vardoger -->` block to it), which Codex auto-loads on every session.
+- **Opt-in — project scope:** pass `project_path="<workspace root>"` (and `scope=project`) to land `<project>/AGENTS.md`. vardoger refuses to write project-scoped instructions into a directory that doesn't look like a real project (it requires `.git`, a language manifest, `AGENTS.md`, or an existing `.cursor/` in the path or one of its ancestors). Without that check, an MCP server launched from `$HOME` would silently drop rules into a location Codex would never load. Supply a real workspace root or drop the `project_path` argument to write user-globally.
+
 ## Uninstall
 
 Remove the entry from `~/.agents/plugins/marketplace.json` and uninstall via `/plugins`.

@@ -5,6 +5,9 @@
 import tempfile
 from pathlib import Path
 
+import pytest
+
+from vardoger.writers._projects import NotAProjectError, find_project_root
 from vardoger.writers.openclaw import (
     clear_openclaw_rules,
     read_openclaw_rules,
@@ -12,10 +15,16 @@ from vardoger.writers.openclaw import (
 )
 
 
+def _as_project(dir_: Path) -> Path:
+    """Create ``dir_`` (if needed) and attach a ``.git`` marker."""
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / ".git").mkdir(exist_ok=True)
+    return dir_
+
+
 def test_creates_skill_md_project_scope():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp) / "myproject"
-        project.mkdir()
+        project = _as_project(Path(tmp) / "myproject")
 
         path = write_openclaw_rules(
             "Be concise.",
@@ -33,8 +42,7 @@ def test_creates_skill_md_project_scope():
 
 def test_project_scope():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp) / "myproject"
-        project.mkdir()
+        project = _as_project(Path(tmp) / "myproject")
 
         path = write_openclaw_rules(
             "Use Python.",
@@ -50,8 +58,7 @@ def test_project_scope():
 
 def test_idempotent_overwrite():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp) / "proj"
-        project.mkdir()
+        project = _as_project(Path(tmp) / "proj")
 
         write_openclaw_rules("first pass", scope="project", project_path=project)
         write_openclaw_rules("second pass", scope="project", project_path=project)
@@ -63,8 +70,7 @@ def test_idempotent_overwrite():
 
 def test_round_trip_strips_header():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp) / "proj"
-        project.mkdir()
+        project = _as_project(Path(tmp) / "proj")
         body = "Some body content.\n"
         write_openclaw_rules(body, scope="project", project_path=project)
         assert read_openclaw_rules(scope="project", project_path=project) == body
@@ -77,9 +83,53 @@ def test_read_returns_none_when_absent():
 
 def test_clear_removes_file():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp) / "proj"
-        project.mkdir()
+        project = _as_project(Path(tmp) / "proj")
         write_openclaw_rules("x", scope="project", project_path=project)
         assert clear_openclaw_rules(scope="project", project_path=project) is True
         assert read_openclaw_rules(scope="project", project_path=project) is None
         assert clear_openclaw_rules(scope="project", project_path=project) is False
+
+
+# ---------------------------------------------------------------------------
+# Project-marker validation — regression for
+# https://github.com/dstrupl/vardoger/issues/21
+# ---------------------------------------------------------------------------
+
+
+def test_project_scope_refuses_non_project_dir(tmp_path: Path) -> None:
+    """scope=project must reject a directory with no project markers."""
+    bare = tmp_path / "nothome"
+    bare.mkdir()
+    with pytest.raises(NotAProjectError):
+        write_openclaw_rules("content", scope="project", project_path=bare)
+
+
+def test_project_scope_accepts_nested_subdir_of_project(tmp_path: Path) -> None:
+    """Writing inside a project subdirectory is fine."""
+    project = _as_project(tmp_path / "proj")
+    nested = project / "packages" / "service"
+    nested.mkdir(parents=True)
+    output = write_openclaw_rules("body", scope="project", project_path=nested)
+    assert output.is_file()
+    assert output == nested / "skills" / "vardoger-personalization" / "SKILL.md"
+
+
+def test_global_scope_does_not_validate_project(tmp_path: Path) -> None:
+    """scope=global writes under ~/.openclaw/ without touching project validation."""
+    bare_home = tmp_path / "bare_home"
+    bare_home.mkdir()
+    from unittest.mock import patch
+
+    with patch("vardoger.writers.openclaw.Path.home", return_value=bare_home):
+        path = write_openclaw_rules("body", scope="global")
+    assert path == bare_home / ".openclaw" / "skills" / "vardoger-personalization" / "SKILL.md"
+
+
+def test_find_project_root_detects_pyproject(tmp_path: Path) -> None:
+    """pyproject.toml anchors a project root."""
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "pyproject.toml").write_text("")
+    nested = project / "a" / "b"
+    nested.mkdir(parents=True)
+    assert find_project_root(nested) == project.resolve()

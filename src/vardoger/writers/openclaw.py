@@ -15,6 +15,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from vardoger.writers._projects import ensure_project
+
 logger = logging.getLogger(__name__)
 
 SKILL_DIR_NAME = "vardoger-personalization"
@@ -46,10 +48,15 @@ def write_openclaw_rules(
     """Write the vardoger personalization as an OpenClaw SKILL.md file.
 
     scope="global": writes to ~/.openclaw/skills/vardoger-personalization/SKILL.md
-    scope="project": writes to <project>/skills/vardoger-personalization/SKILL.md
+    scope="project": writes to <project>/skills/vardoger-personalization/SKILL.md.
+    The base directory (or an ancestor) must contain a project marker,
+    otherwise :class:`vardoger.writers._projects.NotAProjectError` is
+    raised (see https://github.com/dstrupl/vardoger/issues/21).
 
     Returns the path of the written file.
     """
+    if scope == "project":
+        ensure_project(project_path or Path.cwd(), platform="OpenClaw")
     output_path = _skill_path(scope, project_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(SKILL_HEADER + content, encoding="utf-8")

@@ -6,6 +6,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
+from vardoger.writers._projects import NotAProjectError, find_project_root
 from vardoger.writers.windsurf import (
     clear_windsurf_rules,
     read_windsurf_rules,
@@ -13,9 +16,16 @@ from vardoger.writers.windsurf import (
 )
 
 
+def _as_project(dir_: Path) -> Path:
+    """Create ``dir_`` (if needed) and attach a ``.git`` marker."""
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / ".git").mkdir(exist_ok=True)
+    return dir_
+
+
 def test_project_scope_writes_dedicated_file():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp)
+        project = _as_project(Path(tmp))
         path = write_windsurf_rules("body", scope="project", project_path=project)
 
         assert path == project / ".windsurf" / "rules" / "vardoger.md"
@@ -25,7 +35,7 @@ def test_project_scope_writes_dedicated_file():
 
 def test_project_scope_overwrites_in_place():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp)
+        project = _as_project(Path(tmp))
         write_windsurf_rules("first", scope="project", project_path=project)
         write_windsurf_rules("second", scope="project", project_path=project)
         path = project / ".windsurf" / "rules" / "vardoger.md"
@@ -34,7 +44,7 @@ def test_project_scope_overwrites_in_place():
 
 def test_project_scope_clear_removes_file():
     with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp)
+        project = _as_project(Path(tmp))
         write_windsurf_rules("body", scope="project", project_path=project)
         assert clear_windsurf_rules(scope="project", project_path=project) is True
         assert not (project / ".windsurf" / "rules" / "vardoger.md").is_file()
@@ -109,3 +119,46 @@ def test_global_scope_clear_deletes_file_when_only_vardoger_content():
             write_windsurf_rules("body", scope="global")
             assert clear_windsurf_rules(scope="global") is True
         assert not (fake_home / ".codeium" / "windsurf" / "memories" / "global_rules.md").is_file()
+
+
+# ---------------------------------------------------------------------------
+# Project-marker validation — regression for
+# https://github.com/dstrupl/vardoger/issues/21
+# ---------------------------------------------------------------------------
+
+
+def test_project_scope_refuses_non_project_dir(tmp_path: Path) -> None:
+    """scope=project must reject a directory with no project markers."""
+    bare = tmp_path / "nothome"
+    bare.mkdir()
+    with pytest.raises(NotAProjectError):
+        write_windsurf_rules("content", scope="project", project_path=bare)
+
+
+def test_project_scope_accepts_nested_subdir_of_project(tmp_path: Path) -> None:
+    """Writing inside a project subdirectory is fine."""
+    project = _as_project(tmp_path / "proj")
+    nested = project / "packages" / "service"
+    nested.mkdir(parents=True)
+    output = write_windsurf_rules("body", scope="project", project_path=nested)
+    assert output.is_file()
+    assert output == nested / ".windsurf" / "rules" / "vardoger.md"
+
+
+def test_global_scope_does_not_validate_project(tmp_path: Path) -> None:
+    """scope=global writes under ~/.codeium/ without project validation."""
+    bare_home = tmp_path / "bare_home"
+    bare_home.mkdir()
+    with patch("vardoger.writers.windsurf.Path.home", return_value=bare_home):
+        path = write_windsurf_rules("body", scope="global")
+    assert path == bare_home / ".codeium" / "windsurf" / "memories" / "global_rules.md"
+
+
+def test_find_project_root_detects_cargo_toml(tmp_path: Path) -> None:
+    """Cargo.toml anchors a project root."""
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "Cargo.toml").write_text("")
+    nested = project / "a" / "b"
+    nested.mkdir(parents=True)
+    assert find_project_root(nested) == project.resolve()

@@ -20,6 +20,11 @@ This installs the vardoger analysis skill to `~/.openclaw/skills/vardoger/`. Ope
 
 Once loaded, ask OpenClaw to "analyze my conversation history" or "run the vardoger skill."
 
+### Where the personalization lands
+
+- **Default — user-global scope:** writes to `~/.openclaw/skills/vardoger-personalization/SKILL.md`, which OpenClaw auto-discovers on every session.
+- **Opt-in — project scope:** pass `project_path="<workspace root>"` (and `scope=project`) to land `<project>/skills/vardoger-personalization/SKILL.md`. vardoger refuses to write project-scoped skills into a directory that doesn't look like a real project (it requires `.git`, a language manifest, `AGENTS.md`, or an existing `.cursor/` in the path or one of its ancestors). Without that check, an MCP server launched from `$HOME` would silently drop skills into a location OpenClaw would never read. Supply a real workspace root or drop the `project_path` argument to write user-globally.
+
 ## Uninstall
 
 Remove the `~/.openclaw/skills/vardoger/` directory.

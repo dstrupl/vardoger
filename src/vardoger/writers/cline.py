@@ -20,6 +20,8 @@ import logging
 import re
 from pathlib import Path
 
+from vardoger.writers._projects import ensure_project
+
 logger = logging.getLogger(__name__)
 
 START_MARKER = "<!-- vardoger:start -->"
@@ -66,8 +68,17 @@ def write_cline_rules(
     scope: str = "project",
     project_path: Path | None = None,
 ) -> Path:
-    """Write vardoger rules for a Cline project and return the path written."""
+    """Write vardoger rules for a Cline project and return the path written.
+
+    Cline's only scope is project-level, so unlike the other platforms
+    this check fires on every call — not just when ``scope="project"``
+    is explicit. An MCP server launched from ``$HOME`` with no
+    ``project_path`` would otherwise drop a ``.clinerules`` file in a
+    location Cline never reads (see
+    https://github.com/dstrupl/vardoger/issues/21).
+    """
     _require_project_scope(scope)
+    ensure_project(project_path or Path.cwd(), platform="Cline")
     output_path, dedicated = _resolve_target(project_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

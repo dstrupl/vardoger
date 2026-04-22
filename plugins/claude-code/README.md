@@ -30,6 +30,11 @@ Make sure you have run `uv sync` ([install uv](https://docs.astral.sh/uv/getting
 
 Once loaded, ask Claude Code to "analyze my conversation history" or "run the vardoger skill."
 
+### Where the personalization lands
+
+- **Default — user-global scope:** writes to `~/.claude/rules/vardoger.md`, which Claude Code auto-loads on every session.
+- **Opt-in — project scope:** pass `project_path="<workspace root>"` (and `scope=project`) to land `<project>/.claude/rules/vardoger.md`. vardoger refuses to write project-scoped rules into a directory that doesn't look like a real project (it requires `.git`, a language manifest, `AGENTS.md`, or an existing `.cursor/` in the path or one of its ancestors). This is intentional — without the check, an MCP server launched from `$HOME` would silently drop rules in a location Claude Code would never load. Supply a real workspace root or drop the `project_path` argument to write user-globally.
+
 ## Uninstall
 
 Simply stop passing `--plugin-dir` when starting Claude Code.
