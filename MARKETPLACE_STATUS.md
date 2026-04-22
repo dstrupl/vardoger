@@ -75,3 +75,78 @@ Last refreshed: **2026-04-22** (UTC). ClawHub flipped to **Live (self-served)** 
 - **Docker MCP Registry** — Docker Desktop's MCP Toolkit is a large
   distribution surface for containerized MCP servers; requires a Dockerfile
   and therefore depends on a separate decision to containerize vardoger.
+
+## Next session pickup
+
+Priority-ordered actions for the next agent/owner session. Each item links to
+the relevant table row above for the full context.
+
+### 1. Poll reviewer queues (re-verify before other work)
+
+- **Cursor Plugin Registry** — no public review API; log into the
+  [Cursor publisher dashboard](https://cursor.com/marketplace/publish) and
+  check `plugins/cursor/` submission state. Last checked 2026-04-22.
+- **Claude Code Plugins** — no public review API; check
+  [claude.ai/settings/plugins](https://claude.ai/settings/plugins). Last
+  checked 2026-04-22.
+- **`awesome-copilot` PR #1461** —
+  `gh pr view github/awesome-copilot#1461 --json state,reviewDecision,comments`.
+  Functionally waiting on a human maintainer; the only lingering review is the
+  bot's `CHANGES_REQUESTED` that preceded the `staged`-branch retarget.
+- **Cline MCP Marketplace issue #1394** —
+  `gh issue view cline/mcp-marketplace#1394 --json state,comments`. No
+  reviewer comments as of 2026-04-22.
+
+If any of these flipped, update the row's Status/Live on/Notes and bump
+"Last refreshed" at the top of this file in the same commit.
+
+### 2. Ready-to-publish — owner action required
+
+These are prepped; each needs owner credentials or a release step we
+intentionally deferred.
+
+- **Official MCP Registry (`registry.modelcontextprotocol.io`)** — cut
+  vardoger 0.3.1 on PyPI first so the `<!-- mcp-name: io.github.dstrupl/vardoger -->`
+  marker in `README.md` ships in the PyPI package description (required for
+  ownership verification). Then, from a fresh clone on a shell with a browser:
+  1. Install `mcp-publisher` (see `plugins/mcp-registry/README.md`).
+  2. Copy `plugins/mcp-registry/server.json` to the repo root (the CLI reads
+     from `./server.json`), bump `packages[0].version` to `0.3.1`, run
+     `mcp-publisher init` in a scratch dir and diff against the tracked file
+     to catch `packageArguments` schema drift.
+  3. `mcp-publisher login github && mcp-publisher publish`.
+  4. Verify:
+     `curl -s https://registry.modelcontextprotocol.io/v0/servers | jq '.servers[] | select(.name=="io.github.dstrupl/vardoger")'`.
+  5. Flip the row to **Live** and tick the Phase 4 checkbox in `PRD.md`.
+- **McpMux (`mcpmux/mcp-servers`)** — no PyPI work needed. Fork, copy
+  `plugins/mcpmux/vardoger.json` to `servers/vardoger.json`, restore the
+  in-repo `$schema` path (`../schemas/server-definition.schema.json`), run
+  `pnpm install && pnpm validate servers/vardoger.json && pnpm check-conflicts`,
+  then open a signed-commit PR titled `Add vardoger`. Flip to **Submitted**
+  on PR open and **Live** on merge.
+
+### 3. Blocked — pending an owner decision
+
+- **Docker MCP Registry** — blocked on Dockerfile. Choose one of:
+  (a) add a Dockerfile and let Docker build/sign `mcp/vardoger` via
+  `task create --category productivity https://github.com/dstrupl/vardoger`,
+  (b) add a Dockerfile, publish our own image (e.g. `ghcr.io/dstrupl/vardoger`),
+  and submit with `--image`, or (c) defer indefinitely. Once decided, I can
+  draft `plugins/docker-mcp/server.yaml` and the Dockerfile.
+- **ClawHub listing license** — `vardoger-analyze@0.3.0` auto-landed as
+  **MIT-0** (strictly more permissive than the repo's Apache-2.0 for prose,
+  so safe). If we want the listing license to mirror the repo, add
+  `license: Apache-2.0` to `plugins/openclaw/skills/analyze/SKILL.md`
+  frontmatter, bump to 0.3.1, and republish with
+  `bunx --bun clawhub publish plugins/openclaw/skills/analyze/ --slug vardoger-analyze --name "vardoger — Analyze History" --version 0.3.1 --tags latest --changelog "Add explicit Apache-2.0 license"`.
+
+### 4. Not actionable today — revisit only on upstream change
+
+- **Windsurf MCP Store** — re-verified 2026-04-22; still curated, no public
+  submission endpoint. Revisit only if Windsurf announces a self-serve flow
+  or makes the `windsurf-mcp-registry://` deeplink target third-party
+  manifests. The Enterprise internal-registry path is covered by the MCP
+  Registry row (item 2).
+- **Codex official directory** — blocked upstream; watch
+  `developers.openai.com/codex/plugins/build` for the "Self-serve plugin
+  publishing and management are coming soon" banner to disappear.
