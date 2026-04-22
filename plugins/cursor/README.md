@@ -43,7 +43,18 @@ Ask the Cursor agent:
 - "Run vardoger"
 - "Analyze my conversation history"
 
-The agent will call the `vardoger_personalize` tool, which returns step-by-step orchestration instructions. The agent then follows them automatically — preparing batches, summarizing, synthesizing, and writing the result to `.cursor/rules/vardoger.md`.
+The agent will call the `vardoger_personalize` tool, which returns step-by-step orchestration instructions. The agent then follows them automatically — preparing batches, summarizing, synthesizing, and delivering the result.
+
+### Where the personalization lands
+
+vardoger analyses your *global* Cursor conversation history, so the output it produces is user-level (applies to every workspace), not project-level. Delivery defaults reflect that:
+
+- **Default — User Rules (copy-paste):** The agent surfaces a ready-to-paste block. You paste it into **Cursor Settings → Rules → User Rules** once; it then applies across every project. Edit the block freely — the bullets are starting points derived from patterns in your chat history, not commandments.
+- **Opt-in — project-scoped file:** Ask the agent "also drop this into my current workspace" and it will call `vardoger_write` with `project_path=<your workspace root>`. vardoger writes `<project>/.cursor/rules/vardoger.md` *only* if that directory (or one of its ancestors) looks like a real project (contains `.git`, a language manifest, `AGENTS.md`, or an existing `.cursor/`). If it doesn't, the write is refused with an actionable error — vardoger will not silently drop a rules file into `$HOME` or any other non-project location.
+
+### Reusing a personalization from another workspace
+
+If you've already curated a `vardoger.md` in another Cursor workspace, tell the agent: "you can also check workspace X and workspace Y." The agent calls `vardoger_import` with those paths; vardoger returns any `vardoger.md` it finds so the agent can offer to reuse, merge, or ignore it before running a fresh analysis.
 
 ## Uninstall
 

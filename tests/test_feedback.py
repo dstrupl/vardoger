@@ -22,6 +22,18 @@ GENERATED = """\
 """
 
 
+def _make_cursor_project(project: Path) -> Path:
+    """Create a directory with a ``.git`` marker so the Cursor writer accepts it.
+
+    The writer intentionally refuses to drop rules into a directory that
+    doesn't look like a project (``.git``/manifest/``AGENTS.md``/``.cursor``);
+    see https://github.com/dstrupl/vardoger/issues/18.
+    """
+    project.mkdir(parents=True, exist_ok=True)
+    (project / ".git").mkdir(exist_ok=True)
+    return project
+
+
 def test_extract_bullets_orders_and_dedupes():
     text = "# H\n- a\n- b\n- a\n  - c\n"
     assert extract_bullets(text) == ["a", "b", "c"]
@@ -55,7 +67,7 @@ def test_detect_edits_returns_none_when_no_prior_generation():
 def test_detect_edits_returns_none_when_file_matches(tmp_path):
     from vardoger.writers.cursor import write_cursor_rules
 
-    project = tmp_path / "proj"
+    project = _make_cursor_project(tmp_path / "proj")
     store = CheckpointStore(state_dir=tmp_path / "state")
 
     output = write_cursor_rules(GENERATED, project_path=project)
@@ -73,7 +85,7 @@ def test_detect_edits_returns_none_when_file_matches(tmp_path):
 def test_detect_edits_classifies_changes(tmp_path):
     from vardoger.writers.cursor import write_cursor_rules
 
-    project = tmp_path / "proj"
+    project = _make_cursor_project(tmp_path / "proj")
     store = CheckpointStore(state_dir=tmp_path / "state")
 
     output = write_cursor_rules(GENERATED, project_path=project)
@@ -206,7 +218,7 @@ def test_detect_edits_cline_skips_global_scope(tmp_path):
 def test_detect_edits_is_idempotent_after_reverting(tmp_path):
     from vardoger.writers.cursor import write_cursor_rules
 
-    project = tmp_path / "proj"
+    project = _make_cursor_project(tmp_path / "proj")
     store = CheckpointStore(state_dir=tmp_path / "state")
 
     output = write_cursor_rules(GENERATED, project_path=project)

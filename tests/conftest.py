@@ -36,11 +36,32 @@ def fake_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture
 def project_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Chdir into a fresh project dir so writers rooted at ``Path.cwd()`` stay isolated."""
+    """Chdir into a fresh project dir so writers rooted at ``Path.cwd()`` stay isolated.
+
+    The directory contains a ``.git`` stub so that writers which now enforce
+    "must be inside a project" (see :mod:`vardoger.writers.cursor`) recognise
+    it as a real project root.
+    """
     project = tmp_path / "project"
     project.mkdir()
+    (project / ".git").mkdir()
     monkeypatch.chdir(project)
     return project
+
+
+@pytest.fixture
+def bare_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Chdir into a directory with NO project markers.
+
+    Used to exercise the ``$HOME``-launched MCP-server scenario (see
+    https://github.com/dstrupl/vardoger/issues/18): callers that do not
+    pass ``project_path`` must not be allowed to silently drop a rules
+    file in a non-project directory.
+    """
+    bare = tmp_path / "nothome"
+    bare.mkdir()
+    monkeypatch.chdir(bare)
+    return bare
 
 
 def _build_conversations(count: int = 2) -> list[Conversation]:
