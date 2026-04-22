@@ -6,7 +6,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Changed (**breaking** for Cursor MCP callers)
+## [0.3.0] — 2026-04-22
+
+### Changed (**breaking** for MCP callers of every non-Cursor writer)
 
 - `vardoger_write` for Cursor no longer silently falls back to
   `Path.cwd() / ".cursor/rules/vardoger.md"` when the caller omits
@@ -36,6 +38,25 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     refuses to write otherwise. `write_cursor_rules` raises
     `NotAProjectError` for non-project paths.
   ([#18](https://github.com/dstrupl/vardoger/issues/18))
+- Project-scope writes for the six non-Cursor writers (`claude-code`,
+  `codex`, `openclaw`, `copilot`, `windsurf`, `cline`) now enforce the
+  same project-marker check. Before this release, calling
+  `vardoger_write(platform=X, scope="project")` without a `project_path`
+  from an MCP server launched with `cwd=$HOME` silently dropped rules
+  into locations the target tool does not read (e.g. `~/AGENTS.md` for
+  Codex, `~/.github/copilot-instructions.md` for Copilot,
+  `~/.windsurf/rules/vardoger.md` for Windsurf, `~/.clinerules/vardoger.md`
+  for Cline). The shared `writers/_projects.py` module now centralises
+  `PROJECT_MARKERS`, `NotAProjectError`, `find_project_root`, and
+  `ensure_project`, and every writer calls `ensure_project(...)` on the
+  project-scope branch. Cline validates unconditionally — it has no
+  global scope, so even the default no-`project_path` call now refuses
+  when cwd is not a project. `vardoger_write` and `vardoger_feedback`
+  translate `NotAProjectError` into platform-appropriate actionable
+  messages (everyone else is told to retry with `scope=global`; Cline
+  is told to pass a real `project_path` because it has no global
+  fallback).
+  ([#21](https://github.com/dstrupl/vardoger/issues/21))
 
 ### Added
 
@@ -49,6 +70,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `vardoger_import` before generation when other workspaces are known,
   and (b) default the final delivery to User Rules with the project-file
   path as an explicit opt-in.
+- "Where the personalization lands" section on every plugin README
+  (`cursor`, `claude-code`, `codex`, `openclaw`, `copilot`, `windsurf`,
+  `cline`) explaining the refusal behaviour, the marker requirements,
+  and the per-platform recovery path.
+
+### Changed
+
+- Bumped plugin manifest versions (`plugins/{cursor,claude-code,codex,copilot}`
+  plugin.json, `plugins/copilot/marketplace.json`, and the OpenClaw SKILL
+  frontmatter) to `0.3.0` in lock-step with the Python package.
 
 ## [0.2.2] — 2026-04-21
 
