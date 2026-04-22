@@ -119,7 +119,7 @@ Additionally, Cursor supports **MCP servers** configured via `~/.cursor/mcp.json
 
 **Recommended approach:** Ship as an MCP server (configured in `mcp.json`) that exposes vardoger commands as tools the agent can invoke. This aligns with Cursor's AI-native plugin model better than a traditional VS Code extension. Install via `pipx install vardoger && vardoger setup cursor`.
 
-> **Status:** [x] MCP server implemented (stdio transport) with the `vardoger_personalize` entry-point tool plus implementation tools `vardoger_status`, `vardoger_prepare`, `vardoger_synthesize_prompt`, `vardoger_write`, `vardoger_preview`, `vardoger_feedback`, and `vardoger_compare`. The server is platform-agnostic — every tool accepts a `platform` argument (or reads `VARDOGER_MCP_PLATFORM`) and routes to the correct per-platform history reader and writer, so the same server is reused by the Cursor, Claude Code, Codex, OpenClaw, Copilot CLI, Windsurf, and Cline installs. Cursor Plugin Registry publishing tracked under Phase 4; see [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+> **Status:** [x] MCP server implemented (stdio transport) with the `vardoger_personalize` entry-point tool plus implementation tools `vardoger_status`, `vardoger_prepare`, `vardoger_synthesize_prompt`, `vardoger_write`, `vardoger_preview`, `vardoger_feedback`, and `vardoger_compare`. The server is platform-agnostic — every tool accepts a `platform` argument (or reads `VARDOGER_MCP_PLATFORM`) and routes to the correct per-platform history reader and writer, so the same server is reused by the Cursor, Claude Code, Codex, OpenClaw, Copilot CLI, Windsurf, and Cline installs. Cursor Plugin Registry publishing tracked under Phase 4; see [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 
 ---
 
@@ -299,7 +299,7 @@ Copilot CLI supports registering third-party plugin marketplaces via `copilot pl
 - Plugin manifest: `plugins/copilot/.github/plugin/plugin.json`
 - One-line install: `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot`
 
-> **Status:** [x] Plugin manifest and analyze skill implemented; marketplace submission tracked in [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+> **Status:** [x] Plugin manifest and analyze skill implemented; marketplace submission tracked in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 
 ---
 
@@ -364,7 +364,7 @@ Cline publishes third-party servers through the Cline MCP Marketplace (GitHub-is
 - Install guide: `plugins/cline/llms-install.md`
 - User-facing readme: `plugins/cline/README.md`
 
-> **Status:** [x] Install guide and README implemented; marketplace submission tracked in [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+> **Status:** [x] Install guide and README implemented; marketplace submission tracked in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 
 ---
 
@@ -462,11 +462,11 @@ The core analysis logic must be shared across all platform integrations. Platfor
 - [ ] Plugin packaging and marketplace submission for Claude Code — **submitted, awaiting review** (`plugins/claude-code/`, Claude Code Plugins directory)
 - [ ] Plugin packaging and marketplace submission for Codex (custom marketplace + official directory) — **not started**; custom-marketplace install already works via `plugins/codex/marketplace.json`
 - [ ] Skill publishing to ClawHub for OpenClaw — **not started**
-- [ ] Plugin packaging and marketplace submission for GitHub Copilot CLI — **not started**; `plugins/copilot/marketplace.json` ready
+- [ ] Plugin packaging and marketplace submission for GitHub Copilot CLI — **custom marketplace not started** (`plugins/copilot/marketplace.json` ready); **`awesome-copilot` submitted, awaiting review** ([PR #1461](https://github.com/github/awesome-copilot/pull/1461), retargeted to `staged` on 2026-04-21)
 - [ ] Windsurf MCP Store listing — **N/A today** (no public submission form); revisit if Windsurf opens self-serve submissions
-- [ ] Cline MCP Marketplace submission — **not started**; `plugins/cline/llms-install.md` ready
+- [ ] Cline MCP Marketplace submission — **submitted, awaiting review** ([issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) opened 2026-04-20)
 
-Full per-marketplace status (with submission dates and review feedback) lives in [`docs/marketplace-status.md`](./docs/marketplace-status.md), which is the single source of truth for Phase 4 progress.
+Full per-marketplace status (with submission dates and review feedback) lives in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md), which is the single source of truth for Phase 4 progress.
 
 **Prerequisites:** Limited beta with direct installs (`pipx install vardoger && vardoger setup <platform>`) validates the UX and analysis quality across real users.
 
