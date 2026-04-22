@@ -52,8 +52,8 @@ _ensure_project = ensure_project
 
 __all__ = [
     "FRONTMATTER",
-    "NotAProjectError",
     "PROJECT_MARKERS",
+    "NotAProjectError",
     "clear_cursor_rules",
     "read_cursor_rules",
     "write_cursor_rules",
