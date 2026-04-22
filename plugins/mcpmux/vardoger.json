@@ -1,0 +1,60 @@
+{
+  "$schema": "../schemas/server-definition.schema.json",
+  "id": "io.github.dstrupl.vardoger",
+  "name": "vardoger",
+  "alias": "vardoger",
+  "description": "Personalize AI coding assistants by analyzing local conversation history. Reads JSONL session logs from Cursor, Claude Code, Codex, Copilot CLI, Windsurf, Cline, and OpenClaw, extracts behavioral signals, and writes tailored rules files. Runs entirely on your machine.",
+  "icon": "🪞",
+  "schema_version": "2.1",
+  "categories": ["developer-tools", "productivity", "ai-ml"],
+  "tags": ["personalization", "local-first", "history", "rules", "skills"],
+
+  "transport": {
+    "type": "stdio",
+    "command": "vardoger",
+    "args": ["mcp"],
+    "env": {
+      "VARDOGER_MCP_PLATFORM": "${input:VARDOGER_MCP_PLATFORM}"
+    },
+    "metadata": {
+      "inputs": [
+        {
+          "id": "VARDOGER_MCP_PLATFORM",
+          "label": "Host platform (optional)",
+          "description": "Override the platform identifier the MCP server defaults to. Leave blank to let vardoger pick based on the calling host. Valid values: cursor, claude-code, codex, copilot, windsurf, cline, openclaw.",
+          "type": "string",
+          "required": false,
+          "secret": false,
+          "placeholder": "cursor"
+        }
+      ]
+    }
+  },
+
+  "auth": {
+    "type": "none",
+    "instructions": "vardoger reads local filesystem paths only (e.g. ~/.cursor/, ~/.claude/, ~/.codex/). No API keys or OAuth required."
+  },
+
+  "contributor": {
+    "name": "David Strupl",
+    "github": "dstrupl",
+    "url": "https://github.com/dstrupl/vardoger"
+  },
+
+  "links": {
+    "repository": "https://github.com/dstrupl/vardoger",
+    "documentation": "https://github.com/dstrupl/vardoger#readme",
+    "homepage": "https://github.com/dstrupl/vardoger",
+    "issues": "https://github.com/dstrupl/vardoger/issues"
+  },
+
+  "platforms": ["all"],
+
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false,
+    "read_only_mode": false
+  }
+}

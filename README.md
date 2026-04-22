@@ -156,7 +156,7 @@ The `publish.yml` workflow builds the package and uploads it to PyPI via [truste
 
 ## Status
 
-Public beta. The `0.2.x` line is published on PyPI and actively maintained;
+Public beta. The `0.3.x` line is published on PyPI and actively maintained;
 marketplace listings are rolling out per [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 See [PRD.md](PRD.md) for the full product requirements document.
 
@@ -168,3 +168,6 @@ See [PRD.md](PRD.md) for the full product requirements document.
 ## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
+
+<!-- mcp-name: io.github.dstrupl/vardoger -->
+
