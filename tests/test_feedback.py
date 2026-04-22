@@ -23,11 +23,13 @@ GENERATED = """\
 
 
 def _make_cursor_project(project: Path) -> Path:
-    """Create a directory with a ``.git`` marker so the Cursor writer accepts it.
+    """Create a directory with a ``.git`` marker so the writers accept it.
 
-    The writer intentionally refuses to drop rules into a directory that
-    doesn't look like a project (``.git``/manifest/``AGENTS.md``/``.cursor``);
-    see https://github.com/dstrupl/vardoger/issues/18.
+    Every project-scope writer now refuses to drop rules into a directory
+    that doesn't look like a project (``.git``/manifest/``AGENTS.md``/
+    ``.cursor``); see https://github.com/dstrupl/vardoger/issues/18 (for
+    Cursor) and https://github.com/dstrupl/vardoger/issues/21 (for the
+    generalisation to the other writers).
     """
     project.mkdir(parents=True, exist_ok=True)
     (project / ".git").mkdir(exist_ok=True)
@@ -139,7 +141,7 @@ def _seed_generation(store: CheckpointStore, platform: str, output: Path, conten
 def test_detect_edits_covers_copilot(tmp_path):
     from vardoger.writers.copilot import read_copilot_rules, write_copilot_rules
 
-    project = tmp_path / "proj"
+    project = _make_cursor_project(tmp_path / "proj")
     store = CheckpointStore(state_dir=tmp_path / "state")
 
     output = write_copilot_rules(GENERATED, scope="project", project_path=project)
@@ -161,7 +163,7 @@ def test_detect_edits_covers_copilot(tmp_path):
 def test_detect_edits_covers_windsurf(tmp_path):
     from vardoger.writers.windsurf import read_windsurf_rules, write_windsurf_rules
 
-    project = tmp_path / "proj"
+    project = _make_cursor_project(tmp_path / "proj")
     store = CheckpointStore(state_dir=tmp_path / "state")
 
     output = write_windsurf_rules(GENERATED, scope="project", project_path=project)
@@ -183,7 +185,7 @@ def test_detect_edits_covers_windsurf(tmp_path):
 def test_detect_edits_covers_cline(tmp_path):
     from vardoger.writers.cline import read_cline_rules, write_cline_rules
 
-    project = tmp_path / "proj"
+    project = _make_cursor_project(tmp_path / "proj")
     store = CheckpointStore(state_dir=tmp_path / "state")
 
     output = write_cline_rules(GENERATED, scope="project", project_path=project)

@@ -74,6 +74,11 @@ manual configuration in step 2.
 - Ask Cline to analyze your Cline conversation history, or invoke the vardoger
   MCP server once it is registered.
 
+### Where the personalization lands
+
+- **Only scope — project:** Cline has no user-global rules surface, so vardoger only writes to `<project>/.clinerules/vardoger.md` (or appends to a single-file `.clinerules`). This is Cline's default scope — you do not need to pass `scope=project` explicitly.
+- **Project validation is always on.** Unlike the other platforms, Cline does not offer a global-scope fallback, so vardoger *always* verifies that the target `project_path` (or the current working directory if none is given) lives inside a real project. It requires `.git`, a language manifest, `AGENTS.md`, or an existing `.cursor/` in the path or one of its ancestors. Without that check, an MCP server launched from `$HOME` would silently drop rules into `~/.clinerules/vardoger.md`, which Cline would never pick up. If you see vardoger refuse to write, pass `project_path="<real workspace root>"` — there is no user-global fallback to switch to.
+
 ## Uninstall
 
 - Remove `.clinerules/vardoger.md` (or the fenced block in `.clinerules` if it

@@ -15,6 +15,8 @@ import logging
 import re
 from pathlib import Path
 
+from vardoger.writers._projects import ensure_project
+
 logger = logging.getLogger(__name__)
 
 START_MARKER = "<!-- vardoger:start -->"
@@ -47,13 +49,18 @@ def write_codex_rules(
     """Write the vardoger section into an AGENTS.md file for Codex.
 
     scope="global": writes to ~/.codex/AGENTS.md
-    scope="project": writes to <project>/AGENTS.md
+    scope="project": writes to <project>/AGENTS.md. The base directory
+    (or an ancestor) must contain a project marker, otherwise
+    :class:`vardoger.writers._projects.NotAProjectError` is raised (see
+    https://github.com/dstrupl/vardoger/issues/21).
 
     If the file already exists and contains a vardoger section, that section
     is replaced. Otherwise the section is appended.
 
     Returns the path of the written file.
     """
+    if scope == "project":
+        ensure_project(project_path or Path.cwd(), platform="Codex")
     output_path = _agents_path(scope, project_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

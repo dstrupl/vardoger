@@ -18,6 +18,8 @@ import logging
 import re
 from pathlib import Path
 
+from vardoger.writers._projects import ensure_project
+
 logger = logging.getLogger(__name__)
 
 START_MARKER = "<!-- vardoger:start -->"
@@ -45,7 +47,15 @@ def write_windsurf_rules(
     scope: str = "global",
     project_path: Path | None = None,
 ) -> Path:
-    """Write Windsurf rules for the given scope and return the path written."""
+    """Write Windsurf rules for the given scope and return the path written.
+
+    For ``scope="project"`` the base directory (or an ancestor) must
+    contain a project marker, otherwise
+    :class:`vardoger.writers._projects.NotAProjectError` is raised (see
+    https://github.com/dstrupl/vardoger/issues/21).
+    """
+    if scope == "project":
+        ensure_project(project_path or Path.cwd(), platform="Windsurf")
     output_path = _rules_path(scope, project_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

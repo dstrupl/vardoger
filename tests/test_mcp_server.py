@@ -240,6 +240,77 @@ def test_vardoger_write_refuses_non_project_path(
     assert store.get_generation("cursor") is None
 
 
+# Regression for https://github.com/dstrupl/vardoger/issues/21: the
+# refusal must fire for every writer, not just Cursor, and the hint must
+# be platform-appropriate — in particular, Cline must never be told to
+# "use scope=global" because it has no global scope.
+@pytest.mark.parametrize(
+    ("platform", "scope", "expected_hint_snippet"),
+    [
+        ("claude-code", "project", "scope=global"),
+        ("codex", "project", "scope=global"),
+        ("openclaw", "project", "scope=global"),
+        ("copilot", "project", "scope=global"),
+        ("windsurf", "project", "scope=global"),
+        # Cline: default scope is already project, and Cline has no
+        # global scope at all — so the hint must NOT suggest switching
+        # to global.
+        ("cline", "", "no global scope"),
+    ],
+)
+def test_vardoger_write_refuses_non_project_path_for_every_platform(
+    fake_home: Path,
+    tmp_path: Path,
+    platform: str,
+    scope: str,
+    expected_hint_snippet: str,
+) -> None:
+    """Non-Cursor writers must also refuse to land rules in a non-project dir."""
+    bogus = tmp_path / "nothome"
+    bogus.mkdir()
+
+    result = mcp_server.vardoger_write(
+        "# p\n\n- rule\n",
+        platform=platform,
+        scope=scope,
+        project_path=str(bogus),
+    )
+    assert "refused to write" in result
+    assert expected_hint_snippet in result
+
+    # No file landed anywhere under the bogus directory.
+    assert not any(bogus.rglob("vardoger.md"))
+    assert not any(bogus.rglob(".clinerules"))
+
+    # And no generation was recorded for the refused platform.
+    store = CheckpointStore()
+    assert store.get_generation(mcp_server._STATE_KEY[platform]) is None
+
+
+def test_vardoger_write_cline_refuses_default_scope_no_project_path(
+    fake_home: Path,
+    bare_cwd: Path,
+) -> None:
+    """Cline's default scope is project — so a $HOME-like cwd must still refuse.
+
+    This is the worst-case footgun in #21: cline has no global scope,
+    default scope is project, and an MCP server launched from $HOME
+    with no ``project_path`` would otherwise land ``~/.clinerules`` at
+    a path Cline never reads.
+    """
+    result = mcp_server.vardoger_write(
+        "# p\n\n- rule\n",
+        platform="cline",
+    )
+    assert "refused to write" in result
+    assert "no global scope" in result
+    assert not (bare_cwd / ".clinerules").exists()
+    assert not (bare_cwd / ".clinerules" / "vardoger.md").exists()
+
+    store = CheckpointStore()
+    assert store.get_generation("cline") is None
+
+
 def test_vardoger_preview_no_project_path_shows_user_rules_block(
     fake_home: Path,
     bare_cwd: Path,

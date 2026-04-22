@@ -9,18 +9,31 @@ Files support YAML frontmatter with description, globs, and alwaysApply.
 
 The writer here is intentionally strict about what counts as a "project":
 if the resolved target directory is not itself a project root and has no
-project ancestors (looking for ``.git``, language manifests, ``AGENTS.md``
-or an existing ``.cursor/`` directory), the write is refused with a
-:class:`NotAProjectError`. This prevents the silent failure mode
-documented in https://github.com/dstrupl/vardoger/issues/18, where an
-MCP server launched from ``$HOME`` would happily drop a file at
+project ancestors (see :mod:`vardoger.writers._projects`), the write is
+refused with a :class:`NotAProjectError`. This prevents the silent
+failure mode documented in
+https://github.com/dstrupl/vardoger/issues/18, where an MCP server
+launched from ``$HOME`` would happily drop a file at
 ``~/.cursor/rules/vardoger.md`` — a location Cursor never loads.
+
+The shared helper module now drives the same check in every other
+writer (https://github.com/dstrupl/vardoger/issues/21); the
+``PROJECT_MARKERS`` / ``_find_project_root`` / ``_ensure_project`` /
+``NotAProjectError`` names are re-exported from here so external
+importers (and the older test module) keep working.
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+
+from vardoger.writers._projects import (
+    PROJECT_MARKERS,
+    NotAProjectError,
+    ensure_project,
+    find_project_root,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,75 +44,25 @@ alwaysApply: true
 ---
 """
 
-# Ordering is not meaningful; membership test is what matters. Any of
-# these markers present in the target directory or any of its ancestors
-# signals "this is a real project Cursor will load rules from."
-PROJECT_MARKERS: frozenset[str] = frozenset(
-    {
-        ".git",
-        ".hg",
-        ".svn",
-        "pyproject.toml",
-        "package.json",
-        "Cargo.toml",
-        "go.mod",
-        "pom.xml",
-        "build.gradle",
-        "build.gradle.kts",
-        "AGENTS.md",
-        ".cursor",
-    }
-)
+# Re-exported so ``from vardoger.writers.cursor import NotAProjectError``
+# (and the previously-private ``_find_project_root`` / ``_ensure_project``
+# used by the tests) keep working after the move to the shared module.
+_find_project_root = find_project_root
+_ensure_project = ensure_project
 
-
-class NotAProjectError(RuntimeError):
-    """Raised when a target path cannot be identified as a project root.
-
-    Cursor only loads rules from directories inside a project
-    (anything with ``.git``, a language manifest, ``AGENTS.md``, or an
-    existing ``.cursor/`` directory in its ancestry). Writing outside
-    such a directory silently produces a file Cursor will never read,
-    so the writer refuses and surfaces this error instead.
-    """
-
-
-def _find_project_root(start: Path) -> Path | None:
-    """Walk up from ``start`` looking for a project marker.
-
-    Returns the first directory (``start`` itself or an ancestor) that
-    contains any member of :data:`PROJECT_MARKERS`, or ``None`` if no
-    such directory is found before reaching the filesystem root.
-    """
-    try:
-        current = start.resolve()
-    except OSError:
-        return None
-
-    # Path.parents stops at the filesystem root; we also want to inspect
-    # ``current`` itself, hence the chain.
-    for candidate in (current, *current.parents):
-        for marker in PROJECT_MARKERS:
-            if (candidate / marker).exists():
-                return candidate
-    return None
+__all__ = [
+    "FRONTMATTER",
+    "NotAProjectError",
+    "PROJECT_MARKERS",
+    "clear_cursor_rules",
+    "read_cursor_rules",
+    "write_cursor_rules",
+]
 
 
 def _rules_path(project_path: Path | None) -> Path:
     base = project_path or Path.cwd()
     return base / ".cursor" / "rules" / "vardoger.md"
-
-
-def _ensure_project(project_path: Path) -> None:
-    """Refuse to operate on a path that has no project marker in scope."""
-    root = _find_project_root(project_path)
-    if root is None:
-        msg = (
-            f"{project_path} is not inside a project (no .git, language manifest, "
-            "AGENTS.md or .cursor/ found in it or any ancestor); Cursor does not "
-            "load rules from paths like this, so refusing to write. Pass an "
-            "explicit project_path or install via User Rules instead."
-        )
-        raise NotAProjectError(msg)
 
 
 def write_cursor_rules(content: str, project_path: Path | None = None) -> Path:
@@ -111,7 +74,7 @@ def write_cursor_rules(content: str, project_path: Path | None = None) -> Path:
     the written file.
     """
     base = project_path or Path.cwd()
-    _ensure_project(base)
+    ensure_project(base, platform="Cursor")
     output_path = _rules_path(project_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(FRONTMATTER + "\n" + content, encoding="utf-8")

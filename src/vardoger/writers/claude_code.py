@@ -12,6 +12,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from vardoger.writers._projects import ensure_project
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,10 +34,15 @@ def write_claude_code_rules(
     """Write the vardoger rule file for Claude Code.
 
     scope="global": writes to ~/.claude/rules/vardoger.md
-    scope="project": writes to <project>/.claude/rules/vardoger.md
+    scope="project": writes to <project>/.claude/rules/vardoger.md. The
+    base directory (or an ancestor) must contain a project marker,
+    otherwise :class:`vardoger.writers._projects.NotAProjectError` is
+    raised (see https://github.com/dstrupl/vardoger/issues/21).
 
     Returns the path of the written file.
     """
+    if scope == "project":
+        ensure_project(project_path or Path.cwd(), platform="Claude Code")
     output_path = _rules_path(scope, project_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content, encoding="utf-8")

@@ -62,6 +62,11 @@ the `vardoger` CLI to read past conversations from
 
 See the [vardoger repo README](../../README.md) for the full workflow.
 
+### Where the personalization lands
+
+- **Default — user-global scope:** writes/updates the fenced `<!-- vardoger:start --> ... <!-- vardoger:end -->` block inside `~/.copilot/copilot-instructions.md`, which Copilot auto-loads on every CLI session.
+- **Opt-in — project scope:** pass `project_path="<workspace root>"` (and `scope=project`) to land the same fenced block inside `<project>/.github/copilot-instructions.md`. vardoger refuses to write project-scoped instructions into a directory that doesn't look like a real project (it requires `.git`, a language manifest, `AGENTS.md`, or an existing `.cursor/` in the path or one of its ancestors). Without that check, an MCP server launched from `$HOME` would silently drop rules under `~/.github/copilot-instructions.md`, which Copilot CLI never reads as project scope. Supply a real workspace root or drop the `project_path` argument to write user-globally.
+
 ## Uninstall
 
 ```bash

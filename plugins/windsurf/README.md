@@ -73,6 +73,11 @@ Cascade > **MCPs** should then list `vardoger`.
 Ask Cascade to analyze your Windsurf conversation history, or invoke the
 vardoger MCP server directly once it is registered.
 
+### Where the personalization lands
+
+- **Default — user-global scope:** writes/updates the fenced `<!-- vardoger:start --> ... <!-- vardoger:end -->` block inside `~/.codeium/windsurf/memories/global_rules.md`, which Windsurf auto-loads for every workspace.
+- **Opt-in — project scope:** pass `project_path="<workspace root>"` (and `scope=project`) to land `<project>/.windsurf/rules/vardoger.md`. vardoger refuses to write project-scoped rules into a directory that doesn't look like a real project (it requires `.git`, a language manifest, `AGENTS.md`, or an existing `.cursor/` in the path or one of its ancestors). Without that check, an MCP server launched from `$HOME` would silently drop rules under `~/.windsurf/rules/vardoger.md`, which Windsurf never reads as project scope. Supply a real workspace root or drop the `project_path` argument to write user-globally.
+
 ## Uninstall
 
 - Remove the fenced `<!-- vardoger:start --> ... <!-- vardoger:end -->` section

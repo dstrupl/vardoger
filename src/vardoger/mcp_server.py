@@ -508,6 +508,57 @@ def _user_rules_preview_response(content: str, copy_path: Path) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Not-a-project error messaging
+# ---------------------------------------------------------------------------
+
+# Each writer refuses to land a rules file in a directory that lacks a
+# project marker (see https://github.com/dstrupl/vardoger/issues/18 for
+# the Cursor case and https://github.com/dstrupl/vardoger/issues/21 for
+# the generalisation). The platforms differ in what the fix should look
+# like to the user, so we render a tailored hint rather than bubble the
+# raw exception text up through the MCP response.
+
+# Cline has no user-global scope, so "switch to global" is never valid
+# advice for it. For Cursor we prefer the User Rules copy-paste block
+# over writing a file.
+_NOT_A_PROJECT_HINTS: dict[str, str] = {
+    "cursor": (
+        "Omit project_path to get the User Rules copy-paste block instead, "
+        "or pass project_path=<workspace root>."
+    ),
+    "claude-code": (
+        "Pass project_path=<workspace root>, or use scope=global to write "
+        "into ~/.claude/rules/."
+    ),
+    "codex": (
+        "Pass project_path=<workspace root>, or use scope=global to write "
+        "into ~/.codex/AGENTS.md."
+    ),
+    "openclaw": (
+        "Pass project_path=<workspace root>, or use scope=global to write "
+        "into ~/.openclaw/skills/."
+    ),
+    "copilot": (
+        "Pass project_path=<workspace root>, or use scope=global to write "
+        "into ~/.copilot/copilot-instructions.md."
+    ),
+    "windsurf": (
+        "Pass project_path=<workspace root>, or use scope=global to write "
+        "into ~/.codeium/windsurf/memories/."
+    ),
+    # Cline has no documented user-level rules path, so "switch to global"
+    # is not available; the only remedy is to supply a real project_path.
+    "cline": "Pass project_path=<workspace root> — Cline has no global scope.",
+}
+
+
+def _format_not_a_project_message(platform: str, scope: str, exc: Exception) -> str:
+    """Render a platform-appropriate ``NotAProjectError`` response."""
+    hint = _NOT_A_PROJECT_HINTS.get(platform, "Pass project_path=<workspace root>.")
+    return f"vardoger: refused to write — {exc} {hint}"
+
+
+# ---------------------------------------------------------------------------
 # Tools
 # ---------------------------------------------------------------------------
 
@@ -700,7 +751,7 @@ def vardoger_write(
         (User Rules delivery).
     """
     from vardoger.checkpoint import CheckpointStore, content_hash
-    from vardoger.writers.cursor import NotAProjectError
+    from vardoger.writers import NotAProjectError
 
     resolved, err = _resolve_platform(platform)
     if resolved is None or err is not None:
@@ -735,10 +786,7 @@ def vardoger_write(
     try:
         output = _write_rules(resolved, rendered, resolved_scope, target)
     except NotAProjectError as exc:
-        return (
-            f"vardoger: refused to write — {exc} "
-            "Omit project_path to get the User Rules copy-paste block instead."
-        )
+        return _format_not_a_project_message(resolved, resolved_scope, exc)
 
     store.record_generation(
         _STATE_KEY[resolved],
@@ -906,7 +954,17 @@ def _apply_reject(
                 "the old one from Settings → Rules → User Rules:\n\n"
                 + _user_rules_response(previous.content, restored)
             )
-        output = _write_rules(platform, previous.content, scope, project_path)
+        from vardoger.writers import NotAProjectError
+
+        try:
+            output = _write_rules(platform, previous.content, scope, project_path)
+        except NotAProjectError as exc:
+            # The previous generation was a project-scoped file write, but
+            # the caller did not give us a project_path that still looks
+            # like one. Don't silently land the rules somewhere Cline/etc.
+            # will never read; surface the same actionable hint the write
+            # path uses.
+            return _format_not_a_project_message(platform, scope, exc)
         return f"vardoger: reverted {platform} to previous generation ({output})."
 
     if rejected_was_user_rules:
