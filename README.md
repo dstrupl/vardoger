@@ -37,7 +37,7 @@ Then tell your assistant: **"Personalize my assistant."**
 
 > Looking for the in-app plugin listings? Track review status for each
 > marketplace (PyPI, Cursor, Claude Code, Codex, Copilot CLI, Windsurf, Cline,
-> ClawHub) in [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+> ClawHub) in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
 > `0.2.x` line. The beta install paths below stay here for anyone still pinning
@@ -157,7 +157,7 @@ The `publish.yml` workflow builds the package and uploads it to PyPI via [truste
 ## Status
 
 Public beta. The `0.2.x` line is published on PyPI and actively maintained;
-marketplace listings are rolling out per [`docs/marketplace-status.md`](./docs/marketplace-status.md).
+marketplace listings are rolling out per [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 See [PRD.md](PRD.md) for the full product requirements document.
 
 ## Privacy and security

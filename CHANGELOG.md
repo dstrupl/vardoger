@@ -55,7 +55,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Cline install reference at `plugins/cline/README.md` plus a
   `plugins/cline/llms-install.md` tailored to the Cline MCP marketplace's
   LLM-driven install flow.
-- `docs/marketplace-status.md` now tracks Copilot CLI (custom + the
+- `MARKETPLACE_STATUS.md` (then `docs/marketplace-status.md`) now tracks Copilot CLI (custom + the
   `awesome-copilot` list), Windsurf, and Cline rows, and refreshes the
   PyPI row with the 0.2.0 / 0.2.1 release tags.
 
