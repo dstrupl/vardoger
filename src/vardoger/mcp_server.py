@@ -527,12 +527,10 @@ _NOT_A_PROJECT_HINTS: dict[str, str] = {
         "or pass project_path=<workspace root>."
     ),
     "claude-code": (
-        "Pass project_path=<workspace root>, or use scope=global to write "
-        "into ~/.claude/rules/."
+        "Pass project_path=<workspace root>, or use scope=global to write into ~/.claude/rules/."
     ),
     "codex": (
-        "Pass project_path=<workspace root>, or use scope=global to write "
-        "into ~/.codex/AGENTS.md."
+        "Pass project_path=<workspace root>, or use scope=global to write into ~/.codex/AGENTS.md."
     ),
     "openclaw": (
         "Pass project_path=<workspace root>, or use scope=global to write "
