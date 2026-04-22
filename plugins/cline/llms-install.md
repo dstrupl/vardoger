@@ -37,7 +37,7 @@ Verify:
 vardoger --version
 ```
 
-The output should be `0.2.2` or newer.
+The output should be `0.3.0` or newer.
 
 ## Step 2 — Prepare Cline rules
 

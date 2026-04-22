@@ -5,13 +5,13 @@
   },
   "metadata": {
     "description": "Personalizes your AI assistant by analyzing local conversation history and generating tailored instructions. Runs entirely on your machine.",
-    "version": "0.2.2"
+    "version": "0.3.0"
   },
   "plugins": [
     {
       "name": "vardoger",
       "description": "Personalizes your AI assistant by analyzing conversation history and generating tailored instructions. Runs entirely on your machine.",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "source": ".",
       "homepage": "https://github.com/dstrupl/vardoger",
       "repository": "https://github.com/dstrupl/vardoger",
