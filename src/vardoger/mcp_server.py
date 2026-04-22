@@ -287,7 +287,26 @@ If the personalization is fresh (not stale), tell the user their \
 personalization is up to date and ask if they want to re-run anyway. \
 If stale or never generated, continue.
 
-## Step 2: Get batch metadata
+## Step 2: Check for existing personalizations in other workspaces (Cursor only)
+
+The personalization vardoger produces is derived from the user's *global* \
+conversation history, not from the current project. A user who has already \
+run vardoger in a different workspace may have a ready-made \
+`.cursor/rules/vardoger.md` you can reuse instead of regenerating from \
+scratch.
+
+If the platform is Cursor and you know (from your session context, open \
+editors, recent files, etc.) of other workspaces the user has, call \
+`vardoger_import(paths=["/path/a", "/path/b", ...])` with them. The tool \
+returns the content of any `vardoger.md` it finds. If it finds one, offer \
+the user:
+  (a) reuse that content as-is,
+  (b) regenerate and merge with the existing content, or
+  (c) discard and regenerate from history.
+
+Otherwise continue with generation below.
+
+## Step 3: Get batch metadata
 
 Call `vardoger_prepare(platform="{platform}", batch=0)`.
 
@@ -295,7 +314,7 @@ This returns JSON like `{{"batches": 3, "total_conversations": 29}}`. \
 Note the number of batches. Tell the user: "Found N conversations in M \
 batches. Analyzing..."
 
-## Step 3: Summarize each batch
+## Step 4: Summarize each batch
 
 For each batch from 1 to M, call \
 `vardoger_prepare(platform="{platform}", batch=N)`.
@@ -306,29 +325,76 @@ signals you observe. Keep each summary for later.
 
 Tell the user: "Analyzing batch N of M..."
 
-## Step 4: Get the synthesis prompt
+## Step 5: Get the synthesis prompt
 
 Call `vardoger_synthesize_prompt(platform="{platform}")`.
 
-## Step 5: Synthesize
+## Step 6: Synthesize
 
 Following the synthesis prompt, combine all your batch summaries into a \
 single personalization. The output should be clean markdown with actionable \
 instructions.
 
-## Step 6: Write the result
+## Step 7: Deliver the result
 
-Call `vardoger_write(platform="{platform}", content="YOUR_PERSONALIZATION_HERE")`.
+Because the personalization is derived from *global* conversation history, \
+its natural home is Cursor's **User Rules** (Settings → Rules → User \
+Rules), which apply across every project. The `vardoger_write` tool \
+reflects this:
 
-## Step 7: Report to the user
+- Default — User Rules: call \
+  `vardoger_write(platform="{platform}", content="YOUR_PERSONALIZATION_HERE")` \
+  *without* a `project_path`. vardoger returns a copy-paste block the user \
+  can drop into Settings → Rules → User Rules. No files are written. \
+  Surface the returned block verbatim and encourage the user to edit it.
+- Opt-in — project-scoped file: if (and only if) the user explicitly asks \
+  for a project-specific rules file, call the same tool again with \
+  `project_path="<workspace root>"`. vardoger will refuse to write outside \
+  a directory that looks like a project, which is intentional — don't \
+  fabricate paths.
 
-Tell the user what was written and where. Mention they can ask you to \
-re-run vardoger any time to update the personalization.
+## Step 8: Report to the user
+
+Tell the user what was produced and which delivery mode was used. Mention \
+they can ask you to re-run vardoger any time to update the personalization.
 """
 
 
 def _orchestration_instructions(platform: str) -> str:
     return _ORCHESTRATION_TEMPLATE.format(platform=platform, label=_label(platform))
+
+
+# Sentinel we stash in ``CheckpointStore.output_path`` when we generated a
+# personalization without writing it to disk (the User Rules default). Keeps
+# downstream code — staleness, feedback, compare — able to tell "generated"
+# from "generated and written."
+_USER_RULES_OUTPUT_SENTINEL = "(user-rules: no file written)"
+
+
+_USER_RULES_TEMPLATE = """\
+vardoger: personalization ready — not written to disk.
+
+The content below was synthesized from your *global* conversation history, \
+so it belongs in Cursor's **User Rules** (Settings → Rules → User Rules), \
+which apply across every project. Paste it there. Edit freely: the rules \
+below are starting points derived from patterns in your chat history, not \
+commandments.
+
+If you'd rather also drop a project-scoped copy into a specific workspace's \
+.cursor/rules/vardoger.md, re-run the tool with \
+``project_path="<your workspace root>"``. vardoger refuses to write into \
+directories that don't look like projects (no .git, manifest, AGENTS.md, \
+or .cursor/), which is why the default path here is copy-paste rather \
+than a silent filesystem write.
+
+--- BEGIN vardoger personalization ---
+{content}
+--- END vardoger personalization ---
+"""
+
+
+def _user_rules_response(content: str) -> str:
+    return _USER_RULES_TEMPLATE.format(content=content.rstrip() + "\n")
 
 
 # ---------------------------------------------------------------------------
@@ -484,12 +550,29 @@ def vardoger_write(
     scope: str = "",
     project_path: str = "",
 ) -> str:
-    """Write the final personalization to the target platform's rules file.
+    """Deliver the final personalization — copy-paste by default, file opt-in.
 
     Call this after synthesizing all batch summaries. If ``content`` begins
     with a YAML frontmatter block (as produced by the synthesis prompt),
-    low-confidence rules are annotated with "(tentative)" before being
-    written.
+    low-confidence rules are annotated with "(tentative)" before delivery.
+
+    Delivery modes (Cursor):
+      - ``project_path`` empty → default, **no disk write**. Returns a
+        copy-paste block the user pastes into *Cursor Settings → Rules →
+        User Rules*. This is the correct default because vardoger's output
+        is derived from global conversation history, not from any one
+        project.
+      - ``project_path`` set → project-scoped write to
+        ``<project>/.cursor/rules/vardoger.md``. The target is validated
+        to actually be a project (``.git``, language manifest,
+        ``AGENTS.md``, or ``.cursor/`` in the directory or an ancestor).
+        Non-project paths are refused rather than written silently. Fixes
+        https://github.com/dstrupl/vardoger/issues/18.
+
+    For other platforms, ``project_path`` empty still falls back to the
+    platform's usual default (user-global rules directory under ``~``);
+    those platforms don't have Cursor's "$HOME-masquerading-as-workspace"
+    problem.
 
     Args:
         content: The personalization markdown to write (with optional YAML
@@ -497,15 +580,17 @@ def vardoger_write(
         platform: One of cursor, claude-code, codex, openclaw, copilot,
             windsurf, cline. Empty uses the server default.
         scope: "global" or "project". Empty selects the platform's default
-            (project for cline, global otherwise). Ignored for Cursor
-            (Cursor's writer always targets ``<project>/.cursor/rules/``).
-        project_path: Optional project directory. Empty uses the current
-            working directory.
+            (project for cline, global otherwise). Ignored for Cursor.
+        project_path: Optional project directory. For Cursor, leaving this
+            empty switches delivery to the User Rules copy-paste block.
+            For other platforms, it's passed through to their writer.
 
     Returns:
-        Human-readable confirmation of what was written.
+        Human-readable confirmation (file written) or a copy-paste block
+        (User Rules delivery).
     """
     from vardoger.checkpoint import CheckpointStore, content_hash
+    from vardoger.writers.cursor import NotAProjectError
 
     resolved, err = _resolve_platform(platform)
     if resolved is None or err is not None:
@@ -515,10 +600,30 @@ def vardoger_write(
     doc = parse_personalization(content)
     rendered = annotate_tentative(doc)
 
-    target = Path(project_path) if project_path else None
-    output = _write_rules(resolved, rendered, resolved_scope, target)
-
     store = CheckpointStore()
+
+    # Cursor + no project_path → User Rules copy-paste, no disk write.
+    if resolved == "cursor" and not project_path:
+        store.record_generation(
+            _STATE_KEY[resolved],
+            conversations_analyzed=0,
+            output_path=_USER_RULES_OUTPUT_SENTINEL,
+            content=rendered,
+            output_hash=content_hash(rendered),
+            confidence=doc.confidence,
+        )
+        store.save()
+        return _user_rules_response(rendered)
+
+    target = Path(project_path) if project_path else None
+    try:
+        output = _write_rules(resolved, rendered, resolved_scope, target)
+    except NotAProjectError as exc:
+        return (
+            f"vardoger: refused to write — {exc} "
+            "Omit project_path to get the User Rules copy-paste block instead."
+        )
+
     store.record_generation(
         _STATE_KEY[resolved],
         conversations_analyzed=0,
@@ -563,9 +668,18 @@ def vardoger_preview(
         return err or "vardoger: unknown platform."
     resolved_scope = _resolve_scope(resolved, scope)
 
-    target = Path(project_path) if project_path else None
     doc = parse_personalization(content)
     rendered = annotate_tentative(doc)
+
+    # Cursor + no project_path: no file to diff against — show the
+    # User Rules copy-paste block that ``vardoger_write`` would return.
+    if resolved == "cursor" and not project_path:
+        return (
+            "vardoger: no project_path given — vardoger_write would return "
+            "the following User Rules copy-paste block:\n\n" + _user_rules_response(rendered)
+        )
+
+    target = Path(project_path) if project_path else None
     current = _read_rules(resolved, resolved_scope, target) or ""
 
     if current == rendered:
@@ -648,20 +762,101 @@ def _apply_reject(
     project_path: Path | None,
     state_key: str,
 ) -> str:
-    """Pop the latest generation and either revert to the prior one or clear the file."""
+    """Pop the latest generation and either revert to the prior one or clear the file.
+
+    The rejected generation may have been a "User Rules copy-paste"
+    delivery (no file on disk, output_path=``_USER_RULES_OUTPUT_SENTINEL``);
+    in that case there is nothing to revert or clear on the filesystem and
+    we say so explicitly, rather than trying to write to an ad-hoc path.
+    """
     rejected = store.pop_generation(state_key)
     if rejected is None:
         return f"vardoger: nothing to revert for {platform}."
 
+    rejected_was_user_rules = rejected.output_path == _USER_RULES_OUTPUT_SENTINEL
+
     previous = store.get_generation(state_key)
     if previous is not None and previous.content:
+        if previous.output_path == _USER_RULES_OUTPUT_SENTINEL:
+            # Previous was also copy-paste: re-offer it, don't touch disk.
+            return (
+                f"vardoger: reverted {platform} to the previous (User Rules) "
+                "personalization. Re-paste the following block if you removed "
+                "the old one from Settings → Rules → User Rules:\n\n"
+                + _user_rules_response(previous.content)
+            )
         output = _write_rules(platform, previous.content, scope, project_path)
         return f"vardoger: reverted {platform} to previous generation ({output})."
+
+    if rejected_was_user_rules:
+        return (
+            f"vardoger: rejected the latest {platform} personalization. "
+            "No file was written for it (delivery was User Rules copy-paste); "
+            "remove the pasted block manually from Settings → Rules → User Rules "
+            "if you already added it."
+        )
 
     cleared = _clear_rules(platform, scope, project_path)
     if cleared:
         return f"vardoger: cleared {platform} personalization (no prior generation)."
     return f"vardoger: no {platform} personalization file to clear."
+
+
+@mcp.tool()
+def vardoger_import(paths: list[str]) -> str:
+    """Look for existing ``.cursor/rules/vardoger.md`` files in given workspaces.
+
+    vardoger's output is derived from *global* conversation history, so a
+    user with multiple Cursor projects may already have a curated
+    ``vardoger.md`` in one of them that's worth reusing (perhaps with
+    edits) instead of regenerating from scratch. This tool gives the
+    orchestrating model a way to look one up without blindly scanning the
+    filesystem.
+
+    The caller (the agent) is expected to supply a short list of candidate
+    workspace roots it already knows about — from the user's open editors,
+    recent-workspaces list, explicit mentions, etc. vardoger deliberately
+    does not walk ``$HOME`` on its own: that would be slow and
+    privacy-sensitive, and the exact same class of blind-filesystem
+    behaviour is what caused https://github.com/dstrupl/vardoger/issues/18.
+
+    Args:
+        paths: Candidate workspace root paths (strings; tilde expansion
+            applied). Non-strings and empty entries are skipped.
+
+    Returns:
+        JSON list of ``{"path": "<file>", "content": "<text>"}`` for each
+        workspace where ``<root>/.cursor/rules/vardoger.md`` exists and
+        was readable. Unreadable or missing entries are omitted silently.
+        Empty list (``"[]"``) if nothing was found.
+    """
+    import json
+
+    results: list[dict[str, str]] = []
+    for entry in paths or []:
+        if not isinstance(entry, str) or not entry.strip():
+            continue
+        try:
+            root = Path(entry).expanduser()
+        except (OSError, RuntimeError):
+            continue
+        candidate = root / ".cursor" / "rules" / "vardoger.md"
+        if not candidate.is_file():
+            continue
+        try:
+            results.append(
+                {
+                    "path": str(candidate),
+                    "content": candidate.read_text(encoding="utf-8"),
+                }
+            )
+        except OSError:
+            # File exists but is unreadable (permissions, etc.). Skip
+            # quietly; the orchestrator shouldn't halt because one
+            # candidate was broken.
+            continue
+
+    return json.dumps(results, indent=2)
 
 
 @mcp.tool()

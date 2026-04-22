@@ -6,6 +6,39 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (**breaking** for Cursor MCP callers)
+
+- `vardoger_write` for Cursor no longer silently falls back to
+  `Path.cwd() / ".cursor/rules/vardoger.md"` when the caller omits
+  `project_path`. Because the Cursor MCP server is launched by Cursor with
+  `cwd=$HOME`, the previous behaviour dropped the personalization at
+  `~/.cursor/rules/vardoger.md` — a path Cursor never reads — making the
+  whole orchestration a silent no-op. New behaviour:
+  - Omit `project_path` → vardoger returns a copy-paste block intended
+    for *Cursor Settings → Rules → User Rules* (the correct destination
+    for a personalization derived from *global* conversation history).
+    Nothing is written to disk. The returned text includes explicit
+    instructions and is safe to surface to the user verbatim.
+  - Pass `project_path=<workspace>` → vardoger now validates that the
+    target (or one of its ancestors) contains a project marker
+    (`.git`, a language manifest, `AGENTS.md`, or `.cursor/`) and
+    refuses to write otherwise. `write_cursor_rules` raises
+    `NotAProjectError` for non-project paths.
+  ([#18](https://github.com/dstrupl/vardoger/issues/18))
+
+### Added
+
+- `vardoger_import(paths=[...])` MCP tool: given a list of candidate
+  workspace roots, returns the contents of any
+  `<workspace>/.cursor/rules/vardoger.md` it finds so the orchestrating
+  model can offer to reuse or merge an existing personalization instead
+  of regenerating from scratch. The tool deliberately avoids filesystem
+  scanning — the agent supplies the candidate list from its own context.
+- `vardoger_personalize` orchestration walkthrough updated to (a) call
+  `vardoger_import` before generation when other workspaces are known,
+  and (b) default the final delivery to User Rules with the project-file
+  path as an explicit opt-in.
+
 ## [0.2.2] — 2026-04-21
 
 ### Fixed

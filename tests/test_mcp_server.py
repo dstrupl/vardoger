@@ -155,6 +155,133 @@ def test_vardoger_write_records_generation(
     assert store.get_generation("cursor") is not None
 
 
+# ---------------------------------------------------------------------------
+# Regression tests for https://github.com/dstrupl/vardoger/issues/18:
+# cwd-launched MCP server must NOT silently drop files in a non-project dir.
+# ---------------------------------------------------------------------------
+
+
+def test_vardoger_write_no_project_path_returns_user_rules_block(
+    fake_home: Path,
+    bare_cwd: Path,
+) -> None:
+    """Default delivery for Cursor is the User Rules copy-paste block — no disk write."""
+    content = "# Personalization\n\n- stay concise\n"
+    result = mcp_server.vardoger_write(content)
+
+    assert "not written to disk" in result
+    assert "User Rules" in result
+    assert "- stay concise" in result
+    # No .cursor/rules landed in the cwd (the $HOME-equivalent case).
+    assert not (bare_cwd / ".cursor" / "rules" / "vardoger.md").exists()
+
+    # Generation is still recorded so status/feedback stay consistent.
+    store = CheckpointStore()
+    record = store.get_generation("cursor")
+    assert record is not None
+    assert record.output_path == mcp_server._USER_RULES_OUTPUT_SENTINEL
+
+
+def test_vardoger_write_refuses_non_project_path(
+    fake_home: Path,
+    tmp_path: Path,
+) -> None:
+    """Explicit project_path that isn't a project → refuse, don't write."""
+    bogus = tmp_path / "definitely-not-a-project"
+    bogus.mkdir()
+
+    result = mcp_server.vardoger_write(
+        "# p\n\n- rule\n",
+        project_path=str(bogus),
+    )
+    assert "refused to write" in result
+    assert not (bogus / ".cursor" / "rules" / "vardoger.md").exists()
+
+    # Nothing was recorded either.
+    store = CheckpointStore()
+    assert store.get_generation("cursor") is None
+
+
+def test_vardoger_preview_no_project_path_shows_user_rules_block(
+    fake_home: Path,
+    bare_cwd: Path,
+) -> None:
+    result = mcp_server.vardoger_preview("# Preview\n\n- dry run\n")
+    assert "no project_path given" in result
+    assert "- dry run" in result
+
+
+def test_vardoger_feedback_reject_user_rules_generation(
+    fake_home: Path,
+    bare_cwd: Path,
+) -> None:
+    """Rejecting a User-Rules-only generation surfaces guidance, doesn't touch disk."""
+    mcp_server.vardoger_write("# First\n\n- keep one\n")
+    mcp_server.vardoger_write("# Second\n\n- replace with this\n")
+
+    result = mcp_server.vardoger_feedback("reject")
+    assert "User Rules" in result
+    # The previous (also User-Rules) generation is re-offered:
+    assert "- keep one" in result
+    # Still no .cursor/rules/ was created in the bare cwd.
+    assert not (bare_cwd / ".cursor" / "rules" / "vardoger.md").exists()
+
+
+def test_vardoger_feedback_reject_only_user_rules_generation(
+    fake_home: Path,
+    bare_cwd: Path,
+) -> None:
+    """Rejecting the only generation (copy-paste delivery) gives manual-removal guidance."""
+    mcp_server.vardoger_write("# Only\n\n- single\n")
+
+    result = mcp_server.vardoger_feedback("reject")
+    assert "No file was written" in result
+    assert "Settings → Rules → User Rules" in result
+
+
+# ---------------------------------------------------------------------------
+# vardoger_import: deliberate discovery of existing vardoger.md files.
+# ---------------------------------------------------------------------------
+
+
+def test_vardoger_import_returns_contents_for_found_paths(tmp_path: Path) -> None:
+    proj_a = tmp_path / "a"
+    proj_b = tmp_path / "b"
+    proj_c = tmp_path / "c"
+    for p in (proj_a, proj_b, proj_c):
+        p.mkdir()
+
+    (proj_a / ".cursor" / "rules").mkdir(parents=True)
+    (proj_a / ".cursor" / "rules" / "vardoger.md").write_text("A rules\n", encoding="utf-8")
+    (proj_c / ".cursor" / "rules").mkdir(parents=True)
+    (proj_c / ".cursor" / "rules" / "vardoger.md").write_text("C rules\n", encoding="utf-8")
+
+    payload = json.loads(mcp_server.vardoger_import([str(proj_a), str(proj_b), str(proj_c)]))
+
+    paths = {entry["path"] for entry in payload}
+    assert str(proj_a / ".cursor" / "rules" / "vardoger.md") in paths
+    assert str(proj_c / ".cursor" / "rules" / "vardoger.md") in paths
+    # proj_b has no vardoger.md — should be silently skipped, not errored.
+    assert len(payload) == 2
+
+    by_path = {entry["path"]: entry["content"] for entry in payload}
+    assert by_path[str(proj_a / ".cursor" / "rules" / "vardoger.md")] == "A rules\n"
+
+
+def test_vardoger_import_empty_list_returns_empty_json() -> None:
+    assert mcp_server.vardoger_import([]) == "[]"
+
+
+def test_vardoger_import_skips_invalid_entries(tmp_path: Path) -> None:
+    """Non-strings, empty strings, and bogus paths should be ignored, not raise."""
+    payload = json.loads(
+        mcp_server.vardoger_import(
+            ["", str(tmp_path / "nonexistent"), "   "]  # type: ignore[list-item]
+        )
+    )
+    assert payload == []
+
+
 def test_vardoger_preview_identical_returns_no_change(fake_home: Path, project_cwd: Path) -> None:
     content = "# Same\n\n- rule\n"
     mcp_server.vardoger_write(content, project_path=str(project_cwd))
