@@ -21,11 +21,21 @@
         {
           "id": "VARDOGER_MCP_PLATFORM",
           "label": "Host platform (optional)",
-          "description": "Override the platform identifier the MCP server defaults to. Leave blank to let vardoger pick based on the calling host. Valid values: cursor, claude-code, codex, copilot, windsurf, cline, openclaw.",
-          "type": "text",
+          "description": "Override the platform identifier the MCP server defaults to. Leave blank (Auto-detect) to let vardoger pick based on the calling host.",
+          "type": "select",
           "required": false,
           "secret": false,
-          "placeholder": "cursor"
+          "default": "",
+          "options": [
+            { "value": "",            "label": "Auto-detect (default)", "description": "Let vardoger pick based on the calling host." },
+            { "value": "cursor",      "label": "Cursor" },
+            { "value": "claude-code", "label": "Claude Code" },
+            { "value": "codex",       "label": "Codex" },
+            { "value": "openclaw",    "label": "OpenClaw" },
+            { "value": "copilot",     "label": "GitHub Copilot CLI" },
+            { "value": "windsurf",    "label": "Windsurf" },
+            { "value": "cline",       "label": "Cline" }
+          ]
         }
       ]
     }
