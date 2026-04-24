@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.dstrupl/vardoger",
   "title": "vardoger",
-  "description": "Personalize AI coding assistants by analyzing local conversation history. Runs entirely on your machine.",
+  "description": "Personalize AI coding assistants by analyzing local conversation history. Runs on your machine.",
   "repository": {
     "url": "https://github.com/dstrupl/vardoger",
     "source": "github"

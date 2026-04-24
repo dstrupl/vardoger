@@ -16,7 +16,7 @@ meta:
     - copilot
     - windsurf
 about:
-  title: vardoger
+  title: Vardoger
   description: |
     Personalize AI coding assistants by analyzing local conversation history.
 
@@ -40,7 +40,7 @@ source:
   project: https://github.com/dstrupl/vardoger
   branch: main
   # Pinned at submission time to the vardoger 0.3.1 release tag commit.
-  commit: TBD
+  commit: 1090cf27ee75bec233b78c7234c56d68b30f6651
 run:
   volumes:
     - "{{vardoger.home_path}}:/host-home"
