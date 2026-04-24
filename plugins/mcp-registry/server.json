@@ -7,12 +7,12 @@
     "url": "https://github.com/dstrupl/vardoger",
     "source": "github"
   },
-  "version": "0.3.0",
+  "version": "0.3.1",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "vardoger",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "transport": {
         "type": "stdio"
       },

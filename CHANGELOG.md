@@ -6,6 +6,39 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-04-24
+
+### Added
+
+- Dockerfile and `plugins/docker-mcp/` scaffolding for the Docker MCP
+  Registry. The multi-stage `python:3.12-slim` image runs `vardoger mcp`
+  on stdio as the non-root `vardoger` user and resolves every platform
+  history directory through `HOME=/host-home` plus a caller-supplied
+  `$HOME` bind mount. Tracked `plugins/docker-mcp/server.yaml`
+  (`category: productivity`, parameterised `home_path` volume, optional
+  `VARDOGER_MCP_PLATFORM`) plus a submission-ready README with the
+  `task wizard` / `task create` / `task validate` /
+  `task build -- --tools vardoger` walkthrough. Cline history is
+  documented as unsupported in the containerised build (depends on the
+  host-OS VS Code `globalStorage` layout) — Cline users should continue
+  to install via `pipx`.
+- Explicit `license: Apache-2.0` frontmatter on
+  `plugins/openclaw/skills/analyze/SKILL.md`. The 0.3.0 ClawHub
+  submission declared no license field and the registry fell back to
+  MIT-0; the next republish as `vardoger-analyze@0.3.1` now mirrors the
+  repository license.
+
+### Changed
+
+- Plugin-manifest versions (cursor, claude-code, codex, copilot, the
+  Codex/Claude manifests emitted from `src/vardoger/setup.py`, the
+  OpenClaw skill frontmatter, and `plugins/cline/llms-install.md`
+  minimum-version snippet) bumped to `0.3.1` in lock-step with the
+  Python package.
+- `plugins/mcp-registry/server.json` version + packages[0] PyPI pointer
+  bumped to `0.3.1` so the Official MCP Registry submission ingests the
+  new wheel once it lands on PyPI.
+
 ## [0.3.0] — 2026-04-22
 
 ### Changed (**breaking** for MCP callers of every non-Cursor writer)

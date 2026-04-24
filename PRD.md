@@ -1,7 +1,7 @@
 # vardoger — Product Requirements Document
 
-> **Version:** 0.3.0
-> **Date:** 2026-04-22
+> **Version:** 0.3.1
+> **Date:** 2026-04-24
 > **Status:** Public beta (Phases 1–3 and 5 shipped; Phase 4 in progress)
 >
 > **Implementation status legend:**
@@ -457,7 +457,7 @@ The core analysis logic must be shared across all platform integrations. Platfor
 **Goal:** Publish vardoger to the official plugin marketplaces after validating through limited beta.
 
 **Deliverables:**
-- [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.3.0)
+- [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.3.1)
 - [ ] Plugin packaging and marketplace submission for Cursor Plugin Registry — **submitted, awaiting review** (`plugins/cursor/`)
 - [ ] Plugin packaging and marketplace submission for Claude Code — **submitted, awaiting review** (`plugins/claude-code/`, Claude Code Plugins directory)
 - [ ] Plugin packaging and marketplace submission for Codex (custom marketplace + official directory) — **custom marketplace live (self-served)** via `plugins/codex/marketplace.json` (Codex has no central registry for custom marketplaces — users install directly via `codex plugin marketplace add …`); **official directory blocked upstream** — [openai/codex#13712](https://github.com/openai/codex/pull/13712) merged 2026-03-07, but OpenAI's build-plugins docs still say "Self-serve plugin publishing and management are coming soon" as of 2026-04-22
