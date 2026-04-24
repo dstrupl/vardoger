@@ -55,4 +55,7 @@ jobs:
         run: uv run --with bandit bandit -r src/ -q
 
       - name: Dependency CVE scan (pip-audit)
-        run: uv run --with pip-audit pip-audit --skip-editable
+        # CVE-2026-3219 affects pip itself (bootstrapped by pip-audit), not a
+        # vardoger runtime dependency, and has no fix version published yet.
+        # Revisit after upstream pip ships a patched release (tracked 2026-04-24).
+        run: uv run --with pip-audit pip-audit --skip-editable --ignore-vuln CVE-2026-3219
