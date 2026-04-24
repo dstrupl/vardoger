@@ -15,7 +15,7 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-04-24** (UTC). McpMux [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) merged as [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe) — row flipped to **Live**; vardoger now reaches Cursor, Claude Desktop, VS Code, and Windsurf via the McpMux desktop gateway.
+Last refreshed: **2026-04-24** (UTC). Docker MCP Registry unblocked: added a runtime `Dockerfile` + `.dockerignore` at the repo root and a tracked `plugins/docker-mcp/server.yaml` / `README.md`; row flipped from **blocked on Dockerfile** to **Prep complete — awaits 0.3.1 release** so `source.commit` can be pinned to the release tag before opening the PR against `docker/mcp-registry`. Earlier the same day: McpMux [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) merged as [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe) — row flipped to **Live**; vardoger now reaches Cursor, Claude Desktop, VS Code, and Windsurf via the McpMux desktop gateway.
 
 Previous refresh (2026-04-23): addressed @its-mash's review on PR #113 by switching the `VARDOGER_MCP_PLATFORM` input from free-text to a `select` with explicit options (seven supported platforms plus an "Auto-detect (default)" empty-value entry); mirrored the change in our tracked copy at `plugins/mcpmux/vardoger.json`.
 
@@ -33,7 +33,7 @@ Earlier (2026-04-22): ClawHub flipped to **Live (self-served)** the same day as 
 | **Windsurf MCP Store**      | (no public submission form)                       | `plugins/windsurf/`   | N/A          | —            | —       | Re-verified 2026-04-22 against the [Windsurf MCP docs](https://docs.windsurf.com/windsurf/cascade/mcp) (`llms-full.txt`): the in-product MCP marketplace is still curated ("Official MCPs show up with a blue checkmark, indicating that they are made by the parent service company"), there is no public submission endpoint or PR repo, and the only third-party install paths are (a) manual `~/.codeium/windsurf/mcp_config.json` edit — already documented in `plugins/windsurf/README.md` via `vardoger setup windsurf` — and (b) the Enterprise "Internal MCP Registry" feature, which consumes schemas conforming to [`modelcontextprotocol.io`](https://modelcontextprotocol.io/) (covered by the official MCP Registry row below). Revisit if Windsurf publishes a self-serve submission flow. |
 | **Official MCP Registry**   | `mcp-publisher publish` against `registry.modelcontextprotocol.io` | `plugins/mcp-registry/` | Not started — prep complete | — | — | The [MCP Registry preview](https://registry.modelcontextprotocol.io/docs) is the canonical cross-vendor MCP server feed (API-frozen at v0.1 as of 2025-10-24). Listings here are ingested by Docker Desktop's MCP Toolkit, VS Code's MCP picker, Windsurf's enterprise Internal MCP Registry feature, and any host that syncs the feed. Draft `server.json` lives at `plugins/mcp-registry/server.json` (schema `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`, name `io.github.dstrupl/vardoger`, `packages[0]` pointing at PyPI `vardoger@0.3.0`). Ownership marker `<!-- mcp-name: io.github.dstrupl/vardoger -->` already added to the repo-root `README.md`, so the next PyPI release will carry it automatically — publishing from the current 0.3.0 wheel requires re-cutting a PyPI release first so the marker ships in the package description. Before `mcp-publisher publish`, re-run `mcp-publisher init` in a scratch dir and diff against the tracked file to catch any `packageArguments` schema drift (see `plugins/mcp-registry/README.md`). |
 | **McpMux community registry** | [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) | `plugins/mcpmux/` | Live         | 2026-04-22   | 2026-04-24 | [McpMux](https://mcpmux.com) is a desktop MCP gateway that proxies tools into Cursor, Claude Desktop, VS Code, and Windsurf through one endpoint; one merged PR lands vardoger in every McpMux client. Tracked server definition lives at `plugins/mcpmux/vardoger.json` (schema version `2.1`, stdio transport invoking `vardoger mcp`, categories `developer-tools` / `productivity` / `ai-ml`, `platforms: ["all"]`). PR #113 opened 2026-04-22 against `mcpmux/mcp-servers` from `dstrupl:add-vardoger` with DCO sign-off; `node scripts/validate.js` reports `PASS` + no ID/alias conflicts across the 106-server baseline. 2026-04-23: addressed @its-mash's review (pushed [80e6cb2](https://github.com/mcpmux/mcp-servers/commit/80e6cb2)) by switching `VARDOGER_MCP_PLATFORM` from `text` to `select` with explicit options for each supported platform plus an "Auto-detect (default)" empty-value entry; `npm run validate:all` still reported 106 PASS / 0 FAIL and `npm run check-conflicts` clean. 2026-04-24: @its-mash approved and merged as [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe) at 17:03 UTC. The McpMux bundle refreshes from `main` within ~an hour, so desktop clients pick up the entry automatically from that point. No further maintenance until vardoger ships a breaking MCP-tool or CLI change. |
-| **Docker MCP Registry**     | PR to [`docker/mcp-registry`](https://github.com/docker/mcp-registry) | `plugins/docker-mcp/` (planned) | Not started — blocked on Docker image | — | — | Docker's catalog (surfaces at [hub.docker.com/mcp](https://hub.docker.com/mcp) and inside Docker Desktop's MCP Toolkit) requires a working Docker image for the server — either Docker-built via `task create --category productivity https://github.com/dstrupl/vardoger` (writes `servers/vardoger/server.yaml`, Docker then builds and signs `mcp/vardoger` on Docker Hub) or self-provided via `--image <registry>/vardoger`. vardoger has no `Dockerfile` today, so this row is **blocked on adding a Dockerfile + deciding whether we want Docker to host the image or to publish one ourselves** — separate decision from the metadata-only submissions above. Defer until that decision is made. |
+| **Docker MCP Registry**     | PR to [`docker/mcp-registry`](https://github.com/docker/mcp-registry) | `plugins/docker-mcp/` | Prep complete — awaits 0.3.1 release | — | — | Docker's catalog (surfaces at [hub.docker.com/mcp](https://hub.docker.com/mcp) and inside Docker Desktop's MCP Toolkit) requires a working Docker image. Decision 2026-04-24: let Docker build and sign the image for us (`mcp/vardoger` on Docker Hub) via `task create --category productivity`. Landed the runtime `Dockerfile` at the repo root (multi-stage, non-root UID 1000, builds vardoger from the pinned source commit, stdio `ENTRYPOINT ["vardoger","mcp"]`, expects the caller's host `$HOME` bind-mounted at `/host-home`), plus `.dockerignore`, a tracked `plugins/docker-mcp/server.yaml` (`category: productivity`, one parameterised `home_path` volume, optional `VARDOGER_MCP_PLATFORM` env), and `plugins/docker-mcp/README.md` with the `task wizard` / `task create` / `task validate` / `task build -- --tools` submission steps. Cline history is not accessible from the containerized build (depends on host-OS VS Code globalStorage layout) — documented in both the `server.yaml` description and the README; Cline users should continue to install via `pipx`. Remaining work: (1) cut `vardoger 0.3.1` on PyPI, (2) pin `source.commit` in `server.yaml` to the release tag SHA, (3) run `task validate` + `task build -- --tools vardoger` from a fresh `docker/mcp-registry` clone, (4) open the PR. |
 | **Cline MCP Marketplace**   | [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) | `plugins/cline/` | Submitted | 2026-04-20 | — | Server submission issue `[Server Submission]: vardoger — personalize AI assistants from local history` opened 2026-04-20 at cline/mcp-marketplace. Install guidance for the LLM-driven install flow at `plugins/cline/llms-install.md`; user-facing readme at `plugins/cline/README.md`. Last checked 2026-04-22: no reviewer comments yet. |
 | **OpenClaw ClawHub**        | `bunx --bun clawhub publish …` (after `bun clawhub login` — GitHub browser OAuth) | `plugins/openclaw/skills/analyze/` | Live (self-served) | 2026-04-22 | 2026-04-22 | Published 2026-04-22 as `vardoger-analyze@0.3.0` (publish id `k9796s5r5hk5ea46kxbpwk49dd85axz8`). Verified via `bunx --bun clawhub inspect vardoger-analyze` (owner `dstrupl`, latest `0.3.0`, tag `latest=0.3.0`) and `bunx --bun clawhub search vardoger` (ranked hit). Republish / refresh with `bunx --bun clawhub publish plugins/openclaw/skills/analyze/ --slug vardoger-analyze --name "vardoger — Analyze History" --version <next> --tags latest --changelog "<note>"` after bumping `plugins/openclaw/skills/analyze/SKILL.md` `version:` to match. Note: `SKILL.md` declares no `license:` field, so ClawHub defaulted to MIT-0 even though the repo is Apache-2.0; safe (MIT-0 is more permissive than Apache-2.0 for skill prose), but revisit if we want the listing to mirror the repo license. |
 
@@ -110,16 +110,23 @@ If any of these flipped, update the row's Status/Live on/Notes and bump
 
 ### 2. Ready-to-publish — owner action required
 
-These are prepped; each needs owner credentials or a release step we
-intentionally deferred.
+These are prepped and all gated on the same release step: cut `vardoger 0.3.1`
+on PyPI. After that, three downstream publishes fan out in parallel.
 
-- **Official MCP Registry (`registry.modelcontextprotocol.io`)** — cut
-  vardoger 0.3.1 on PyPI first so the `<!-- mcp-name: io.github.dstrupl/vardoger -->`
-  marker in `README.md` ships in the PyPI package description (required for
-  ownership verification). Then, from a fresh clone on a shell with a browser:
+- **Step 0 — cut `vardoger 0.3.1`.** `version` in `pyproject.toml`,
+  `packages[0].version` in `plugins/mcp-registry/server.json`, and the
+  `version:` frontmatter in `plugins/openclaw/skills/analyze/SKILL.md` all
+  move in lock-step. Tag `v0.3.1` on GitHub; the `publish.yml` workflow
+  pushes the wheel to PyPI via trusted publishers. 0.3.1 is what ships the
+  `<!-- mcp-name: io.github.dstrupl/vardoger -->` marker in the PyPI
+  package description and the explicit `license: Apache-2.0` field in the
+  OpenClaw skill.
+
+- **Official MCP Registry (`registry.modelcontextprotocol.io`)** — once
+  0.3.1 is on PyPI, from a fresh clone on a shell with a browser:
   1. Install `mcp-publisher` (see `plugins/mcp-registry/README.md`).
   2. Copy `plugins/mcp-registry/server.json` to the repo root (the CLI reads
-     from `./server.json`), bump `packages[0].version` to `0.3.1`, run
+     from `./server.json`), confirm `packages[0].version` is `0.3.1`, run
      `mcp-publisher init` in a scratch dir and diff against the tracked file
      to catch `packageArguments` schema drift.
   3. `mcp-publisher login github && mcp-publisher publish`.
@@ -127,22 +134,27 @@ intentionally deferred.
      `curl -s https://registry.modelcontextprotocol.io/v0/servers | jq '.servers[] | select(.name=="io.github.dstrupl/vardoger")'`.
   5. Flip the row to **Live** and tick the Phase 4 checkbox in `PRD.md`.
 
-### 3. Blocked — pending an owner decision
+- **Docker MCP Registry** (`docker/mcp-registry`) — once the v0.3.1 tag
+  exists:
+  1. Pin `source.commit` in `plugins/docker-mcp/server.yaml` to
+     `git rev-parse v0.3.1`.
+  2. Smoke-test the image locally:
+     `docker build -t mcp/vardoger:dev .` then
+     `docker run --rm -i -v "$HOME:/host-home" mcp/vardoger:dev` (stdio).
+  3. Fork `docker/mcp-registry`, drop the tracked `server.yaml` at
+     `servers/vardoger/server.yaml`, run
+     `task validate -- --name vardoger` and `task build -- --tools vardoger`,
+     and open the PR using `.github/PULL_REQUEST_TEMPLATE.md`. See
+     `plugins/docker-mcp/README.md` for the full walkthrough.
 
-- **Docker MCP Registry** — blocked on Dockerfile. Choose one of:
-  (a) add a Dockerfile and let Docker build/sign `mcp/vardoger` via
-  `task create --category productivity https://github.com/dstrupl/vardoger`,
-  (b) add a Dockerfile, publish our own image (e.g. `ghcr.io/dstrupl/vardoger`),
-  and submit with `--image`, or (c) defer indefinitely. Once decided, I can
-  draft `plugins/docker-mcp/server.yaml` and the Dockerfile.
-- **ClawHub listing license** — `vardoger-analyze@0.3.0` auto-landed as
-  **MIT-0** (strictly more permissive than the repo's Apache-2.0 for prose,
-  so safe). If we want the listing license to mirror the repo, add
-  `license: Apache-2.0` to `plugins/openclaw/skills/analyze/SKILL.md`
-  frontmatter, bump to 0.3.1, and republish with
+- **ClawHub** — republish the analyze skill so the listing carries the
+  explicit Apache-2.0 license (strict parity with the repo):
   `bunx --bun clawhub publish plugins/openclaw/skills/analyze/ --slug vardoger-analyze --name "vardoger — Analyze History" --version 0.3.1 --tags latest --changelog "Add explicit Apache-2.0 license"`.
+  Verify with
+  `bunx --bun clawhub inspect vardoger-analyze` and flip the row's "Live on"
+  date in the row above.
 
-### 4. Not actionable today — revisit only on upstream change
+### 3. Not actionable today — revisit only on upstream change
 
 - **Windsurf MCP Store** — re-verified 2026-04-22; still curated, no public
   submission endpoint. Revisit only if Windsurf announces a self-serve flow

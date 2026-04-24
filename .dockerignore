@@ -1,0 +1,50 @@
+# Only ship what `pip install .` actually needs so the Docker build context
+# stays small and reproducible. The Dockerfile copies pyproject.toml, README.md,
+# LICENSE, and src/ explicitly; everything else is excluded here.
+
+# VCS / CI
+.git
+.github
+.gitignore
+.gitattributes
+
+# IDE / OS
+.cursor
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Python tooling caches and venv
+.venv
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.coverage
+coverage
+htmlcov
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+build
+dist
+out
+
+# Lockfiles and dev tooling we do not need at runtime
+uv.lock
+
+# Tests, plugins, docs — not required for the runtime image
+tests
+plugins
+docs
+assets
+scripts
+Dockerfile
+.dockerignore
+
+# Misc
+*.log
+*.swp
+*.swo
+*~
