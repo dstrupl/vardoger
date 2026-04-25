@@ -15,11 +15,13 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-04-25** (UTC). Two passes today:
+Last refreshed: **2026-04-25** (UTC). Three passes today:
+
+Pass 3 (2026-04-25 late PM): Followed through on `github/awesome-copilot#1461` to get every pre-merge check green. Addressed the `skill-check` validator warning "No numbered workflow steps" by inspecting the validator source at [`dotnet/skills` `eng/skill-validator/src/Check/SkillProfiler.cs`](https://github.com/dotnet/skills/blob/main/eng/skill-validator/src/Check/SkillProfiler.cs) (regex is `^\d+\.\s`, multiline) and adding a numbered workflow overview section to `skills/vardoger-analyze/SKILL.md` that mirrors the existing detailed `## Steps` section. Then rebased the branch onto `upstream/staged` so the PR diff only touches the files the PR actually introduces — the old base (`63d08d5 chore: publish from staged` on `main`) had drifted far enough from current `staged` that the PR appeared to touch ~750 unrelated files. Post-rebase the PR shows a single file (`skills/vardoger-analyze/SKILL.md`) across four commits: `35db99f` (initial add), `b7a7c5a` (Copilot session-state path fix — was `1c7b29d` before the rebase rewrote it), `a7ab430` (numbered workflow overview), and `1776546` (regenerated `docs/README.skills.md` to include the new row — required by the `validate-readme` CI job which runs `npm start` and fails on any diff). One rabbit-hole worth recording: the first `validate-readme` recovery attempt also committed an "edit" to `docs/README.agents.md` that had been silently produced by running `npm start` offline — the generator drops the MCP catalog link column (`[apify](https://github.com/mcp/…)` → bare `apify`) when it can't reach GitHub's MCP catalog at runtime, so an offline regen looks like a real diff but is actually a network-dependent false positive; reverted the commit once the with-network regen produced the identical bytes already on `staged`. Final state: `validate-readme`, `skill-check`, `codespell`, and `check-line-endings` all pass. PR is still `BLOCKED` from merge by the same stale `github-actions` `CHANGES_REQUESTED` review (`PRR_kwDOO6BQUc73Iv1W`) left behind when the PR originally targeted `main` — the `check-pr-target` workflow only triggers on `opened` events so it never dismissed itself after the `staged` retarget. Posted a comment on the PR explaining the situation and pinging `@aaronpowell` and `@dvelton` asking a maintainer to dismiss the stale review ([issuecomment-4320268413](https://github.com/github/awesome-copilot/pull/1461#issuecomment-4320268413)).
 
 Pass 2 (2026-04-25 PM): Audited every open submission and every Live listing for version-freshness vs. `vardoger 0.3.1`. Fixed four real defects that would otherwise surface to reviewers or end users:
 
-- **`github/awesome-copilot#1461`**: PR description said "verified against `vardoger 0.2.1`" and "PyPI current version 0.2.1" (stale from the 2026-04-21 submission). The submitted `SKILL.md` also referenced `~/.copilot/history-session-state/`, which does not exist — the real CLI path is `~/.copilot/session-state/` (see `src/vardoger/history/copilot.py`). Edited the PR body to reference 0.3.1 and the correct path; pushed [`1c7b29d`](https://github.com/dstrupl/awesome-copilot/commit/1c7b29d) to `dstrupl:add-vardoger-analyze-skill` fixing both places in the submitted `SKILL.md`. Also fixed the mirrored typo on line 59 of `plugins/copilot/README.md` in this repo.
+- **`github/awesome-copilot#1461`**: PR description said "verified against `vardoger 0.2.1`" and "PyPI current version 0.2.1" (stale from the 2026-04-21 submission). The submitted `SKILL.md` also referenced `~/.copilot/history-session-state/`, which does not exist — the real CLI path is `~/.copilot/session-state/` (see `src/vardoger/history/copilot.py`). Edited the PR body to reference 0.3.1 and the correct path; pushed a fix to `dstrupl:add-vardoger-analyze-skill` correcting both places in the submitted `SKILL.md` (this commit was originally `1c7b29d`; the Pass 3 rebase onto `upstream/staged` rewrote it to [`b7a7c5a`](https://github.com/dstrupl/awesome-copilot/commit/b7a7c5a), which is the SHA reachable on the PR branch now). Also fixed the mirrored typo on line 59 of `plugins/copilot/README.md` in this repo.
 - **`cline/mcp-marketplace#1394`**: issue body had the same stale "PyPI current version 0.2.1" line (submitted 2026-04-20 when PyPI was 0.2.1). Edited to 0.3.1.
 - **`docker/mcp-registry#2949`**: `source.commit` was pinned to `1090cf27ee75bec233b78c7234c56d68b30f6651`, which is the **annotated tag object SHA** of `v0.3.1`, not the peeled commit SHA. The validator only does a regex check (`^[a-f0-9]{40}$`) so it passed, but `source.commit` is supposed to be a commit SHA. Fixed to `98c9006f87880d907944557d343028f2b53cf635` (`git rev-list -1 v0.3.1`) in both `plugins/docker-mcp/server.yaml` and the submission branch (pushed [`ca30a5d`](https://github.com/dstrupl/mcp-registry/commit/ca30a5d) to `dstrupl:add-vardoger`); updated the PR description to explain the correction. Also corrected `plugins/docker-mcp/README.md` step 2 to recommend `git rev-list -1 v0.3.1` (or `git rev-parse v0.3.1^{}`) instead of `git rev-parse v0.3.1` (which returns the tag object SHA for annotated tags).
 - **McpMux tracked copy**: re-fetched the file at [`mcpmux/mcp-servers@main:servers/io.github-dstrupl-vardoger.json`](https://github.com/mcpmux/mcp-servers/blob/main/servers/io.github-dstrupl-vardoger.json). Upstream post-merge renamed the field `icon: "🪞"` → `logo: "https://avatars.githubusercontent.com/u/4134230?v=4"` (the `dstrupl` GitHub avatar — verified via the GitHub users API) and reformatted compact arrays/objects to multi-line. Overwrote `plugins/mcpmux/vardoger.json` with the upstream-current bytes so our tracked copy matches what's actually live.
@@ -145,16 +147,63 @@ targeted `main`; the `github-actions` bot requested a retarget to the
 `staged` branch (auto-published to `main`), and the PR was re-pointed at
 `staged` the same day.
 
-2026-04-25: edited the PR description to reference `vardoger 0.3.1` (was stale
-at 0.2.1) and fixed the Copilot session-state path in the submitted
-`SKILL.md` from `~/.copilot/history-session-state/` to
+2026-04-25 (Pass 2 — PM): edited the PR description to reference
+`vardoger 0.3.1` (was stale at 0.2.1) and fixed the Copilot session-state path
+in the submitted `SKILL.md` from `~/.copilot/history-session-state/` to
 `~/.copilot/session-state/` (the real path our CLI reads; see
-`src/vardoger/history/copilot.py`). Pushed
-[`1c7b29d`](https://github.com/dstrupl/awesome-copilot/commit/1c7b29d) to
-`dstrupl:add-vardoger-analyze-skill`.
+`src/vardoger/history/copilot.py`). Originally pushed as `1c7b29d`; the Pass 3
+rebase rewrote it to
+[`b7a7c5a`](https://github.com/dstrupl/awesome-copilot/commit/b7a7c5a).
 
-Last checked 2026-04-25: still `OPEN` / `CHANGES_REQUESTED` (lingering bot
-review from before the `staged` retarget); no human comments since 2026-04-21.
+2026-04-25 (Pass 3 — late PM): drove the remaining pre-merge checks to green.
+
+1. **`skill-check` validator warning** "No numbered workflow steps" — traced
+   to the regex `^\d+\.\s` (multiline) in [`dotnet/skills`
+   `eng/skill-validator/src/Check/SkillProfiler.cs`](https://github.com/dotnet/skills/blob/main/eng/skill-validator/src/Check/SkillProfiler.cs).
+   Added a numbered workflow overview section to `SKILL.md`
+   ([`a7ab430`](https://github.com/dstrupl/awesome-copilot/commit/a7ab430))
+   that restates the existing `## Steps` section as an ordered list at the
+   top.
+2. **Noisy PR diff** (user reported seeing ~750 unrelated files touched) —
+   root cause was that the branch was originally opened against `main` at
+   base commit `63d08d5` and then retargeted to `staged` without a rebase,
+   so GitHub computed the diff against a very stale merge-base. Rebased
+   `add-vardoger-analyze-skill` onto current `upstream/staged` (our three
+   relevant commits replayed cleanly) and force-pushed with
+   `--force-with-lease`. PR now shows a single file —
+   `skills/vardoger-analyze/SKILL.md` — across four commits.
+3. **`validate-readme` CI failure** — the workflow runs `npm start`
+   (regenerates `README.md`, `docs/README.agents.md`, `docs/README.skills.md`,
+   and `.github/plugin/marketplace.json`) then fails on any `git diff`. Ran
+   `npm start` locally and committed the updated `docs/README.skills.md`
+   row for vardoger-analyze
+   ([`1776546`](https://github.com/dstrupl/awesome-copilot/commit/1776546)).
+   Briefly committed an "edit" to `docs/README.agents.md` as well, then
+   reverted — the generator is network-dependent (fetches the GitHub MCP
+   catalog at runtime to render the table's link column), so an offline
+   `npm start` produces a file that looks changed but is actually a
+   network-dependent false positive. Re-running with network access
+   produced the identical bytes already on `staged`, so that file no
+   longer needs a commit.
+
+All four CI jobs (`validate-readme`, `skill-check`, `codespell`,
+`check-line-endings`) pass as of this pass.
+
+PR is still `mergeable: BLOCKED` / `reviewDecision: CHANGES_REQUESTED`, but
+the only outstanding review is the stale `github-actions`
+`CHANGES_REQUESTED` from
+[`.github/workflows/check-pr-target.yml`](https://github.com/github/awesome-copilot/blob/main/.github/workflows/check-pr-target.yml)
+left over from when this PR originally targeted `main`. That workflow only
+triggers on `pull_request_target.types: [opened]` against `main`, so
+retargeting the PR to `staged` did not re-trigger it and it never dismissed
+itself. Review id `PRR_kwDOO6BQUc73Iv1W`. Posted
+[issuecomment-4320268413](https://github.com/github/awesome-copilot/pull/1461#issuecomment-4320268413)
+explaining the stale-review situation and pinging `@aaronpowell` and
+`@dvelton` to ask a maintainer to dismiss it — the PR author cannot dismiss
+their own reviewer's review.
+
+Last checked 2026-04-25: `OPEN` / `CHANGES_REQUESTED` (stale bot review
+only); no human comments since 2026-04-21.
 
 ### Windsurf MCP Store
 
@@ -374,15 +423,16 @@ full submission history and audit context.
   [Cursor publisher dashboard](https://cursor.com/marketplace/publish) and
   check `plugins/cursor/` submission state. Last checked 2026-04-22.
 - **[`awesome-copilot` PR #1461](#github-copilot-cli--awesome-copilot)** —
-  `gh pr view 1461 --repo github/awesome-copilot --json state,reviewDecision,comments`.
-  Functionally waiting on a human maintainer; the only lingering review is the
-  bot's `CHANGES_REQUESTED` that preceded the `staged`-branch retarget. Last
-  checked 2026-04-25: still `OPEN` / `CHANGES_REQUESTED`, no new human
-  comments since 2026-04-21. Note: on 2026-04-25 we pushed
-  [`1c7b29d`](https://github.com/dstrupl/awesome-copilot/commit/1c7b29d)
-  (0.3.1 version bump + Copilot session-state path fix); next poll should also
-  confirm the bot has re-run against the updated `SKILL.md` without flagging
-  new issues.
+  `gh pr view 1461 --repo github/awesome-copilot --json state,reviewDecision,statusCheckRollup,comments`.
+  All four CI jobs (`validate-readme`, `skill-check`, `codespell`,
+  `check-line-endings`) are green as of the 2026-04-25 Pass 3 work; the PR is
+  `BLOCKED` only by a stale `github-actions` `CHANGES_REQUESTED` review
+  (`PRR_kwDOO6BQUc73Iv1W`) left over from the `staged`-branch retarget.
+  Posted [issuecomment-4320268413](https://github.com/github/awesome-copilot/pull/1461#issuecomment-4320268413)
+  asking `@aaronpowell` / `@dvelton` to dismiss the stale review. Next poll:
+  (a) check whether a maintainer has dismissed the stale review or opened a
+  human review, and (b) if no one has responded within ~a week, reply to the
+  thread with a polite bump rather than re-pinging.
 - **[Cline MCP Marketplace issue #1394](#cline-mcp-marketplace)** —
   `gh issue view 1394 --repo cline/mcp-marketplace --json state,comments`.
   Last checked 2026-04-25: still `OPEN`, zero comments since filing.
