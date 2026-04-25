@@ -42,8 +42,10 @@ repository root. It:
    tag plus `latest`, so a bump here means a bump on Docker Hub after the
    registry merges the PR.
 2. **Pin `source.commit`.** Replace the `TBD` placeholder in
-   [`server.yaml`](./server.yaml) with the commit SHA of the release tag
-   (`git rev-parse v0.3.1`).
+   [`server.yaml`](./server.yaml) with the commit SHA of the release tag.
+   Use `git rev-list -1 v0.3.1` (or `git rev-parse v0.3.1^{}`) — **not**
+   `git rev-parse v0.3.1`, which returns the annotated tag object SHA and
+   is not what Docker's `source.commit` expects.
 3. **Smoke-test the image locally.** From a checkout at that commit:
 
    ```bash

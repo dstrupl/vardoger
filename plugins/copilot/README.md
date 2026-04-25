@@ -56,7 +56,7 @@ Option A or B if you want Copilot to discover the `analyze` skill.
 Once installed via Option A or B, ask Copilot to analyze your Copilot CLI
 history, or invoke the `analyze` skill directly. The skill shells out to
 the `vardoger` CLI to read past conversations from
-`~/.copilot/history-session-state/` and write a personalization to
+`~/.copilot/session-state/` and write a personalization to
 `~/.copilot/copilot-instructions.md` (user scope) or
 `.github/copilot-instructions.md` (project scope).
 

@@ -4,15 +4,26 @@
   "name": "vardoger",
   "alias": "vardoger",
   "description": "Personalize AI coding assistants by analyzing local conversation history. Reads JSONL session logs from Cursor, Claude Code, Codex, Copilot CLI, Windsurf, Cline, and OpenClaw, extracts behavioral signals, and writes tailored rules files. Runs entirely on your machine.",
-  "icon": "🪞",
+  "logo": "https://avatars.githubusercontent.com/u/4134230?v=4",
   "schema_version": "2.1",
-  "categories": ["developer-tools", "productivity", "ai-ml"],
-  "tags": ["personalization", "local-first", "history", "rules", "skills"],
-
+  "categories": [
+    "developer-tools",
+    "productivity",
+    "ai-ml"
+  ],
+  "tags": [
+    "personalization",
+    "local-first",
+    "history",
+    "rules",
+    "skills"
+  ],
   "transport": {
     "type": "stdio",
     "command": "vardoger",
-    "args": ["mcp"],
+    "args": [
+      "mcp"
+    ],
     "env": {
       "VARDOGER_MCP_PLATFORM": "${input:VARDOGER_MCP_PLATFORM}"
     },
@@ -27,40 +38,62 @@
           "secret": false,
           "default": "",
           "options": [
-            { "value": "",            "label": "Auto-detect (default)", "description": "Let vardoger pick based on the calling host." },
-            { "value": "cursor",      "label": "Cursor" },
-            { "value": "claude-code", "label": "Claude Code" },
-            { "value": "codex",       "label": "Codex" },
-            { "value": "openclaw",    "label": "OpenClaw" },
-            { "value": "copilot",     "label": "GitHub Copilot CLI" },
-            { "value": "windsurf",    "label": "Windsurf" },
-            { "value": "cline",       "label": "Cline" }
+            {
+              "value": "",
+              "label": "Auto-detect (default)",
+              "description": "Let vardoger pick based on the calling host."
+            },
+            {
+              "value": "cursor",
+              "label": "Cursor"
+            },
+            {
+              "value": "claude-code",
+              "label": "Claude Code"
+            },
+            {
+              "value": "codex",
+              "label": "Codex"
+            },
+            {
+              "value": "openclaw",
+              "label": "OpenClaw"
+            },
+            {
+              "value": "copilot",
+              "label": "GitHub Copilot CLI"
+            },
+            {
+              "value": "windsurf",
+              "label": "Windsurf"
+            },
+            {
+              "value": "cline",
+              "label": "Cline"
+            }
           ]
         }
       ]
     }
   },
-
   "auth": {
     "type": "none",
     "instructions": "vardoger reads local filesystem paths only (e.g. ~/.cursor/, ~/.claude/, ~/.codex/). No API keys or OAuth required."
   },
-
   "contributor": {
     "name": "David Strupl",
     "github": "dstrupl",
     "url": "https://github.com/dstrupl/vardoger"
   },
-
   "links": {
     "repository": "https://github.com/dstrupl/vardoger",
     "documentation": "https://github.com/dstrupl/vardoger#readme",
     "homepage": "https://github.com/dstrupl/vardoger",
     "issues": "https://github.com/dstrupl/vardoger/issues"
   },
-
-  "platforms": ["all"],
-
+  "platforms": [
+    "all"
+  ],
   "capabilities": {
     "tools": true,
     "resources": false,
