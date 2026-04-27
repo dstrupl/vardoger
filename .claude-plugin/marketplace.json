@@ -1,0 +1,31 @@
+{
+  "name": "vardoger",
+  "owner": {
+    "name": "David Strupl",
+    "url": "https://github.com/dstrupl"
+  },
+  "metadata": {
+    "description": "Self-hosted Claude Code marketplace for the vardoger plugin.",
+    "version": "0.3.1"
+  },
+  "plugins": [
+    {
+      "name": "vardoger",
+      "description": "Personalizes Claude Code by analyzing your local conversation history and generating tailored rules. Runs entirely on your machine.",
+      "version": "0.3.1",
+      "author": {
+        "name": "David Strupl"
+      },
+      "category": "productivity",
+      "keywords": [
+        "personalization",
+        "productivity",
+        "skills",
+        "local-first"
+      ],
+      "source": "./plugins/claude-code",
+      "homepage": "https://github.com/dstrupl/vardoger",
+      "license": "Apache-2.0"
+    }
+  ]
+}

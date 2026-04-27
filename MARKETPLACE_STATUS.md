@@ -15,7 +15,9 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-04-25** (UTC). Three passes today:
+Last refreshed: **2026-04-27** (UTC).
+
+2026-04-27: Discovered the **Claude Code Plugins** row had been flipped to **Live** prematurely on 2026-04-25 — the `Published` badge on the [claude.ai plugin-submissions dashboard](https://claude.ai/settings/plugins/submissions) only means "submission accepted and validated by Anthropic," it does NOT mean the plugin is merged into the `anthropics/claude-plugins-official` catalog that Claude Code clients actually read. Verified against [`https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json): as of 2026-04-27 the catalog contains 160 plugins (15 under `external_plugins/` — `asana`, `context7`, `discord`, `fakechat`, `firebase`, `github`, `gitlab`, `greptile`, `imessage`, `laravel-boost`, `linear`, `playwright`, `serena`, `telegram`, `terraform`) and **vardoger is not among them**, confirming the in-product `/plugin` Discover tab's report. Split the single Claude Code row into two parallel rows (matching the Codex and Copilot patterns): **Claude Code — official directory** (re-downgraded to **Submitted** — awaiting catalog merge) and **Claude Code — custom** (new, **Live (self-served)**). Added `.claude-plugin/marketplace.json` at the repo root — schema matches the Anthropic-published file (string `source: "./plugins/claude-code"`, keys limited to the vocabulary actually used across the 160 official entries: `name`, `description`, `version`, `author`, `category: productivity`, `keywords`, `source`, `homepage`, `license`). Users install via `/plugin marketplace add dstrupl/vardoger` then `/plugin install vardoger@vardoger`. Monorepo layout is fine: the marketplace root is the repo root, plugin root is `./plugins/claude-code` relative to it (pattern mirrors Anthropic's own `./plugins/agent-sdk-dev` etc.). Documented the new install path in `plugins/claude-code/README.md`. Matching Phase 4 checkbox updated in `PRD.md`.
 
 Pass 3 (2026-04-25 late PM): Followed through on `github/awesome-copilot#1461` to get every pre-merge check green. Addressed the `skill-check` validator warning "No numbered workflow steps" by inspecting the validator source at [`dotnet/skills` `eng/skill-validator/src/Check/SkillProfiler.cs`](https://github.com/dotnet/skills/blob/main/eng/skill-validator/src/Check/SkillProfiler.cs) (regex is `^\d+\.\s`, multiline) and adding a numbered workflow overview section to `skills/vardoger-analyze/SKILL.md` that mirrors the existing detailed `## Steps` section. Then rebased the branch onto `upstream/staged` so the PR diff only touches the files the PR actually introduces — the old base (`63d08d5 chore: publish from staged` on `main`) had drifted far enough from current `staged` that the PR appeared to touch ~750 unrelated files. Post-rebase the PR shows a single file (`skills/vardoger-analyze/SKILL.md`) across four commits: `35db99f` (initial add), `b7a7c5a` (Copilot session-state path fix — was `1c7b29d` before the rebase rewrote it), `a7ab430` (numbered workflow overview), and `1776546` (regenerated `docs/README.skills.md` to include the new row — required by the `validate-readme` CI job which runs `npm start` and fails on any diff). One rabbit-hole worth recording: the first `validate-readme` recovery attempt also committed an "edit" to `docs/README.agents.md` that had been silently produced by running `npm start` offline — the generator drops the MCP catalog link column (`[apify](https://github.com/mcp/…)` → bare `apify`) when it can't reach GitHub's MCP catalog at runtime, so an offline regen looks like a real diff but is actually a network-dependent false positive; reverted the commit once the with-network regen produced the identical bytes already on `staged`. Final state: `validate-readme`, `skill-check`, `codespell`, and `check-line-endings` all pass. PR is still `BLOCKED` from merge by the same stale `github-actions` `CHANGES_REQUESTED` review (`PRR_kwDOO6BQUc73Iv1W`) left behind when the PR originally targeted `main` — the `check-pr-target` workflow only triggers on `opened` events so it never dismissed itself after the `staged` retarget. Posted a comment on the PR explaining the situation and pinging `@aaronpowell` and `@dvelton` asking a maintainer to dismiss the stale review ([issuecomment-4320268413](https://github.com/github/awesome-copilot/pull/1461#issuecomment-4320268413)).
 
@@ -45,7 +47,8 @@ history, surface details, and "last checked" context.
 | --- | --- | --- | --- | --- | --- |
 | [**PyPI**](#pypi) | (repo root) | Live | 2026-04-20 | 2026-04-24 | [pypi.org/project/vardoger](https://pypi.org/project/vardoger/) |
 | [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Submitted | 2026-04-20 | — | [publisher dashboard](https://cursor.com/marketplace/publish) |
-| [**Claude Code Plugins**](#claude-code-plugins) | `plugins/claude-code/` | Live | 2026-04-20 | 2026-04-25 | [submissions dashboard](https://claude.ai/settings/plugins/submissions) |
+| [**Claude Code — official directory**](#claude-code--official-directory) | `plugins/claude-code/` | Submitted | 2026-04-20 | — | [submissions dashboard](https://claude.ai/settings/plugins/submissions) |
+| [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
 | [**Codex — custom**](#codex--custom) | `plugins/codex/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `codex plugin marketplace add …` |
 | [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Not started — blocked upstream | — | — | [openai/codex#13712](https://github.com/openai/codex/pull/13712) |
 | [**GitHub Copilot CLI — custom**](#github-copilot-cli--custom) | `plugins/copilot/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `copilot plugin marketplace add …` |
@@ -84,7 +87,7 @@ Manifest at `plugins/cursor/.cursor-plugin/plugin.json`; `mcp.json` boots via
 public API for review state — check the Cursor publisher dashboard. Last
 checked 2026-04-22: no reviewer response.
 
-### Claude Code Plugins
+### Claude Code — official directory
 
 - **Surface:** [claude.ai/settings/plugins/submit](https://claude.ai/settings/plugins/submit)
 - **Plugin root:** `plugins/claude-code/`
@@ -93,8 +96,66 @@ Submitted via the claude.ai form (personal-account path; platform.claude.com
 is the org-account alternative and feeds the same marketplace). Privacy Policy
 URL: `https://github.com/dstrupl/vardoger/blob/main/PRIVACY.md`. Platforms
 selected: Claude Code only (Cowork excluded — no `cowork` adapter and audience
-is non-developer). Flipped to **Live** on 2026-04-25 after the claude.ai
-plugin-submissions dashboard showed the listing with a **Published** badge.
+is non-developer). The claude.ai plugin-submissions dashboard showed the
+listing with a **Published** badge on 2026-04-25.
+
+2026-04-27 correction: briefly flipped this row to **Live** on 2026-04-25 on
+the basis of the `Published` badge alone, then reverted to **Submitted**
+after discovering that badge does NOT mean the plugin is live in the catalog
+Claude Code clients read. The in-product `/plugin` → Discover tab still
+shows 160 plugins and vardoger isn't among them. Verified against the
+source-of-truth manifest at
+[`anthropics/claude-plugins-official/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json):
+the `external_plugins/` section lists 15 entries (asana, context7, discord,
+fakechat, firebase, github, gitlab, greptile, imessage, laravel-boost,
+linear, playwright, serena, telegram, terraform) and vardoger is absent. So
+"Published" in the dashboard is tier 1 (Anthropic-side validation accepted)
+and the merge into the public catalog is a separate tier-2 step with no
+documented SLA.
+
+Next poll 2026-05-02 (one week after "Published"): if vardoger is still not
+in `external_plugins/`, either (a) open an issue at
+[anthropics/claude-code#issues](https://github.com/anthropics/claude-code/issues)
+referencing the 2026-04-25 publish date, or (b) check whether
+`anthropics/claude-plugins-official` accepts direct community PRs for new
+external plugins and open one if so.
+
+In the meantime, users have two working install paths today:
+`pipx install vardoger && vardoger setup claude-code` (the path we've always
+shipped) and the self-hosted marketplace below.
+
+### Claude Code — custom
+
+- **Surface:** `/plugin marketplace add dstrupl/vardoger`
+- **Plugin root:** `plugins/claude-code/`
+
+Self-hosted marketplace manifest at `.claude-plugin/marketplace.json` in the
+repo root. Users add this repo as a marketplace source and install from it:
+
+```
+/plugin marketplace add dstrupl/vardoger
+/plugin install vardoger@vardoger
+```
+
+Added 2026-04-27 after confirming (a) the official-directory submission is
+stuck at tier 1 with no documented timeline and (b) Claude Code's docs
+explicitly support user-hosted marketplaces via a `.claude-plugin/marketplace.json`
+file ([plugin-marketplaces reference](https://code.claude.com/docs/en/plugin-marketplaces.md)).
+Monorepo-compatible: the manifest uses `"source": "./plugins/claude-code"`
+(a relative string source resolved against the marketplace root, which is
+the repo root) — the same pattern Anthropic's own plugins use (e.g.
+`"source": "./plugins/agent-sdk-dev"` in the official catalog). Schema
+fields used (`name`, `description`, `version`, `author`, `category`,
+`keywords`, `source`, `homepage`, `license`) were selected by surveying
+which keys actually appear across the 160 plugins in the official
+`marketplace.json`, so the manifest is a drop-in if Anthropic ever merges
+`vardoger` into `external_plugins/` using this entry verbatim.
+
+No central registry to submit to — the manifest in our repo *is* the
+marketplace, same as our Codex and Copilot custom marketplace rows. No
+further maintenance required beyond bumping the two `version` fields
+(top-level `metadata.version` and the per-plugin `version`) in lock-step
+with each vardoger release.
 
 ### Codex — custom
 
@@ -445,10 +506,17 @@ full submission history and audit context.
   (`1090cf27…`) to the peeled commit SHA (`98c9006f…`); next poll should
   confirm `go run ./cmd/validate --name vardoger` still passes against the
   updated branch before a reviewer looks at it.
+- **[Claude Code — official directory](#claude-code--official-directory)** —
+  re-added to this list on 2026-04-27 after reverting the premature flip to
+  **Live**. Check whether vardoger has been merged into
+  `anthropics/claude-plugins-official/external_plugins/`: `curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | grep -c '"name": "vardoger"'`
+  (expect `0` today, `1` once merged). First follow-up scheduled for
+  2026-05-02 — if still absent by then, open an issue at
+  [anthropics/claude-code#issues](https://github.com/anthropics/claude-code/issues)
+  or a direct PR against `anthropics/claude-plugins-official` if that repo
+  accepts community PRs for new external plugins.
 
-Claude Code Plugins dropped off this list on 2026-04-25 — the claude.ai
-plugin-submissions dashboard shows the listing with a **Published** badge;
-row is now **Live**. McpMux PR #113 dropped off on 2026-04-24 — merged as
+McpMux PR #113 dropped off on 2026-04-24 — merged as
 [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe);
 row is now **Live**.
 
