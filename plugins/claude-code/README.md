@@ -16,6 +16,17 @@ vardoger setup claude-code
 
 This creates the plugin directory at `~/.vardoger/plugins/claude-code/` and prints the activation command.
 
+## Install from the vardoger marketplace
+
+vardoger also ships a self-hosted Claude Code marketplace manifest at [`.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) in the repo root. From inside Claude Code:
+
+```
+/plugin marketplace add dstrupl/vardoger
+/plugin install vardoger@vardoger
+```
+
+The first command registers this repo as a marketplace source; the second installs the plugin from it. You still need `pipx install vardoger` on your `$PATH` so the skill's CLI is available at runtime.
+
 ## Local Development Install
 
 If you're developing vardoger from source, you can point Claude Code at the repo's plugin directory instead:
