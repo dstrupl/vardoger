@@ -15,7 +15,11 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-04-27** (UTC).
+Last refreshed: **2026-04-28** (UTC).
+
+2026-04-28 (Cursor): **The `cursor.com/marketplace/publish` page is submit-only — it does not expose a my-submissions list, despite the doc previously implying otherwise.** Verified by the project owner logging into the dashboard: the URL is purely a submission form, with no view of items already submitted. So our **Submitted | 2026-04-20** status is unverifiable from the publisher side. Switched to public-surface probes: `curl -sI https://cursor.com/marketplace/vardoger` returns `HTTP/2 404`; `curl -sI https://cursor.com/plugins/vardoger` returns `HTTP/2 308` redirecting to `/marketplace/vardoger` (i.e. a slug-resolver redirect that 404s on the next hop, confirming no listing); searching `cursor.com/marketplace?search=vardoger` returns HTTP 200 but `vardoger` only appears in the page's Next.js router state echo (the search query itself), no listing card. Also evaluated [`github.com/cursor/plugins`](https://github.com/cursor/plugins) as a possible parallel path (Cursor's official plugin spec + curated catalog repo, schema docs at `docs/`, individual plugin folders at the root mirroring our `plugins/cursor/` layout one-for-one). **Not viable today**: 15 open community plugin PRs (e.g. `#27` Initial project setup `2026-02-23`, `#29` Excalidraw `2026-02-25`, `#32` continual-learning fix `2026-02-28`, … `#59` mem-forever `2026-04-26`), every one of them carrying `reviewDecision: -` (no review at all), no labels, no triage; the only merged PRs in the trailing 20 are by `maloneya` and `ericzakariasson` (Cursor employees). Community submissions there sit even longer than the form, so opening one for vardoger is a strictly worse copy of the path we're already on. Net for the row: keeping the status at **Submitted** (we can neither confirm nor disprove the 2026-04-20 form submission), updated the per-marketplace section with the actual verification probes, dropped the "log into the dashboard and check" instruction from "Next session pickup" (it isn't possible), and replaced it with the two public probes plus a fallback re-submission note in case the original form submit silently failed.
+
+2026-04-28 (awesome-copilot): **`github/awesome-copilot#1461` merged.** [`aaronpowell`](https://github.com/aaronpowell) (one of the two maintainers we pinged in the 2026-04-27 stale-review comment) approved the PR at 03:45:35Z and merged it 29 seconds later at [03:46:04Z](https://github.com/github/awesome-copilot/pull/1461) into `staged` as merge commit [`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f). The maintainer never bothered dismissing the stale `github-actions` `CHANGES_REQUESTED` review (`PRR_kwDOO6BQUc73Iv1W`) we asked about — they just stacked an `APPROVED` review on top, which GitHub treats as overriding the prior block. Side effect: `gh pr view` still reports `reviewDecision: CHANGES_REQUESTED` even though `state: MERGED`, so any future poll-by-`reviewDecision` check needs to also look at `state` to avoid a false "still blocked" reading. Verified the publish pipeline already ran end-to-end — `https://raw.githubusercontent.com/github/awesome-copilot/main/skills/vardoger-analyze/SKILL.md` returns `HTTP/2 200` and the `docs/README.skills.md` index on `main` carries the `vardoger-analyze` row with the install snippet `gh skills install github/awesome-copilot vardoger-analyze`. (Worth recording for future submissions: skills that ship under `skills/` do *not* get an entry in `.github/plugin/marketplace.json` — that file's `plugins[]` array is for plugin *bundles* only, currently 73 entries, and individual skills are intentionally absent. Discovery for skill submissions happens via `docs/README.skills.md` + the `gh skills install` CLI, so seeing zero `vardoger` mentions in `marketplace.json` after the merge is correct, not a publish gap.) Row flipped from **Submitted** → **Live**; matching `[ ]` ticked in `PRD.md` Phase 4. Removed the `awesome-copilot` bullet from the "Next session pickup → Poll reviewer queues" list. No further maintenance until vardoger ships a breaking change to the `analyze` skill or the Copilot session-state path.
 
 2026-04-27: Discovered the **Claude Code Plugins** row had been flipped to **Live** prematurely on 2026-04-25 — the `Published` badge on the [claude.ai plugin-submissions dashboard](https://claude.ai/settings/plugins/submissions) only means "submission accepted and validated by Anthropic," it does NOT mean the plugin is merged into the `anthropics/claude-plugins-official` catalog that Claude Code clients actually read. Verified against [`https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json): as of 2026-04-27 the catalog contains 160 plugins (15 under `external_plugins/` — `asana`, `context7`, `discord`, `fakechat`, `firebase`, `github`, `gitlab`, `greptile`, `imessage`, `laravel-boost`, `linear`, `playwright`, `serena`, `telegram`, `terraform`) and **vardoger is not among them**, confirming the in-product `/plugin` Discover tab's report. Split the single Claude Code row into two parallel rows (matching the Codex and Copilot patterns): **Claude Code — official directory** (re-downgraded to **Submitted** — awaiting catalog merge) and **Claude Code — custom** (new, **Live (self-served)**). Added `.claude-plugin/marketplace.json` at the repo root — schema matches the Anthropic-published file (string `source: "./plugins/claude-code"`, keys limited to the vocabulary actually used across the 160 official entries: `name`, `description`, `version`, `author`, `category: productivity`, `keywords`, `source`, `homepage`, `license`). Users install via `/plugin marketplace add dstrupl/vardoger` then `/plugin install vardoger@vardoger`. Monorepo layout is fine: the marketplace root is the repo root, plugin root is `./plugins/claude-code` relative to it (pattern mirrors Anthropic's own `./plugins/agent-sdk-dev` etc.). Documented the new install path in `plugins/claude-code/README.md`. Matching Phase 4 checkbox updated in `PRD.md`. Also added a new row for [**claudemarketplaces.com**](#claudemarketplacescom) — a third-party community aggregator that crawls GitHub daily for repos containing `.claude-plugin/marketplace.json` files and lists them automatically (no submission, no PR). Row seeded at **Pending ingestion (auto)**; the same manifest commit that served the custom row above is all the action needed — next poll ~2026-04-29 confirms the crawl picked us up.
 
@@ -52,7 +56,7 @@ history, surface details, and "last checked" context.
 | [**Codex — custom**](#codex--custom) | `plugins/codex/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `codex plugin marketplace add …` |
 | [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Not started — blocked upstream | — | — | [openai/codex#13712](https://github.com/openai/codex/pull/13712) |
 | [**GitHub Copilot CLI — custom**](#github-copilot-cli--custom) | `plugins/copilot/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `copilot plugin marketplace add …` |
-| [**GitHub Copilot CLI — `awesome-copilot`**](#github-copilot-cli--awesome-copilot) | `plugins/copilot/` | Submitted | 2026-04-21 | — | [PR #1461](https://github.com/github/awesome-copilot/pull/1461) |
+| [**GitHub Copilot CLI — `awesome-copilot`**](#github-copilot-cli--awesome-copilot) | `plugins/copilot/` | Live | 2026-04-21 | 2026-04-28 | [PR #1461](https://github.com/github/awesome-copilot/pull/1461) |
 | [**Windsurf MCP Store**](#windsurf-mcp-store) | `plugins/windsurf/` | N/A | — | — | (no public submission form) |
 | [**Official MCP Registry**](#official-mcp-registry) | `plugins/mcp-registry/` | Live | 2026-04-24 | 2026-04-24 | [registry feed](https://registry.modelcontextprotocol.io/v0/servers?search=vardoger) |
 | [**McpMux community registry**](#mcpmux-community-registry) | `plugins/mcpmux/` | Live | 2026-04-22 | 2026-04-24 | [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) |
@@ -84,9 +88,47 @@ Listing at [pypi.org/project/vardoger](https://pypi.org/project/vardoger/).
 
 Manifest at `plugins/cursor/.cursor-plugin/plugin.json`; `mcp.json` boots via
 `uvx vardoger mcp`. Logotype URL in the form:
-`https://raw.githubusercontent.com/dstrupl/vardoger/main/assets/logo.svg`. No
-public API for review state — check the Cursor publisher dashboard. Last
-checked 2026-04-22: no reviewer response.
+`https://raw.githubusercontent.com/dstrupl/vardoger/main/assets/logo.svg`.
+Submitted via the form on 2026-04-20.
+
+**2026-04-28 dashboard finding:** the publisher page at
+`cursor.com/marketplace/publish` is **submit-only** — it serves a form for
+new applications and does not expose a my-submissions list (verified by the
+project owner logging in). So once a form is submitted, the only signals
+available to track its state are public ones, plus whatever email Anysphere
+chooses to send. Our row stays at **Submitted** because we can neither
+confirm nor disprove the 2026-04-20 submission persisted.
+
+**Verifiable public probes** (replace the prior "log into the dashboard"
+instruction):
+
+```
+curl -sI https://cursor.com/marketplace/vardoger | head -1     # expect HTTP/2 404 today, 200 once listed
+curl -sI https://cursor.com/plugins/vardoger     | head -1     # 308 → /marketplace/vardoger (then 404)
+gh api repos/cursor/plugins/contents/vardoger?ref=main          # expect 404 today (vardoger absent from official catalog)
+```
+
+Last run 2026-04-28: all three return "absent" — vardoger is not yet in
+the public marketplace and not yet in the `cursor/plugins` GitHub catalog.
+
+**Why not also open a PR against `github.com/cursor/plugins`?** That repo
+is Cursor's official plugin spec + curated-catalog source (schema at
+`schemas/`, top-level plugin directories `agent-compatibility`,
+`cli-for-agent`, `continual-learning`, `create-plugin`, `cursor-team-kit`,
+`docs-canvas`, `pr-review-canvas`, `ralph-loop`, `teaching` — all
+authored by Cursor employees per the README's "Author" column). Polled
+2026-04-28: 15 open community plugin PRs (`#27` Initial project setup
+opened 2026-02-23 through `#59` mem-forever opened 2026-04-26), every
+single one of them with `reviewDecision: -` (no review whatsoever), no
+labels, no triage. Recent merges are exclusively from `maloneya` and
+`ericzakariasson` (Cursor staff). So community submissions in that repo
+sit even longer than the form does — strictly worse parallel path, not
+worth opening.
+
+**Re-submission fallback:** if the public probes still return 404 by
+2026-05-04 (~2 weeks after the original submission), re-fill the form
+from a fresh session as defense-in-depth against a silently-failed
+original submit. No way to verify before then without a reviewer response.
 
 ### Claude Code — official directory
 
@@ -251,21 +293,32 @@ rebase rewrote it to
 All four CI jobs (`validate-readme`, `skill-check`, `codespell`,
 `check-line-endings`) pass as of this pass.
 
-PR is still `mergeable: BLOCKED` / `reviewDecision: CHANGES_REQUESTED`, but
-the only outstanding review is the stale `github-actions`
-`CHANGES_REQUESTED` from
-[`.github/workflows/check-pr-target.yml`](https://github.com/github/awesome-copilot/blob/main/.github/workflows/check-pr-target.yml)
-left over from when this PR originally targeted `main`. That workflow only
-triggers on `pull_request_target.types: [opened]` against `main`, so
-retargeting the PR to `staged` did not re-trigger it and it never dismissed
-itself. Review id `PRR_kwDOO6BQUc73Iv1W`. Posted
-[issuecomment-4320268413](https://github.com/github/awesome-copilot/pull/1461#issuecomment-4320268413)
-explaining the stale-review situation and pinging `@aaronpowell` and
-`@dvelton` to ask a maintainer to dismiss it — the PR author cannot dismiss
-their own reviewer's review.
+2026-04-28 (Pass 4 — merge): [`aaronpowell`](https://github.com/aaronpowell)
+(one of the two maintainers pinged in the stale-review comment) approved at
+03:45:35Z and merged 29 seconds later at 03:46:04Z as merge commit
+[`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f).
+The maintainer never dismissed the stale `github-actions`
+`CHANGES_REQUESTED` review (`PRR_kwDOO6BQUc73Iv1W`) — they stacked an
+`APPROVED` review on top, which GitHub treats as overriding the prior
+block. Quirk worth recording: `gh pr view 1461 --json state,reviewDecision`
+now returns `state: MERGED` but `reviewDecision: CHANGES_REQUESTED`, so any
+future poll based on `reviewDecision` alone would falsely read "still
+blocked"; check `state` first.
 
-Last checked 2026-04-25: `OPEN` / `CHANGES_REQUESTED` (stale bot review
-only); no human comments since 2026-04-21.
+Verified the auto-publish from `staged` → `main` already ran end-to-end:
+`curl -sI https://raw.githubusercontent.com/github/awesome-copilot/main/skills/vardoger-analyze/SKILL.md`
+returns `HTTP/2 200`, and the `docs/README.skills.md` index on `main` carries
+the `vardoger-analyze` row with the install snippet
+`gh skills install github/awesome-copilot vardoger-analyze`. Note for future
+skill submissions: the `.github/plugin/marketplace.json` file's `plugins[]`
+array (73 entries on `main` post-merge) is for plugin *bundles* only and
+intentionally does not list individual skills — discovery for skills happens
+via `docs/README.skills.md` plus the `gh skills install` CLI. Zero
+`vardoger` mentions in `marketplace.json` is correct, not a publish gap.
+
+Row flipped to **Live**. No further maintenance expected until vardoger
+ships a breaking change to the `analyze` skill or the Copilot session-state
+path.
 
 ### Windsurf MCP Store
 
@@ -511,20 +564,18 @@ full submission history and audit context.
 ### 1. Poll reviewer queues (re-verify before other work)
 
 - **[Cursor Plugin Registry](#cursor-plugin-registry)** — no public review
-  API; log into the
-  [Cursor publisher dashboard](https://cursor.com/marketplace/publish) and
-  check `plugins/cursor/` submission state. Last checked 2026-04-22.
-- **[`awesome-copilot` PR #1461](#github-copilot-cli--awesome-copilot)** —
-  `gh pr view 1461 --repo github/awesome-copilot --json state,reviewDecision,statusCheckRollup,comments`.
-  All four CI jobs (`validate-readme`, `skill-check`, `codespell`,
-  `check-line-endings`) are green as of the 2026-04-25 Pass 3 work; the PR is
-  `BLOCKED` only by a stale `github-actions` `CHANGES_REQUESTED` review
-  (`PRR_kwDOO6BQUc73Iv1W`) left over from the `staged`-branch retarget.
-  Posted [issuecomment-4320268413](https://github.com/github/awesome-copilot/pull/1461#issuecomment-4320268413)
-  asking `@aaronpowell` / `@dvelton` to dismiss the stale review. Next poll:
-  (a) check whether a maintainer has dismissed the stale review or opened a
-  human review, and (b) if no one has responded within ~a week, reply to the
-  thread with a polite bump rather than re-pinging.
+  API and no my-submissions list on the publisher dashboard (it's a
+  submit-only form, verified 2026-04-28). Use these public probes
+  instead: `curl -sI https://cursor.com/marketplace/vardoger | head -1`
+  (expect `HTTP/2 200` once listed; was `404` on 2026-04-28); and
+  `gh api repos/cursor/plugins/contents/vardoger?ref=main` (expect a
+  directory listing once merged into the official catalog; was `404` on
+  2026-04-28). If both still return absent on 2026-05-04 (~two weeks
+  after the original submit), re-fill the form from a fresh session as
+  defense-in-depth against a silently-failed original submission. Do
+  *not* open a PR at `github.com/cursor/plugins` as a parallel path —
+  that repo's 15 open community plugin PRs (oldest `#27` from
+  2026-02-23) all sit at `reviewDecision: -` with no triage.
 - **[Cline MCP Marketplace issue #1394](#cline-mcp-marketplace)** —
   `gh issue view 1394 --repo cline/mcp-marketplace --json state,comments`.
   Last checked 2026-04-25: still `OPEN`, zero comments since filing.
@@ -557,7 +608,10 @@ full submission history and audit context.
 
 McpMux PR #113 dropped off on 2026-04-24 — merged as
 [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe);
-row is now **Live**.
+row is now **Live**. `awesome-copilot` PR #1461 dropped off on 2026-04-28 —
+merged as
+[`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f)
+into `staged`, auto-published to `main`; row is now **Live**.
 
 If any of the remaining rows flip, update the row's Status / Live on, add
 merge notes to the corresponding
