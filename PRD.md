@@ -549,13 +549,9 @@ These decisions are intentionally left open and will be resolved during implemen
 
 > **Decision:** On-demand by default. Users invoke the `vardoger_personalize` MCP tool or the `vardoger` CLI when they want a refresh. Claude Code additionally ships a `SessionStart` hook that surfaces a staleness reminder without auto-running analysis. A scheduled / background refresh path remains out of scope for Phase 5; it would conflict with the local-only, review-first model above.
 
-### 9.5 History Scope Defaults
+### 9.5 History Scope Defaults — RESOLVED
 
-How much conversation history should vardoger analyze by default?
-
-- Too little: misses patterns
-- Too much: slow analysis, stale signals from old behavior
-- Likely default: last 30 days, configurable
+> **Decision:** No default time window. The first run analyzes the user's full local conversation history — that is the moment the most signal is available at zero ongoing cost, and a windowed default would silently drop older sessions that the user never has a second chance to feed in. The per-conversation checkpoint store (see 4.5) bounds every subsequent run to the new or changed conversations only, so the "Too much: slow analysis" concern decays naturally after the first invocation. The `--since DAYS` flag (CLI: `vardoger analyze` / `vardoger prepare`) and the existing `--full` flag remain available as power-user knobs for users with very large local history who want to bound first-run cost or force a full re-crawl, respectively. The synthesis prompt itself is responsible for weighting recent over older behavior when patterns conflict; the reader's job is to surface everything the user has on disk.
 
 ---
 

@@ -70,6 +70,16 @@ Then tell your assistant: **"Personalize my assistant."**
 3. **Generate** — Produces a system prompt addition tailored to you
 4. **Deliver** — Writes the addition to the platform's native config (`.cursor/rules/`, `.claude/rules/`, `AGENTS.md`, etc.)
 
+> **First run vs. incremental runs.** By default vardoger does not apply a
+> time window — the first run reads your full local history (that is when the
+> signal is richest and a windowed default would silently drop older sessions
+> you never get a second chance to feed in). After that, a per-conversation
+> checkpoint store at `~/.vardoger/state.json` ensures every subsequent run
+> only reprocesses new or changed conversations, so refreshes stay fast.
+> If you have very large local history and want to cap the first-run cost,
+> pass `--since DAYS` (e.g. `vardoger prepare --platform cursor --since 90`);
+> use `--full` to force a full re-crawl that bypasses the checkpoint.
+
 ## Supported Platforms
 
 | Platform | History Source | Prompt Delivery | Integration |
