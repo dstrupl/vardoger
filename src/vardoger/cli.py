@@ -738,7 +738,11 @@ def main(argv: list[str] | None = None) -> None:
         type=int,
         default=None,
         metavar="DAYS",
-        help="Only process files modified in the last N days.",
+        help=(
+            "Limit to files modified in the last N days. Default: no limit "
+            "(first run sees full history; subsequent runs are bounded by "
+            "the checkpoint store at ~/.vardoger/state.json)."
+        ),
     )
 
     # prepare
@@ -758,7 +762,11 @@ def main(argv: list[str] | None = None) -> None:
         type=int,
         default=None,
         metavar="DAYS",
-        help="Only process files modified in the last N days.",
+        help=(
+            "Limit to files modified in the last N days. Default: no limit "
+            "(first run sees full history; subsequent runs are bounded by "
+            "the checkpoint store at ~/.vardoger/state.json)."
+        ),
     )
     prepare_parser.add_argument(
         "--batch",
