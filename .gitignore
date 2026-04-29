@@ -48,3 +48,6 @@ uv.lock
 
 # vardoger generated output (don't commit personalization)
 .cursor/rules/vardoger.md
+
+# Claude Code personal overrides (keep shared .claude/ config committable)
+.claude/settings.local.json
