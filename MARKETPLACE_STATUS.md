@@ -15,7 +15,15 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-04-28** (UTC).
+Last refreshed: **2026-05-06** (UTC).
+
+2026-05-06: Audited the five overdue / routine rows. Three material findings:
+
+1. **Claude Code catalog: we were polling the wrong repo.** The `2026-04-27` pass assumed `anthropics/claude-plugins-official` is the catalog Claude Code clients read and kept downgrading the row while waiting for vardoger to land in its `external_plugins/`. In fact that repo is described as *"Official, Anthropic-managed directory of high quality Claude Code Plugins"* — a curated tier-2 list, not the discovery catalog. The repo Claude Code clients actually read (and which `clau.de/plugin-directory-submission` feeds) is `anthropics/claude-plugins-community`: *"Read-only mirror — submit plugins at clau.de/plugin-directory-submission"*, 1,920 plugins at HEAD. Vardoger has been in that mirror since the [2026-04-28 sync `4749e7a`](https://github.com/anthropics/claude-plugins-community/commit/4749e7a) (*"sync: 1921 plugins (+285)"*), pinned at our SHA [`da14439`](https://github.com/dstrupl/vardoger/commit/da14439) (the 2026-04-23 McpMux review fix), homepage `https://github.com/dstrupl/vardoger/tree/main/plugins/claude-code`. So the plugin-submissions dashboard's **Published** badge on 2026-04-25 *was* the real "your plugin is now in the catalog Claude Code clients read" signal after all — the 2026-04-27 revert was based on a wrong premise. Corrected here by splitting the single row into two: **Claude Code — community catalog** (Live, 2026-04-28) and **Claude Code — curated directory** (Not started, tier-2, no SLA, no escalation channel — watch-only). One follow-on observation worth recording for future rows: our pinned SHA in the mirror (`da14439`, 2026-04-23) is six days behind our current `main` HEAD ([`60a0bf4`](https://github.com/dstrupl/vardoger/commit/60a0bf4), 2026-04-29). The mirror re-syncs capture new plugins but do not bump existing `source: url` entries to a newer SHA — [`anthropics/claude-code#45153`](https://github.com/anthropics/claude-code/issues/45153) (comment 2026-04-25 by `b-coman`) documents the same lag for `ido4shape` and reports no working "update existing submission" dashboard flow. So the `v0.3.1` release is reachable today via the custom marketplace row below and `pipx install vardoger`, but users discovering via the Claude Code `/plugin` Discover tab currently get the 0.3.0 tree; a refresh will require whatever update mechanism Anthropic builds into the submissions dashboard (tracked under that upstream issue, not here).
+
+2. **claudemarketplaces.com ownership was wrong in the 2026-04-27 note.** The row attributed the site to `@mertduzgun` at `mertbuilds/claudemarketplaces.com`, but `mertbuilds/claudemarketplaces.com` does not exist and `@mertduzgun` has 0 public repos. The actual maintainer is `@noobsaire` (Marvih Ray) at [`noobsaire/claudemarketplaces`](https://github.com/noobsaire/claudemarketplaces) — same README wording (*"automatically searches GitHub daily to discover repositories with `.claude-plugin/marketplace.json` files"*), same "independent project, not affiliated with Anthropic" disclaimer on the site. **Issues are disabled on the real repo**, so the fallback escalation path described in the 2026-04-27 note ("open an issue or use the /feedback page") is incorrect — only the `/feedback` page is available. Probed the site's public catalog endpoint `https://claudemarketplaces.com/api/marketplaces` (JSON array of 2,566 marketplaces): `grep -c vardoger` → 0, so we're definitively not indexed yet, and the crawl has had nine days to pick us up since the manifest landed on 2026-04-27. Net: attribution corrected below, escalation path narrowed to `/feedback` only, decision deferred pending owner action (requires a browser — not something this session can do).
+
+3. **Cursor, Cline MCP, and Docker MCP all unchanged.** `gh pr view 2949 --repo docker/mcp-registry` still `OPEN` / `REVIEW_REQUIRED`, zero comments (last updated 2026-04-25); `gh issue view 1394 --repo cline/mcp-marketplace` still `OPEN`, zero comments (last updated 2026-04-25); Cursor public probes (`cursor.com/marketplace/vardoger` → 404, `cursor.com/plugins/vardoger` → 308 → 404, `gh api repos/cursor/plugins/contents/vardoger` → 404) all still absent. The defense-in-depth re-submission window for the Cursor form opened 2026-05-04 (two weeks after the original submit) — flagged in the Cursor row below for the next owner session.
 
 2026-04-28 (Cursor): **The `cursor.com/marketplace/publish` page is submit-only — it does not expose a my-submissions list, despite the doc previously implying otherwise.** Verified by the project owner logging into the dashboard: the URL is purely a submission form, with no view of items already submitted. So our **Submitted | 2026-04-20** status is unverifiable from the publisher side. Switched to public-surface probes: `curl -sI https://cursor.com/marketplace/vardoger` returns `HTTP/2 404`; `curl -sI https://cursor.com/plugins/vardoger` returns `HTTP/2 308` redirecting to `/marketplace/vardoger` (i.e. a slug-resolver redirect that 404s on the next hop, confirming no listing); searching `cursor.com/marketplace?search=vardoger` returns HTTP 200 but `vardoger` only appears in the page's Next.js router state echo (the search query itself), no listing card. Also evaluated [`github.com/cursor/plugins`](https://github.com/cursor/plugins) as a possible parallel path (Cursor's official plugin spec + curated catalog repo, schema docs at `docs/`, individual plugin folders at the root mirroring our `plugins/cursor/` layout one-for-one). **Not viable today**: 15 open community plugin PRs (e.g. `#27` Initial project setup `2026-02-23`, `#29` Excalidraw `2026-02-25`, `#32` continual-learning fix `2026-02-28`, … `#59` mem-forever `2026-04-26`), every one of them carrying `reviewDecision: -` (no review at all), no labels, no triage; the only merged PRs in the trailing 20 are by `maloneya` and `ericzakariasson` (Cursor employees). Community submissions there sit even longer than the form, so opening one for vardoger is a strictly worse copy of the path we're already on. Net for the row: keeping the status at **Submitted** (we can neither confirm nor disprove the 2026-04-20 form submission), updated the per-marketplace section with the actual verification probes, dropped the "log into the dashboard and check" instruction from "Next session pickup" (it isn't possible), and replaced it with the two public probes plus a fallback re-submission note in case the original form submit silently failed.
 
@@ -51,7 +59,8 @@ history, surface details, and "last checked" context.
 | --- | --- | --- | --- | --- | --- |
 | [**PyPI**](#pypi) | (repo root) | Live | 2026-04-20 | 2026-04-24 | [pypi.org/project/vardoger](https://pypi.org/project/vardoger/) |
 | [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Submitted | 2026-04-20 | — | [publisher dashboard](https://cursor.com/marketplace/publish) |
-| [**Claude Code — official directory**](#claude-code--official-directory) | `plugins/claude-code/` | Submitted | 2026-04-20 | — | [submissions dashboard](https://claude.ai/settings/plugins/submissions) |
+| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Live | 2026-04-20 | 2026-04-28 | [catalog entry](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
+| [**Claude Code — curated directory**](#claude-code--curated-directory) | `plugins/claude-code/` | Not started (watch-only) | — | — | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
 | [**Codex — custom**](#codex--custom) | `plugins/codex/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `codex plugin marketplace add …` |
 | [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Not started — blocked upstream | — | — | [openai/codex#13712](https://github.com/openai/codex/pull/13712) |
@@ -108,8 +117,12 @@ curl -sI https://cursor.com/plugins/vardoger     | head -1     # 308 → /market
 gh api repos/cursor/plugins/contents/vardoger?ref=main          # expect 404 today (vardoger absent from official catalog)
 ```
 
-Last run 2026-04-28: all three return "absent" — vardoger is not yet in
-the public marketplace and not yet in the `cursor/plugins` GitHub catalog.
+Last run 2026-05-06: all three still return "absent" — vardoger is not
+yet in the public marketplace and not yet in the `cursor/plugins` GitHub
+catalog. Submitted 2026-04-20; the defense-in-depth re-submission window
+opened 2026-05-04 (two weeks after the original submit), so this row is
+now in the "re-fill the form from a fresh session" escalation bucket —
+see the Re-submission fallback paragraph below.
 
 **Why not also open a PR against `github.com/cursor/plugins`?** That repo
 is Cursor's official plugin spec + curated-catalog source (schema at
@@ -125,47 +138,96 @@ labels, no triage. Recent merges are exclusively from `maloneya` and
 sit even longer than the form does — strictly worse parallel path, not
 worth opening.
 
-**Re-submission fallback:** if the public probes still return 404 by
-2026-05-04 (~2 weeks after the original submission), re-fill the form
-from a fresh session as defense-in-depth against a silently-failed
-original submit. No way to verify before then without a reviewer response.
+**Re-submission fallback (now active, owner-only):** the window opened
+2026-05-04 and the probes above still return 404 as of 2026-05-06. Next
+time the owner is logged into `cursor.com` in a browser, re-fill the
+form at `cursor.com/marketplace/publish` as defense-in-depth against a
+silently-failed original submit. Claude cannot submit the form (it's
+behind Cursor's auth). If the form asks for a changelog reason,
+"defense-in-depth resubmission — no acknowledgement of 2026-04-20
+submit" is accurate and honest.
 
-### Claude Code — official directory
+### Claude Code — community catalog
 
-- **Surface:** [claude.ai/settings/plugins/submit](https://claude.ai/settings/plugins/submit)
+- **Surface:** [clau.de/plugin-directory-submission](https://clau.de/plugin-directory-submission) (submission) → [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community) (read-only mirror)
 - **Plugin root:** `plugins/claude-code/`
 
-Submitted via the claude.ai form (personal-account path; platform.claude.com
-is the org-account alternative and feeds the same marketplace). Privacy Policy
-URL: `https://github.com/dstrupl/vardoger/blob/main/PRIVACY.md`. Platforms
+Submitted 2026-04-20 via the `claude.ai/settings/plugins/submit` form (personal-
+account path; `platform.claude.com` is the org-account alternative and feeds
+the same marketplace). Privacy Policy URL:
+`https://github.com/dstrupl/vardoger/blob/main/PRIVACY.md`. Platforms
 selected: Claude Code only (Cowork excluded — no `cowork` adapter and audience
-is non-developer). The claude.ai plugin-submissions dashboard showed the
-listing with a **Published** badge on 2026-04-25.
+is non-developer). The claude.ai plugin-submissions dashboard flipped to
+**Published** on 2026-04-25.
 
-2026-04-27 correction: briefly flipped this row to **Live** on 2026-04-25 on
-the basis of the `Published` badge alone, then reverted to **Submitted**
-after discovering that badge does NOT mean the plugin is live in the catalog
-Claude Code clients read. The in-product `/plugin` → Discover tab still
-shows 160 plugins and vardoger isn't among them. Verified against the
-source-of-truth manifest at
-[`anthropics/claude-plugins-official/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json):
-the `external_plugins/` section lists 15 entries (asana, context7, discord,
-fakechat, firebase, github, gitlab, greptile, imessage, laravel-boost,
-linear, playwright, serena, telegram, terraform) and vardoger is absent. So
-"Published" in the dashboard is tier 1 (Anthropic-side validation accepted)
-and the merge into the public catalog is a separate tier-2 step with no
-documented SLA.
+**Live since 2026-04-28.** Submission landed in the community catalog mirror
+that Claude Code clients actually read — [`anthropics/claude-plugins-community/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-community/main/.claude-plugin/marketplace.json) —
+in [sync `4749e7a`](https://github.com/anthropics/claude-plugins-community/commit/4749e7a)
+(*"sync: 1921 plugins (+285)"*). The tracked entry is
+`{"name": "vardoger", "source": {"source": "url", "url": "https://github.com/dstrupl/vardoger.git", "sha": "da14439fd5862bdb9bef1b77f552892844ca8839"}, "homepage": "https://github.com/dstrupl/vardoger/tree/main/plugins/claude-code"}`.
+Verification:
 
-Next poll 2026-05-02 (one week after "Published"): if vardoger is still not
-in `external_plugins/`, either (a) open an issue at
-[anthropics/claude-code#issues](https://github.com/anthropics/claude-code/issues)
-referencing the 2026-04-25 publish date, or (b) check whether
-`anthropics/claude-plugins-official` accepts direct community PRs for new
-external plugins and open one if so.
+```
+curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-community/main/.claude-plugin/marketplace.json \
+  | python3 -c 'import json,sys;print([p for p in json.load(sys.stdin)["plugins"] if p["name"]=="vardoger"])'
+```
 
-In the meantime, users have two working install paths today:
-`pipx install vardoger && vardoger setup claude-code` (the path we've always
-shipped) and the self-hosted marketplace below.
+**Correction history:** 2026-04-25 flipped to **Live** on the Published badge
+alone → 2026-04-27 reverted to **Submitted** after checking
+[`anthropics/claude-plugins-official/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json)
+and finding vardoger absent from its `external_plugins/` section → 2026-05-06
+re-flipped to **Live** after realising the 2026-04-27 check was against the
+wrong repo. `anthropics/claude-plugins-official` is a curated tier-2 directory
+(*"Official, Anthropic-managed directory of high quality Claude Code Plugins"*),
+not the discovery catalog clients read; the community mirror above is. The
+tier-2 directory is tracked as a separate row below.
+
+**Sync freshness caveat:** the mirror pins source-url entries to a specific
+SHA at ingest time and does not re-bump existing entries during later syncs.
+Our entry is pinned at `da14439` (2026-04-23), so the `v0.3.1` tree is NOT
+what users installing via Claude Code's `/plugin` Discover tab get today; they
+get the tree as it stood on 2026-04-23, which is v0.3.0-ish. This is a known
+Anthropic-side limitation, not a vardoger bug:
+[`anthropics/claude-code#45153`](https://github.com/anthropics/claude-code/issues/45153)
+documents the same behavior for `ido4shape` and the 2026-04-25 follow-up
+comment by `b-coman` asks the Anthropic team to add an "update existing
+submission" flow to the dashboard. Until that lands, `pipx install vardoger`
+and the self-hosted custom marketplace row below remain the paths that track
+the latest release.
+
+Next-release checklist: when upstream ships a dashboard update path, resubmit
+via the form (or whatever replaces it) to refresh the pinned SHA. Until then,
+no row maintenance required.
+
+### Claude Code — curated directory
+
+- **Surface:** [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) (no public submission flow)
+- **Plugin root:** `plugins/claude-code/`
+
+Anthropic's second, curated tier of the Claude Code plugin ecosystem. Repo
+description: *"Official, Anthropic-managed directory of high quality Claude
+Code Plugins."* As of 2026-05-06 the manifest lists 160 plugins with 15 in
+the `external_plugins/` section (asana, context7, discord, fakechat, firebase,
+github, gitlab, greptile, imessage, laravel-boost, linear, playwright, serena,
+telegram, terraform) — all authored by major third-party vendors Anthropic has
+chosen to highlight. There is no submission form, no publicly documented
+selection criteria, and no documented SLA; community PRs against the repo are
+not currently a known path (no external plugin PRs merged as of 2026-05-06).
+
+**Status: Not started (watch-only).** Nothing to submit, nothing to chase.
+This is a "maybe someday" row, not an overdue-follow-up row. Revisit only if
+Anthropic publishes a submission flow for external plugins, OR if vardoger
+hits a scale / profile where an unsolicited curation invite is plausible.
+
+Monitoring probe for future passes:
+
+```
+curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json \
+  | grep -c '"name": "vardoger"'
+```
+
+(expect `0` indefinitely under current policy; `1` = Anthropic curated us in,
+which would be news).
 
 ### Claude Code — custom
 
@@ -431,8 +493,9 @@ description updated with the correction note. Also corrected
 (or `git rev-parse v0.3.1^{}`) instead of `git rev-parse v0.3.1`, which
 returns the annotated tag object SHA.
 
-Last checked 2026-04-25: still `OPEN` / `REVIEW_REQUIRED`, no reviewer
-comments yet.
+Last checked 2026-05-06: still `OPEN` / `REVIEW_REQUIRED`, zero reviewer
+comments across the 11 days since the last check. Submission has been
+sitting in the reviewer queue for 12 days total with no interaction.
 
 ### Cline MCP Marketplace
 
@@ -446,8 +509,8 @@ LLM-driven install flow at `plugins/cline/llms-install.md`; user-facing
 readme at `plugins/cline/README.md`.
 
 2026-04-25: edited the issue body to reference `vardoger 0.3.1` (was stale at
-0.2.1 from the 2026-04-20 submission). Last checked 2026-04-25: still `OPEN`,
-zero comments since filing.
+0.2.1 from the 2026-04-20 submission). Last checked 2026-05-06: still `OPEN`,
+zero comments across the 16 days since filing.
 
 ### OpenClaw ClawHub
 
@@ -487,29 +550,53 @@ and revisit if ClawHub adds a `--license` flag or a maintainer-appeal path.
 - **Plugin root:** `.claude-plugin/marketplace.json` (the repo-root manifest we
   added in the 2026-04-27 PR)
 
-Third-party community aggregator of Claude Code plugin marketplaces, built
-and maintained by `@mertduzgun` at
-[`mertbuilds/claudemarketplaces.com`](https://github.com/mertbuilds/claudemarketplaces.com).
+Third-party community aggregator of Claude Code plugin marketplaces. Built
+and maintained by `@noobsaire` (Marvih Ray) at
+[`noobsaire/claudemarketplaces`](https://github.com/noobsaire/claudemarketplaces).
 Explicitly "independent project, not affiliated with Anthropic."
+
+**2026-05-06 attribution correction:** the 2026-04-27 note attributed the site
+to `@mertduzgun` at `mertbuilds/claudemarketplaces.com`, but `mertbuilds/claudemarketplaces.com`
+does not exist (the GitHub user `@mertduzgun` has 0 public repositories). The
+real backing repo is `noobsaire/claudemarketplaces` (same README, same
+aggregator wording). **Issues are disabled on the real repo**, so the prior
+note's fallback escalation ("open an issue at `mertbuilds/claudemarketplaces.com`")
+is not a path that exists. The only remaining contact channel is the site's
+`/feedback` page, which requires a browser session to submit.
 
 **Registration:** none. Per the project README: *"The site automatically
 searches GitHub daily to discover repositories with
 `.claude-plugin/marketplace.json` files. All valid marketplaces are
 automatically listed — no submission required."* So the same PR that
 merged `.claude-plugin/marketplace.json` onto `main` (2026-04-27) is all
-the action we need; the aggregator's crawl will pick it up on its next
-pass.
+the action we need; the aggregator's crawl is expected to pick it up on
+its next pass.
 
-Status 2026-04-27: the manifest was merged onto `main` roughly an hour
-before this row was added. `claudemarketplaces.com/marketplace/vardoger`
-currently returns 404 and the landing page has no vardoger hits, which is
-expected pre-crawl. Next check ~2026-04-29 — if the listing has appeared,
-flip this row to **Live** and fill in the "Live on" date.
+**Status 2026-05-06 (9 days after manifest landed):** still not indexed.
+Probed the aggregator's public catalog endpoint
+`https://claudemarketplaces.com/api/marketplaces` — it returns 2,566
+marketplace entries, 0 of which mention vardoger. So this is a definitive
+"not indexed" rather than a UI-only gap. The per-URL probe
+`curl -sI https://claudemarketplaces.com/marketplace/vardoger | head -1`
+still returns `HTTP/2 404`.
 
-No further maintenance expected beyond keeping the repo-root
-`marketplace.json` valid. If the aggregator ever fails to crawl us after
-more than a few days, the maintainer's contact paths are the `/feedback`
-page on the site and issues on the backing GitHub repo.
+**Next action (owner-only):** after 9 days without a crawl hit, it's
+reasonable to assume the aggregator's discovery is either slower than the
+README's "daily" claim or failing silently on our manifest. Since the repo
+has issues disabled, the only way to flag this to the maintainer is the
+site's `/feedback` form. Draft the following into the form from a browser:
+
+> Hi — I noticed
+> `https://github.com/dstrupl/vardoger` has had a
+> `.claude-plugin/marketplace.json` on `main` since 2026-04-27 but is not
+> yet listed in the aggregator (checked via `/api/marketplaces`, 0 hits
+> across 2,566 entries as of 2026-05-06). Is there anything I should
+> adjust on our side to help the crawl pick it up? The manifest validates
+> against the schema used by the entries already in your catalog (same
+> fields as Anthropic's own official manifest). Thanks!
+
+This is the only available escalation path — Claude cannot submit the form
+on behalf of the project owner.
 
 ## How to update this table
 
@@ -561,50 +648,48 @@ Priority-ordered actions for the next agent/owner session. Each item links to
 its entry under [Per-marketplace details](#per-marketplace-details) for the
 full submission history and audit context.
 
-### 1. Poll reviewer queues (re-verify before other work)
+### 1. Owner-only actions (require browser / account access)
 
-- **[Cursor Plugin Registry](#cursor-plugin-registry)** — no public review
-  API and no my-submissions list on the publisher dashboard (it's a
-  submit-only form, verified 2026-04-28). Use these public probes
-  instead: `curl -sI https://cursor.com/marketplace/vardoger | head -1`
-  (expect `HTTP/2 200` once listed; was `404` on 2026-04-28); and
-  `gh api repos/cursor/plugins/contents/vardoger?ref=main` (expect a
-  directory listing once merged into the official catalog; was `404` on
-  2026-04-28). If both still return absent on 2026-05-04 (~two weeks
-  after the original submit), re-fill the form from a fresh session as
-  defense-in-depth against a silently-failed original submission. Do
-  *not* open a PR at `github.com/cursor/plugins` as a parallel path —
-  that repo's 15 open community plugin PRs (oldest `#27` from
-  2026-02-23) all sit at `reviewDecision: -` with no triage.
+These two have hit their escalation windows but cannot be executed from a
+Claude session — they need the project owner in a browser.
+
+- **[Cursor Plugin Registry re-submission](#cursor-plugin-registry)** —
+  original submit 2026-04-20, defense-in-depth window opened 2026-05-04,
+  public probes still `404` on 2026-05-06. Next time you're logged into
+  `cursor.com`, re-fill the form at `cursor.com/marketplace/publish` to
+  guard against a silently-failed original submit.
+- **[claudemarketplaces.com feedback form](#claudemarketplacescom)** —
+  our `.claude-plugin/marketplace.json` landed 2026-04-27, aggregator
+  still reports 0/2,566 hits for vardoger on 2026-05-06 (via
+  `/api/marketplaces`). Backing repo (`noobsaire/claudemarketplaces`) has
+  issues disabled, so the only channel left is the site's `/feedback`
+  page. Draft text is in the row's body.
+
+### 2. Poll reviewer queues (re-verify before other work)
+
 - **[Cline MCP Marketplace issue #1394](#cline-mcp-marketplace)** —
   `gh issue view 1394 --repo cline/mcp-marketplace --json state,comments`.
-  Last checked 2026-04-25: still `OPEN`, zero comments since filing.
+  Last checked 2026-05-06: still `OPEN`, zero comments across 16 days.
 - **[Docker MCP Registry PR #2949](#docker-mcp-registry)** —
   `gh pr view 2949 --repo docker/mcp-registry --json state,reviewDecision,comments`.
-  Last checked 2026-04-25: still `OPEN` / `REVIEW_REQUIRED`, no reviewer
-  comments yet. Note: on 2026-04-25 we pushed
-  [`ca30a5d`](https://github.com/dstrupl/mcp-registry/commit/ca30a5d)
-  correcting `source.commit` from the annotated tag object SHA
-  (`1090cf27…`) to the peeled commit SHA (`98c9006f…`); next poll should
-  confirm `go run ./cmd/validate --name vardoger` still passes against the
-  updated branch before a reviewer looks at it.
-- **[Claude Code — official directory](#claude-code--official-directory)** —
-  re-added to this list on 2026-04-27 after reverting the premature flip to
-  **Live**. Check whether vardoger has been merged into
-  `anthropics/claude-plugins-official/external_plugins/`: `curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | grep -c '"name": "vardoger"'`
-  (expect `0` today, `1` once merged). First follow-up scheduled for
-  2026-05-02 — if still absent by then, open an issue at
-  [anthropics/claude-code#issues](https://github.com/anthropics/claude-code/issues)
-  or a direct PR against `anthropics/claude-plugins-official` if that repo
-  accepts community PRs for new external plugins.
-- **[claudemarketplaces.com](#claudemarketplacescom)** — third-party
-  aggregator; no submission, just wait for the daily GitHub crawl to
-  discover our `.claude-plugin/marketplace.json`. Check: `curl -sI https://claudemarketplaces.com/marketplace/vardoger | head -1`
-  should return `HTTP/2 200` once listed (was `404` on 2026-04-27). First
-  follow-up scheduled for 2026-04-29 — if listed, flip the row to **Live**
-  and fill in "Live on"; if still 404 after ~a week, open an issue at
-  [mertbuilds/claudemarketplaces.com](https://github.com/mertbuilds/claudemarketplaces.com)
-  or use the site's `/feedback` page.
+  Last checked 2026-05-06: still `OPEN` / `REVIEW_REQUIRED`, zero reviewer
+  comments across 11 days since the last check. Recall: 2026-04-25 we
+  pushed [`ca30a5d`](https://github.com/dstrupl/mcp-registry/commit/ca30a5d)
+  correcting `source.commit` to the peeled commit SHA
+  (`98c9006f…` was `1090cf27…`); next poll should confirm
+  `go run ./cmd/validate --name vardoger` still passes against the updated
+  branch before a reviewer looks at it.
+- **[Claude Code — curated directory](#claude-code--curated-directory)** —
+  watch-only row. Probe:
+  `curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | grep -c '"name": "vardoger"'`
+  (expect `0` indefinitely; `1` would mean Anthropic curated us in
+  unsolicited). No action required unless this flips.
+
+2026-05-06: Claude Code community catalog row flipped to **Live** after
+discovering the 2026-04-27 downgrade was polling the wrong Anthropic
+repo — vardoger has been in `anthropics/claude-plugins-community` since
+the [`4749e7a`](https://github.com/anthropics/claude-plugins-community/commit/4749e7a)
+sync on 2026-04-28. Dropped from this list.
 
 McpMux PR #113 dropped off on 2026-04-24 — merged as
 [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe);
@@ -618,7 +703,7 @@ merge notes to the corresponding
 [per-marketplace subsection](#per-marketplace-details), and bump "Last
 refreshed" at the top of this file in the same commit.
 
-### 2. Not actionable today — revisit only on upstream change
+### 3. Not actionable today — revisit only on upstream change
 
 - **Windsurf MCP Store** — re-verified 2026-04-22; still curated, no public
   submission endpoint. Revisit only if Windsurf announces a self-serve flow
