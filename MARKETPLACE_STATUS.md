@@ -15,7 +15,100 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-05-06** (UTC).
+Last refreshed: **2026-05-15** (UTC).
+
+2026-05-15: Polled every open / watch-only row plus the recently-Live Claude
+Code community-catalog row. **One material regression**, three rows
+unchanged at zero-activity, two rows still absent from public surfaces.
+
+1. **Claude Code — community catalog: vardoger was removed from the upstream
+   mirror in a 2026-05-13 bulk sync.** The probe
+   `curl -sL …/anthropics/claude-plugins-community/main/.claude-plugin/marketplace.json`
+   now returns 1,715 plugins (was 1,920 on 2026-05-06) and zero entries
+   matching `vardoger` or `dstrupl`. Tracing the diff backwards: at commit
+   [`7a773c6`](https://github.com/anthropics/claude-plugins-community/commit/7a773c6)
+   (2026-05-01, *"sync: 1920 plugins (+0)"*) our entry was still present —
+   `{"name": "vardoger", "source": {"source": "url", "url": "https://github.com/dstrupl/vardoger.git", "sha": "da14439…"}, "homepage": "…/plugins/claude-code"}` — and at
+   [`2ec490e`](https://github.com/anthropics/claude-plugins-community/commit/2ec490e)
+   (2026-05-13, [PR #28](https://github.com/anthropics/claude-plugins-community/pull/28),
+   *"Bulk sync: 666 plugin entries (453 updated, 4 added, 209 cleaned up)"*)
+   it was gone. PR #28's body breaks the 666 down as "453 existing entries
+   updated, 4 new entries added, 209 entries removed (clean-up), 1149
+   entries already in sync (no change)" — so we were one of the 209
+   cleaned-up entries. The PR body provides no per-entry rationale and the
+   diff is a single 561-add / 2647-delete edit to `marketplace.json` with no
+   commit message detail. **Why this happened, best guess:** between 2026-05-01
+   and 2026-05-13 Anthropic landed
+   [PR #19](https://github.com/anthropics/claude-plugins-community/pull/19)
+   (Tobin South, *"Add bump-plugin-shas + scan-plugins actions; fixtures;
+   I10/I11"*) which added two new automated actions and two new invariants
+   (I10 hidden-Unicode, I11 name-format `^[a-z0-9][a-z0-9-]{1,63}$`) plus a
+   Claude-policy-driven `scan-plugins` action that can hard-block entries
+   on policy findings. Ran the full I1–I11 invariant suite mentally against
+   our entry: name `vardoger` matches I11; description has no zero-width or
+   bidi controls; `https://` URL on the `github.com` allowlist; SHA is a
+   well-formed 40-char hex; description well above the 10-char floor. Plugin
+   manifest at SHA `da14439` is structurally identical to current `main`
+   (only `version: "0.3.0" → "0.3.1"` differs, both with `name`, `author`,
+   `license: Apache-2.0`, `keywords`, `skills`, `hooks` — the schema vocabulary
+   the official catalog uses). So the I1–I11 invariants are not the proximate
+   cause. That leaves either (a) the new `scan-plugins` Claude-policy
+   reviewer flagging something it considers risky in the analyze skill (the
+   same skill ClawHub flagged `suspicious` in the 2026-04-25 audit for "broad
+   `$HOME` read/write" — accurate to scope but conservatively rated), or
+   (b) the bulk re-sync simply doesn't re-include entries past some staleness
+   threshold and our 2026-04-23 SHA `da14439` was 20 days old by the
+   2026-05-13 sync. **Either reason puts the recovery action squarely on the
+   project owner**: re-submit via `platform.claude.com/plugins/submit` (the
+   correct working submission form — verified by closed
+   [issue #22](https://github.com/anthropics/claude-plugins-community/issues/22),
+   2026-05-05, which documents that the README's `clau.de/plugin-directory-submission`
+   URL is a NXDOMAIN dead link). Direct PRs against the mirror are
+   auto-closed (workflow `close-external-prs.yml`), and the multiple users
+   on [issue #14](https://github.com/anthropics/claude-plugins-community/issues/14)
+   complaining about "Published" submissions never appearing in
+   `marketplace.json` show that the form-and-wait path is opaque even when
+   it works. So the row drops back from **Live** → **Removed in upstream
+   sync — re-submission required (owner-only)**, with the action added to
+   the Cursor / claudemarketplaces.com pile of "needs the owner in a
+   browser" follow-ups. The custom-marketplace row immediately below it is
+   unaffected (the `.claude-plugin/marketplace.json` we host at the repo
+   root is self-served — `/plugin marketplace add dstrupl/vardoger` →
+   `/plugin install vardoger@vardoger` still works without involving
+   Anthropic's pipeline).
+
+2. **Cline #1394, Docker #2949, Cursor public probes — all still flat.**
+   `gh issue view 1394 --repo cline/mcp-marketplace` last updated
+   **2026-04-25T17:46:20Z** (no movement in 20 days); `gh pr view 2949 --repo docker/mcp-registry`
+   last updated **2026-04-25T17:46:59Z** (also 20 days flat, still
+   `OPEN` / `REVIEW_REQUIRED`, mergeable, zero reviewer comments). Cursor
+   public-surface probes (`cursor.com/marketplace/vardoger` → 404,
+   `cursor.com/plugins/vardoger` → 308 → 404, `gh api repos/cursor/plugins/contents/vardoger` → 404)
+   all still return absent. The 2026-05-04 defense-in-depth re-submission
+   window has been open for 11 days now with no signal from the original
+   2026-04-20 form submit; the row stays in the owner-only re-submission
+   bucket alongside the new Claude Code action.
+
+3. **claudemarketplaces.com aggregator — still 0 hits across 2,566 entries.**
+   18 days after our `.claude-plugin/marketplace.json` landed on `main`
+   (2026-04-27), the aggregator's daily GitHub crawl has not picked us up
+   (nor has the catalog grown, which suggests the crawl is running but
+   filtering us out, not just stalled). Per-URL probe
+   `https://claudemarketplaces.com/marketplace/vardoger` still 404. Backing
+   repo (`noobsaire/claudemarketplaces`) has issues disabled, so the only
+   contact channel is the site's `/feedback` form — owner action, draft
+   text already prepared in the row body below.
+
+4. **All Live rows verified clean against vardoger 0.3.1.** PyPI listing
+   `0.3.1`; Official MCP Registry feed `version: 0.3.1`, `packages[0].version: 0.3.1`,
+   `status: active`, `isLatest: true`; McpMux still tracked at
+   [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe);
+   awesome-copilot still publishing the skill at
+   `raw.githubusercontent.com/github/awesome-copilot/main/skills/vardoger-analyze/SKILL.md`;
+   Claude Code, Codex, Copilot self-hosted custom marketplaces unchanged.
+   `pyproject.toml` still at `version = "0.3.1"`, `git describe`
+   `v0.3.1`, repo HEAD `1e0bc8f` (two commits past the v0.3.1 tag, both
+   doc-only). Net: no version-freshness defects this pass.
 
 2026-05-06: Audited the five overdue / routine rows. Three material findings:
 
@@ -59,7 +152,7 @@ history, surface details, and "last checked" context.
 | --- | --- | --- | --- | --- | --- |
 | [**PyPI**](#pypi) | (repo root) | Live | 2026-04-20 | 2026-04-24 | [pypi.org/project/vardoger](https://pypi.org/project/vardoger/) |
 | [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Submitted | 2026-04-20 | — | [publisher dashboard](https://cursor.com/marketplace/publish) |
-| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Live | 2026-04-20 | 2026-04-28 | [catalog entry](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
+| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Removed in upstream sync — re-submission required | 2026-04-20 (orig); 2026-05-15 (re-submit pending) | 2026-04-28 → 2026-05-13 (regressed) | [catalog entry](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
 | [**Claude Code — curated directory**](#claude-code--curated-directory) | `plugins/claude-code/` | Not started (watch-only) | — | — | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
 | [**Codex — custom**](#codex--custom) | `plugins/codex/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `codex plugin marketplace add …` |
@@ -117,12 +210,12 @@ curl -sI https://cursor.com/plugins/vardoger     | head -1     # 308 → /market
 gh api repos/cursor/plugins/contents/vardoger?ref=main          # expect 404 today (vardoger absent from official catalog)
 ```
 
-Last run 2026-05-06: all three still return "absent" — vardoger is not
+Last run 2026-05-15: all three still return "absent" — vardoger is not
 yet in the public marketplace and not yet in the `cursor/plugins` GitHub
-catalog. Submitted 2026-04-20; the defense-in-depth re-submission window
-opened 2026-05-04 (two weeks after the original submit), so this row is
-now in the "re-fill the form from a fresh session" escalation bucket —
-see the Re-submission fallback paragraph below.
+catalog. Submitted 2026-04-20 (25 days ago); the defense-in-depth
+re-submission window opened 2026-05-04 (now 11 days open), so this row is
+in the "re-fill the form from a fresh session" escalation bucket — see
+the Re-submission fallback paragraph below.
 
 **Why not also open a PR against `github.com/cursor/plugins`?** That repo
 is Cursor's official plugin spec + curated-catalog source (schema at
@@ -138,9 +231,9 @@ labels, no triage. Recent merges are exclusively from `maloneya` and
 sit even longer than the form does — strictly worse parallel path, not
 worth opening.
 
-**Re-submission fallback (now active, owner-only):** the window opened
-2026-05-04 and the probes above still return 404 as of 2026-05-06. Next
-time the owner is logged into `cursor.com` in a browser, re-fill the
+**Re-submission fallback (active for 11+ days, owner-only):** the window
+opened 2026-05-04 and the probes above still return 404 as of 2026-05-15.
+Next time the owner is logged into `cursor.com` in a browser, re-fill the
 form at `cursor.com/marketplace/publish` as defense-in-depth against a
 silently-failed original submit. Claude cannot submit the form (it's
 behind Cursor's auth). If the form asks for a changelog reason,
@@ -160,12 +253,56 @@ selected: Claude Code only (Cowork excluded — no `cowork` adapter and audience
 is non-developer). The claude.ai plugin-submissions dashboard flipped to
 **Published** on 2026-04-25.
 
-**Live since 2026-04-28.** Submission landed in the community catalog mirror
-that Claude Code clients actually read — [`anthropics/claude-plugins-community/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-community/main/.claude-plugin/marketplace.json) —
-in [sync `4749e7a`](https://github.com/anthropics/claude-plugins-community/commit/4749e7a)
-(*"sync: 1921 plugins (+285)"*). The tracked entry is
+**Status 2026-05-15: REMOVED in upstream bulk sync — re-submission
+required (owner-only).** Vardoger was Live in the mirror from
+[sync `4749e7a`](https://github.com/anthropics/claude-plugins-community/commit/4749e7a)
+(2026-04-28, *"sync: 1921 plugins (+285)"*) through
+[`7a773c6`](https://github.com/anthropics/claude-plugins-community/commit/7a773c6)
+(2026-05-01, *"sync: 1920 plugins (+0)"* — last confirmed-present sync) with
+the entry
 `{"name": "vardoger", "source": {"source": "url", "url": "https://github.com/dstrupl/vardoger.git", "sha": "da14439fd5862bdb9bef1b77f552892844ca8839"}, "homepage": "https://github.com/dstrupl/vardoger/tree/main/plugins/claude-code"}`.
-Verification:
+At [`2ec490e`](https://github.com/anthropics/claude-plugins-community/commit/2ec490e)
+(2026-05-13, [PR #28](https://github.com/anthropics/claude-plugins-community/pull/28),
+*"Bulk sync: 666 plugin entries (453 updated, 4 added, 209 cleaned up)"*)
+the entry was removed along with 208 others. The PR body provides no
+per-entry rationale. The plugin manifest at our pinned SHA is structurally
+identical to what's on `main` today (`name`, `author`, `license: Apache-2.0`,
+`keywords`, `skills`, `hooks`) and clears every public I1–I11 invariant in
+the mirror's `validate-plugins/test-invariants.sh` suite, so the cull
+appears to be either (a) the new `scan-plugins` Claude-policy reviewer
+flagging the analyze skill as suspicious for "broad `$HOME` read/write"
+(matching ClawHub's earlier `suspicious` verdict — accurate to scope, not a
+defect we can fix without removing core functionality), or (b) a staleness
+cutoff applied during the catch-up sync (our SHA `da14439` was 20 days old
+by 2026-05-13). No way to disambiguate from the public record.
+
+**Recovery path (owner-only):** re-submit through the form at
+[`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit).
+This is the correct working URL; the README's
+`clau.de/plugin-directory-submission` is a NXDOMAIN dead link
+(documented in [`anthropics/claude-plugins-community#22`](https://github.com/anthropics/claude-plugins-community/issues/22),
+closed 2026-05-05, with maintainer-confirmed `platform.claude.com/plugins/submit`
+as the working alternative). Direct PRs against the mirror are
+auto-closed by the `close-external-prs.yml` workflow, and several users on
+[issue #14](https://github.com/anthropics/claude-plugins-community/issues/14)
+report that even "Published"-badged submissions do not always make it into
+later syncs (no Anthropic response on that thread since 2026-04-23), so
+this is not a one-shot guaranteed-success path. Re-submit, observe the next
+nightly sync (~24h), and revisit.
+
+**Empty-result probe** (run before / after re-submission):
+
+```
+curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-community/main/.claude-plugin/marketplace.json \
+  | python3 -c 'import json,sys; d=json.load(sys.stdin); print(len([p for p in d["plugins"] if p["name"]=="vardoger"]))'
+```
+
+Expected `0` until re-submission lands; expected `1` once a sync re-includes
+us. The mirror was at 1,715 plugins on 2026-05-15 (down from 1,920 on
+2026-05-06) — the next bulk sync after re-submit is likely to be the
+re-add signal, not a per-row delta.
+
+**Original verification recipe** (still useful for ad-hoc lookups):
 
 ```
 curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-community/main/.claude-plugin/marketplace.json \
@@ -177,27 +314,24 @@ alone → 2026-04-27 reverted to **Submitted** after checking
 [`anthropics/claude-plugins-official/.claude-plugin/marketplace.json`](https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json)
 and finding vardoger absent from its `external_plugins/` section → 2026-05-06
 re-flipped to **Live** after realising the 2026-04-27 check was against the
-wrong repo. `anthropics/claude-plugins-official` is a curated tier-2 directory
-(*"Official, Anthropic-managed directory of high quality Claude Code Plugins"*),
-not the discovery catalog clients read; the community mirror above is. The
-tier-2 directory is tracked as a separate row below.
+wrong repo (`claude-plugins-official` is a curated tier-2 directory, not the
+discovery catalog clients read; the community mirror above is) → 2026-05-15
+flipped to **Removed in upstream sync — re-submission required** after the
+2026-05-13 bulk sync (PR #28) cleaned up 209 entries including ours.
 
-**Sync freshness caveat:** the mirror pins source-url entries to a specific
-SHA at ingest time and does not re-bump existing entries during later syncs.
-Our entry is pinned at `da14439` (2026-04-23), so the `v0.3.1` tree is NOT
-what users installing via Claude Code's `/plugin` Discover tab get today; they
-get the tree as it stood on 2026-04-23, which is v0.3.0-ish. This is a known
-Anthropic-side limitation, not a vardoger bug:
+**Side note: the original "sync freshness" concern is now moot for our row.**
+Until the 2026-05-13 cull, the more pressing issue with the mirror was that
+it pins source-url entries to the SHA they were submitted at and does not
+re-bump existing entries during later syncs — see
 [`anthropics/claude-code#45153`](https://github.com/anthropics/claude-code/issues/45153)
-documents the same behavior for `ido4shape` and the 2026-04-25 follow-up
-comment by `b-coman` asks the Anthropic team to add an "update existing
-submission" flow to the dashboard. Until that lands, `pipx install vardoger`
-and the self-hosted custom marketplace row below remain the paths that track
-the latest release.
-
-Next-release checklist: when upstream ships a dashboard update path, resubmit
-via the form (or whatever replaces it) to refresh the pinned SHA. Until then,
-no row maintenance required.
+(2026-04-25 comment by `b-coman` documenting the same lag for `ido4shape` and
+asking for an "update existing submission" dashboard flow). For vardoger,
+our pinned SHA was `da14439` (2026-04-23) — the `v0.3.1` tree was not what
+`/plugin` Discover-tab installs got. That's a non-issue now that we're not
+in the catalog at all; `pipx install vardoger` and the self-hosted custom
+marketplace row below remain the paths that track the latest release. Once
+re-submitted, the lag concern returns and we should plan to re-submit on
+each major release until Anthropic ships the dashboard update flow.
 
 ### Claude Code — curated directory
 
@@ -206,13 +340,15 @@ no row maintenance required.
 
 Anthropic's second, curated tier of the Claude Code plugin ecosystem. Repo
 description: *"Official, Anthropic-managed directory of high quality Claude
-Code Plugins."* As of 2026-05-06 the manifest lists 160 plugins with 15 in
-the `external_plugins/` section (asana, context7, discord, fakechat, firebase,
-github, gitlab, greptile, imessage, laravel-boost, linear, playwright, serena,
-telegram, terraform) — all authored by major third-party vendors Anthropic has
-chosen to highlight. There is no submission form, no publicly documented
-selection criteria, and no documented SLA; community PRs against the repo are
-not currently a known path (no external plugin PRs merged as of 2026-05-06).
+Code Plugins."* As of 2026-05-15 the manifest lists 172 plugins (up from
+160 on 2026-05-06 — Anthropic continues to add curated entries at roughly
+1–2/day). The `external_plugins/` section still hosts the same major
+third-party vendors (asana, context7, discord, fakechat, firebase, github,
+gitlab, greptile, imessage, laravel-boost, linear, playwright, serena,
+telegram, terraform). There is still no submission form, no publicly
+documented selection criteria, and no documented SLA; community PRs against
+the repo are not a known path (no external plugin PRs merged as of
+2026-05-15).
 
 **Status: Not started (watch-only).** Nothing to submit, nothing to chase.
 This is a "maybe someday" row, not an overdue-follow-up row. Revisit only if
@@ -493,9 +629,9 @@ description updated with the correction note. Also corrected
 (or `git rev-parse v0.3.1^{}`) instead of `git rev-parse v0.3.1`, which
 returns the annotated tag object SHA.
 
-Last checked 2026-05-06: still `OPEN` / `REVIEW_REQUIRED`, zero reviewer
-comments across the 11 days since the last check. Submission has been
-sitting in the reviewer queue for 12 days total with no interaction.
+Last checked 2026-05-15: still `OPEN` / `REVIEW_REQUIRED`, mergeable, zero
+reviewer comments. PR last updated **2026-04-25T17:46:59Z** — 20 days flat
+in the reviewer queue with no interaction at all.
 
 ### Cline MCP Marketplace
 
@@ -509,8 +645,9 @@ LLM-driven install flow at `plugins/cline/llms-install.md`; user-facing
 readme at `plugins/cline/README.md`.
 
 2026-04-25: edited the issue body to reference `vardoger 0.3.1` (was stale at
-0.2.1 from the 2026-04-20 submission). Last checked 2026-05-06: still `OPEN`,
-zero comments across the 16 days since filing.
+0.2.1 from the 2026-04-20 submission). Last checked 2026-05-15: still `OPEN`,
+zero comments. Issue last updated **2026-04-25T17:46:20Z** — 20 days of
+silence across both rows that share the same submitter / similar audience.
 
 ### OpenClaw ClawHub
 
@@ -572,15 +709,17 @@ merged `.claude-plugin/marketplace.json` onto `main` (2026-04-27) is all
 the action we need; the aggregator's crawl is expected to pick it up on
 its next pass.
 
-**Status 2026-05-06 (9 days after manifest landed):** still not indexed.
-Probed the aggregator's public catalog endpoint
-`https://claudemarketplaces.com/api/marketplaces` — it returns 2,566
-marketplace entries, 0 of which mention vardoger. So this is a definitive
-"not indexed" rather than a UI-only gap. The per-URL probe
+**Status 2026-05-15 (18 days after manifest landed):** still not indexed.
+Re-probed the aggregator's public catalog endpoint
+`https://claudemarketplaces.com/api/marketplaces` — still returns 2,566
+marketplace entries (no growth from 2026-05-06; the crawler is either
+running but filtering us out, or batch-updating the catalog at lower
+frequency than the README's "daily" claim), 0 of which mention vardoger or
+dstrupl. The per-URL probe
 `curl -sI https://claudemarketplaces.com/marketplace/vardoger | head -1`
 still returns `HTTP/2 404`.
 
-**Next action (owner-only):** after 9 days without a crawl hit, it's
+**Next action (owner-only):** after 18 days without a crawl hit, it's
 reasonable to assume the aggregator's discovery is either slower than the
 README's "daily" claim or failing silently on our manifest. Since the repo
 has issues disabled, the only way to flag this to the maintainer is the
@@ -590,10 +729,12 @@ site's `/feedback` form. Draft the following into the form from a browser:
 > `https://github.com/dstrupl/vardoger` has had a
 > `.claude-plugin/marketplace.json` on `main` since 2026-04-27 but is not
 > yet listed in the aggregator (checked via `/api/marketplaces`, 0 hits
-> across 2,566 entries as of 2026-05-06). Is there anything I should
-> adjust on our side to help the crawl pick it up? The manifest validates
-> against the schema used by the entries already in your catalog (same
-> fields as Anthropic's own official manifest). Thanks!
+> across 2,566 entries as of 2026-05-15 — that catalog count has been flat
+> for at least 9 days, which suggests the crawl is either filtering us out
+> or running at lower frequency than the README's "daily" claim). Is there
+> anything I should adjust on our side to help the crawl pick it up? The
+> manifest validates against the schema used by the entries already in
+> your catalog (same fields as Anthropic's own official manifest). Thanks!
 
 This is the only available escalation path — Claude cannot submit the form
 on behalf of the project owner.
@@ -650,31 +791,53 @@ full submission history and audit context.
 
 ### 1. Owner-only actions (require browser / account access)
 
-These two have hit their escalation windows but cannot be executed from a
+These three have hit their escalation windows but cannot be executed from a
 Claude session — they need the project owner in a browser.
 
+- **[Claude Code — community catalog re-submission](#claude-code--community-catalog)**
+  *(NEW 2026-05-15)* — vardoger was Live in the mirror from 2026-04-28 to
+  ~2026-05-01 and was removed in the
+  [2026-05-13 bulk sync (PR #28)](https://github.com/anthropics/claude-plugins-community/pull/28)
+  that cleaned up 209 entries with no per-row rationale published. Re-submit
+  via the form at
+  [`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit)
+  (the README's `clau.de/plugin-directory-submission` URL is NXDOMAIN —
+  confirmed in [issue #22](https://github.com/anthropics/claude-plugins-community/issues/22)
+  closed 2026-05-05). After re-submit, observe the next sync (~24h) with the
+  one-liner in the row's "Empty-result probe" section above; expect either
+  re-add or another silent drop. Do not open a PR against the mirror — it
+  will be auto-closed by `close-external-prs.yml`.
 - **[Cursor Plugin Registry re-submission](#cursor-plugin-registry)** —
-  original submit 2026-04-20, defense-in-depth window opened 2026-05-04,
-  public probes still `404` on 2026-05-06. Next time you're logged into
-  `cursor.com`, re-fill the form at `cursor.com/marketplace/publish` to
-  guard against a silently-failed original submit.
+  original submit 2026-04-20, defense-in-depth window opened 2026-05-04
+  and has been open for 11 days now; public probes still `404` on
+  2026-05-15. Next time you're logged into `cursor.com`, re-fill the form
+  at `cursor.com/marketplace/publish` to guard against a silently-failed
+  original submit.
 - **[claudemarketplaces.com feedback form](#claudemarketplacescom)** —
-  our `.claude-plugin/marketplace.json` landed 2026-04-27, aggregator
-  still reports 0/2,566 hits for vardoger on 2026-05-06 (via
-  `/api/marketplaces`). Backing repo (`noobsaire/claudemarketplaces`) has
-  issues disabled, so the only channel left is the site's `/feedback`
-  page. Draft text is in the row's body.
+  our `.claude-plugin/marketplace.json` landed 2026-04-27 (18 days ago),
+  aggregator still reports 0/2,566 hits for vardoger on 2026-05-15 (via
+  `/api/marketplaces`; catalog count flat across at least 9 days). Backing
+  repo (`noobsaire/claudemarketplaces`) has issues disabled, so the only
+  channel left is the site's `/feedback` page. Updated draft text is in the
+  row's body.
 
 ### 2. Poll reviewer queues (re-verify before other work)
 
+Both reviewer queues below have now been silent for **20 days flat** since
+the 2026-04-25 cleanup pass. Worth keeping the polls cheap and infrequent
+until either responds; consider escalation only if either crosses 30 days
+without movement.
+
 - **[Cline MCP Marketplace issue #1394](#cline-mcp-marketplace)** —
-  `gh issue view 1394 --repo cline/mcp-marketplace --json state,comments`.
-  Last checked 2026-05-06: still `OPEN`, zero comments across 16 days.
+  `gh issue view 1394 --repo cline/mcp-marketplace --json state,comments,updatedAt`.
+  Last checked 2026-05-15: still `OPEN`, zero comments, last update
+  2026-04-25T17:46:20Z (20 days quiet).
 - **[Docker MCP Registry PR #2949](#docker-mcp-registry)** —
-  `gh pr view 2949 --repo docker/mcp-registry --json state,reviewDecision,comments`.
-  Last checked 2026-05-06: still `OPEN` / `REVIEW_REQUIRED`, zero reviewer
-  comments across 11 days since the last check. Recall: 2026-04-25 we
-  pushed [`ca30a5d`](https://github.com/dstrupl/mcp-registry/commit/ca30a5d)
+  `gh pr view 2949 --repo docker/mcp-registry --json state,reviewDecision,comments,updatedAt,mergeable`.
+  Last checked 2026-05-15: still `OPEN` / `REVIEW_REQUIRED`, mergeable, zero
+  reviewer comments, last update 2026-04-25T17:46:59Z (20 days quiet).
+  Recall: 2026-04-25 we pushed
+  [`ca30a5d`](https://github.com/dstrupl/mcp-registry/commit/ca30a5d)
   correcting `source.commit` to the peeled commit SHA
   (`98c9006f…` was `1090cf27…`); next poll should confirm
   `go run ./cmd/validate --name vardoger` still passes against the updated
@@ -683,13 +846,16 @@ Claude session — they need the project owner in a browser.
   watch-only row. Probe:
   `curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | grep -c '"name": "vardoger"'`
   (expect `0` indefinitely; `1` would mean Anthropic curated us in
-  unsolicited). No action required unless this flips.
+  unsolicited). The catalog has grown from 160 → 172 entries between
+  2026-05-06 and 2026-05-15 (Anthropic continues to add curated plugins),
+  but no community-submitted entries among the new arrivals. No action
+  required unless this flips.
 
-2026-05-06: Claude Code community catalog row flipped to **Live** after
-discovering the 2026-04-27 downgrade was polling the wrong Anthropic
-repo — vardoger has been in `anthropics/claude-plugins-community` since
-the [`4749e7a`](https://github.com/anthropics/claude-plugins-community/commit/4749e7a)
-sync on 2026-04-28. Dropped from this list.
+2026-05-15: Claude Code community catalog row regressed from **Live** to
+**Removed in upstream sync** after the 2026-05-13 bulk sync cleaned up our
+entry. Added to the owner-only list above as the highest-priority item
+(returning a Live row to Live is more valuable than chasing a never-Live
+row).
 
 McpMux PR #113 dropped off on 2026-04-24 — merged as
 [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe);
