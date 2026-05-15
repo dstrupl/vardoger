@@ -115,17 +115,62 @@ unchanged at zero-activity, two rows still absent from public surfaces.
    `/plugin install vardoger@vardoger` still works without involving
    Anthropic's pipeline).
 
-2. **Cline #1394, Docker #2949, Cursor public probes — all still flat.**
-   `gh issue view 1394 --repo cline/mcp-marketplace` last updated
-   **2026-04-25T17:46:20Z** (no movement in 20 days); `gh pr view 2949 --repo docker/mcp-registry`
-   last updated **2026-04-25T17:46:59Z** (also 20 days flat, still
-   `OPEN` / `REVIEW_REQUIRED`, mergeable, zero reviewer comments). Cursor
-   public-surface probes (`cursor.com/marketplace/vardoger` → 404,
-   `cursor.com/plugins/vardoger` → 308 → 404, `gh api repos/cursor/plugins/contents/vardoger` → 404)
-   all still return absent. The 2026-05-04 defense-in-depth re-submission
-   window has been open for 11 days now with no signal from the original
-   2026-04-20 form submit; the row stays in the owner-only re-submission
-   bucket alongside the new Claude Code action.
+2. **Cline #1394 and Docker #2949 — both rows look "submitted, awaiting
+   review" on paper but the underlying queues are effectively
+   unprocessed.** Two new pieces of evidence push these rows from "polite
+   wait" to "practically blocked indefinitely":
+
+   - **Cline marketplace**:
+     [`search/issues?q=repo:cline/mcp-marketplace+is:issue+is:open`](https://api.github.com/search/issues?q=repo:cline/mcp-marketplace+is:issue+is:open)
+     reports **1,377 open issues** total, of which **1,230 are older than
+     our #1394 (created 2026-04-20)**. The recent surface-level activity
+     (~20 issues batch-closed on 2026-05-03 as `COMPLETED`) is misleading:
+     all 20 in that batch were closed within a ~30-second window
+     (`closedAt` 2026-05-03T09:47:16Z–09:47:53Z) which reads as a manual
+     mass-close of duplicates / withdrawn entries, not steady reviewer
+     triage. Comment on one (#1471, "Workflow Connector MCP") confirms
+     it: the submitter posted *"项目已转为私有商用"* (project transferred
+     to private commercial use, no longer publicly distributed) so the
+     close was a self-withdrawal. The newer issues that got closed in
+     that batch were 3–9 days old at close time; ours is 25 days old and
+     has been skipped over entirely. Net: ours is buried in a long-tail
+     queue that hasn't seen genuine triage activity reach it. Pinging
+     would not move it; the marketplace process is functionally broken
+     for plugins that aren't in the latest few weeks of submissions.
+
+   - **Docker MCP Registry**: [`gh pr list --repo docker/mcp-registry --state merged --limit 200`](https://github.com/docker/mcp-registry/pulls?state=closed)
+     shows **199 of the last 200 merged PRs** are automated `chore:
+     update pin for X` bot commits (12 of them merged today alone). The
+     **single** non-chore PR in the last 200 merges was
+     [PR #3341](https://github.com/docker/mcp-registry/pull/3341)
+     (*"Fix astro-docs tools json and add validation"*, merged 2026-05-11
+     — a bug fix to an existing entry, not a new server add). Open backlog
+     of non-chore PRs is **185**, of which **150 are older than our
+     #2949** (some dating back to 2026-02-12, ~3 months ago). So Docker's
+     review pipeline currently merges new server submissions at a rate of
+     ~zero per 200 merges; the registry is functionally an
+     auto-bumped-pins pipeline with new submissions accumulating in a
+     reviewer queue that does not appear to drain. Same conclusion as
+     Cline: pinging is counterproductive.
+
+   - **Cursor public probes**: `cursor.com/marketplace/vardoger` → 404,
+     `cursor.com/plugins/vardoger` → 308 → 404,
+     `gh api repos/cursor/plugins/contents/vardoger` → 404 all still
+     return absent on 2026-05-15. The 2026-05-04 defense-in-depth
+     re-submission window has been open for 11 days with no signal from
+     the original 2026-04-20 form submit; the row stays in the
+     owner-only re-submission bucket alongside the new Claude Code
+     action.
+
+   **Operational implication for the next session:** demote both Cline
+   and Docker from "poll reviewer queues" to "long-tail / indefinite —
+   re-check at 60 days, not 30". Time spent pinging or polling either is
+   strictly wasted. If we want to expand actual reach in the meantime,
+   the productive directions are (a) getting the Claude Code community
+   catalog re-submitted (owner-only), (b) any new marketplace surface
+   that appears in the ecosystem, or (c) accepting that the custom-marketplace
+   / `pipx install` paths are the realistic distribution mechanism for
+   2026.
 
 3. **claudemarketplaces.com aggregator — still 0 hits across 2,566 entries.**
    18 days after our `.claude-plugin/marketplace.json` landed on `main`
@@ -694,6 +739,25 @@ So the submission has not bit-rotted in the 20 days since `ca30a5d`; if
 a reviewer ever picks it up, it will still validate clean against the
 registry's current rules.
 
+**Reviewer-queue reality (2026-05-15 audit):** Docker MCP Registry is
+currently merging at a rate of ~zero new server submissions per 200
+merges. **199 of the last 200 merged PRs were automated `chore: update
+pin for X` bot commits** (12 merged today alone — the bot is keeping
+existing entries fresh). The single non-chore merge in that window was
+[PR #3341](https://github.com/docker/mcp-registry/pull/3341) ("Fix
+astro-docs tools json and add validation" merged 2026-05-11, a bug fix
+on an existing entry). Open backlog of non-chore PRs is **185**, of
+which **150 are older than our #2949** — some dating back to
+2026-02-12 (3+ months ago). This isn't a "wait your turn" backlog; the
+pipeline that would merge new server adds is not currently draining.
+Same conclusion as Cline: pinging is counterproductive. Recommend
+deprioritizing this row to "re-check at 60 days, not 30", and letting
+the Official MCP Registry surface (already Live) carry the
+Docker-Desktop-MCP-Toolkit user surface in the meantime — the Toolkit
+ingests the modelcontextprotocol.io feed in addition to its own catalog,
+so vardoger is reachable from Docker Desktop today via that path even
+without #2949 merging.
+
 ### Cline MCP Marketplace
 
 - **Surface:** [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394)
@@ -708,7 +772,23 @@ readme at `plugins/cline/README.md`.
 2026-04-25: edited the issue body to reference `vardoger 0.3.1` (was stale at
 0.2.1 from the 2026-04-20 submission). Last checked 2026-05-15: still `OPEN`,
 zero comments. Issue last updated **2026-04-25T17:46:20Z** — 20 days of
-silence across both rows that share the same submitter / similar audience.
+silence.
+
+**Reviewer-queue reality (2026-05-15 audit):** Cline marketplace currently
+has **1,377 open issues**, of which **1,230 are older than our #1394**.
+Surface-level activity is misleading: the most recent visible "triage" was
+a batch close of ~20 issues on 2026-05-03 within a 30-second window, which
+inspecting the comments turns out to be self-withdrawals
+(e.g. [`#1471`](https://github.com/cline/mcp-marketplace/issues/1471):
+*"项目已转为私有商用"* — submitter pulled out) rather than steady
+reviewer triage. Newer issues (3–9 days old at close) are getting
+processed before our 25-day-old one is even reached. Conclusion: the
+review pipeline is effectively broken for anything outside the latest few
+weeks of submissions; pinging won't help, and re-filing under a different
+title would just add to the duplicate backlog. Recommend deprioritizing
+this row to "re-check at 60 days, not 30". The Cline marketplace path
+remains a real-but-blocked Phase 4 deliverable; users can still install
+vardoger by following the `llms-install.md` guidance manually.
 
 ### OpenClaw ClawHub
 
@@ -882,27 +962,28 @@ Claude session — they need the project owner in a browser.
   channel left is the site's `/feedback` page. Updated draft text is in the
   row's body.
 
-### 2. Poll reviewer queues (re-verify before other work)
+### 2. Long-tail rows — deprioritized to 60-day polling cadence
 
-Both reviewer queues below have now been silent for **20 days flat** since
-the 2026-04-25 cleanup pass. Worth keeping the polls cheap and infrequent
-until either responds; consider escalation only if either crosses 30 days
-without movement.
+The 2026-05-15 audit revealed both reviewer queues are functionally
+broken, not just slow: pinging or polling more frequently than every
+60 days is wasted effort. Both rows stay open / submitted, but bumped
+out of the "every-session check" loop.
 
 - **[Cline MCP Marketplace issue #1394](#cline-mcp-marketplace)** —
+  marketplace has 1,377 open issues, 1,230 of them older than ours.
+  Surface "triage" is misleading (the recent batch close was
+  self-withdrawals). Re-check 2026-07-14 (60d) unless something obvious
+  changes upstream. Probe:
   `gh issue view 1394 --repo cline/mcp-marketplace --json state,comments,updatedAt`.
-  Last checked 2026-05-15: still `OPEN`, zero comments, last update
-  2026-04-25T17:46:20Z (20 days quiet).
-- **[Docker MCP Registry PR #2949](#docker-mcp-registry)** —
+- **[Docker MCP Registry PR #2949](#docker-mcp-registry)** — 199 of last
+  200 merged PRs were automated bot pin updates; new submissions are
+  effectively not draining (150 non-chore PRs older than ours in
+  backlog, oldest from 2026-02-12). Re-check 2026-07-14 (60d). Probe:
   `gh pr view 2949 --repo docker/mcp-registry --json state,reviewDecision,comments,updatedAt,mergeable`.
-  Last checked 2026-05-15: still `OPEN` / `REVIEW_REQUIRED`, mergeable, zero
-  reviewer comments, last update 2026-04-25T17:46:59Z (20 days quiet).
-  Recall: 2026-04-25 we pushed
-  [`ca30a5d`](https://github.com/dstrupl/mcp-registry/commit/ca30a5d)
-  correcting `source.commit` to the peeled commit SHA
-  (`98c9006f…` was `1090cf27…`); next poll should confirm
-  `go run ./cmd/validate --name vardoger` still passes against the updated
-  branch before a reviewer looks at it.
+  Note: vardoger is already reachable from Docker Desktop's MCP Toolkit
+  via the Official MCP Registry feed, which the Toolkit ingests in
+  parallel with its own catalog — so this row's user-impact is currently
+  zero, only the listing-presence is missing.
 - **[Claude Code — curated directory](#claude-code--curated-directory)** —
   watch-only row. Probe:
   `curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | grep -c '"name": "vardoger"'`
