@@ -37,43 +37,81 @@ unchanged at zero-activity, two rows still absent from public surfaces.
    entries already in sync (no change)" — so we were one of the 209
    cleaned-up entries. The PR body provides no per-entry rationale and the
    diff is a single 561-add / 2647-delete edit to `marketplace.json` with no
-   commit message detail. **Why this happened, best guess:** between 2026-05-01
-   and 2026-05-13 Anthropic landed
-   [PR #19](https://github.com/anthropics/claude-plugins-community/pull/19)
-   (Tobin South, *"Add bump-plugin-shas + scan-plugins actions; fixtures;
-   I10/I11"*) which added two new automated actions and two new invariants
-   (I10 hidden-Unicode, I11 name-format `^[a-z0-9][a-z0-9-]{1,63}$`) plus a
-   Claude-policy-driven `scan-plugins` action that can hard-block entries
-   on policy findings. Ran the full I1–I11 invariant suite mentally against
-   our entry: name `vardoger` matches I11; description has no zero-width or
-   bidi controls; `https://` URL on the `github.com` allowlist; SHA is a
-   well-formed 40-char hex; description well above the 10-char floor. Plugin
-   manifest at SHA `da14439` is structurally identical to current `main`
-   (only `version: "0.3.0" → "0.3.1"` differs, both with `name`, `author`,
-   `license: Apache-2.0`, `keywords`, `skills`, `hooks` — the schema vocabulary
-   the official catalog uses). So the I1–I11 invariants are not the proximate
-   cause. That leaves either (a) the new `scan-plugins` Claude-policy
-   reviewer flagging something it considers risky in the analyze skill (the
-   same skill ClawHub flagged `suspicious` in the 2026-04-25 audit for "broad
-   `$HOME` read/write" — accurate to scope but conservatively rated), or
-   (b) the bulk re-sync simply doesn't re-include entries past some staleness
-   threshold and our 2026-04-23 SHA `da14439` was 20 days old by the
-   2026-05-13 sync. **Either reason puts the recovery action squarely on the
-   project owner**: re-submit via `platform.claude.com/plugins/submit` (the
-   correct working submission form — verified by closed
-   [issue #22](https://github.com/anthropics/claude-plugins-community/issues/22),
-   2026-05-05, which documents that the README's `clau.de/plugin-directory-submission`
-   URL is a NXDOMAIN dead link). Direct PRs against the mirror are
-   auto-closed (workflow `close-external-prs.yml`), and the multiple users
-   on [issue #14](https://github.com/anthropics/claude-plugins-community/issues/14)
-   complaining about "Published" submissions never appearing in
-   `marketplace.json` show that the form-and-wait path is opaque even when
-   it works. So the row drops back from **Live** → **Removed in upstream
-   sync — re-submission required (owner-only)**, with the action added to
-   the Cursor / claudemarketplaces.com pile of "needs the owner in a
-   browser" follow-ups. The custom-marketplace row immediately below it is
-   unaffected (the `.claude-plugin/marketplace.json` we host at the repo
-   root is self-served — `/plugin marketplace add dstrupl/vardoger` →
+   commit message detail. **Initial hypothesis disproved:** first guess was
+   that Anthropic's new `scan-plugins` action (added 2026-05-04 in
+   [PR #19](https://github.com/anthropics/claude-plugins-community/pull/19),
+   which evaluates plugins against the
+   [Anthropic Software Directory Policy](https://support.claude.com/en/articles/13145358-anthropic-software-directory-policy))
+   flagged the `analyze` skill for reading Claude session JSONLs under
+   `~/.claude/projects/`, since policy clause 1.F prohibits "query[ing] or
+   extract[ing] data from Claude's memory, chat history, conversation
+   summaries, or user-generated or uploaded files." Disproved by sampling
+   the surviving 1,715 entries: ~409 of them describe themselves as
+   reading or persisting Claude session content — `remember`, `claude-cognis`,
+   `munin-memory`, `notion-memory`, `shipwright-brain`, `agent-knowledge`
+   ("Cross-session memory for AI coding agents"), `agent-recall`,
+   `auto-memory`, and `ido4shape` (the very plugin from the
+   [`anthropics/claude-code#45153`](https://github.com/anthropics/claude-code/issues/45153)
+   sync-lag thread) all survived. Clause 1.F is being applied much more
+   leniently in practice than its plain text suggests — local on-disk
+   session JSONLs that the user explicitly grants access to are evidently
+   considered out of scope. So scan-plugins is not the proximate cause.
+   The I1–I11 invariants are also not the cause — name `vardoger` matches
+   I11, no hidden Unicode (I10), `https://` URL on the `github.com`
+   allowlist (I4), well-formed 40-char SHA (I5), description above 10
+   chars (I3); the manifest at SHA `da14439` is structurally identical to
+   current `main` (only `version: "0.3.0" → "0.3.1"` differs).
+
+   **Sync-regression hypothesis (current best).** Sampling the 209 removed
+   entries by hand: they include `claude-skills` (*"205 production-ready
+   Claude Code skills … the most comprehensive open-source library"*),
+   `claude-flow` (9-skill cognition framework), `figma-to-flutter`,
+   `dora-compliance` / `eu-ai-act-compliance` / `hipaa-compliance`,
+   `pdf-forge`, `slack-enterprise`, even `socials` (whose description
+   begins *"Official Claude Code plugin for Socials (Brainrot
+   Creations)"*) — none of these read like accidental admissions that
+   should be culled on quality grounds. The single largest removal group
+   was `CSOAI-ORG` losing 16 entries from one author at once, which looks
+   author-scoped rather than per-plugin-quality-scoped. Combined with the
+   sync's anomalously small "+4 added" (vs PR #12 which added 285 and
+   typical recent syncs which add tens), this looks much more like a
+   regression in Anthropic's internal sync pipeline than a deliberate
+   quality / policy decision against any individual entry. We're caught
+   in collateral damage, not flagged for cause.
+
+   **Recovery path is unchanged but the rationale is stronger.** Re-submit
+   via [`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit)
+   (the README's `clau.de/plugin-directory-submission` URL is NXDOMAIN —
+   confirmed in closed
+   [issue #22](https://github.com/anthropics/claude-plugins-community/issues/22)
+   on 2026-05-05). The mirror has no scheduled cron workflow — checked
+   `/repos/anthropics/claude-plugins-community/actions/workflows`, which
+   lists only `Close External PRs`, `Policy Fixtures`, and `Validate
+   Plugins` as active. Bulk syncs like PR #28 are manually pushed by
+   Anthropic's internal pipeline (Tobin South authored the merge commit),
+   so there is no auto-recovery path; re-submission via the form is the
+   only owner-side action. **One material risk:** active bug
+   [`anthropics/claude-code#45051`](https://github.com/anthropics/claude-code/issues/45051)
+   ("Plugin marketplace serves oldest version instead of latest when
+   multiple submissions exist") documents that re-submitting the same
+   plugin name creates a second `Published` dashboard row instead of
+   superseding the first, and the Claude Code resolver picks the
+   *oldest* row. For us, the original `Published` row may still exist on
+   the dashboard even though our `marketplace.json` entry was culled, so
+   re-submission could create a duplicate. The author of issue #29
+   (`manuelschipper/nah`, opened 2026-05-15) explicitly avoids re-submitting
+   their plugin because of #45051. Mitigation when re-submitting: in the
+   form's free-text fields (if any), note that the prior submission was
+   culled in PR #28 and we're requesting a re-add (not a version bump),
+   so Anthropic's reviewer can deduplicate manually. If two rows end up
+   coexisting and the resolver serves the stale one, in-product
+   `/plugin install vardoger` will install at SHA `da14439` (v0.3.0-ish) —
+   acceptable degraded behaviour; `pipx install vardoger` and the
+   self-hosted custom marketplace below remain accurate fallbacks.
+
+   The custom-marketplace row immediately below is unaffected (the
+   `.claude-plugin/marketplace.json` we host at the repo root is
+   self-served — `/plugin marketplace add dstrupl/vardoger` →
    `/plugin install vardoger@vardoger` still works without involving
    Anthropic's pipeline).
 
@@ -268,13 +306,23 @@ the entry was removed along with 208 others. The PR body provides no
 per-entry rationale. The plugin manifest at our pinned SHA is structurally
 identical to what's on `main` today (`name`, `author`, `license: Apache-2.0`,
 `keywords`, `skills`, `hooks`) and clears every public I1–I11 invariant in
-the mirror's `validate-plugins/test-invariants.sh` suite, so the cull
-appears to be either (a) the new `scan-plugins` Claude-policy reviewer
-flagging the analyze skill as suspicious for "broad `$HOME` read/write"
-(matching ClawHub's earlier `suspicious` verdict — accurate to scope, not a
-defect we can fix without removing core functionality), or (b) a staleness
-cutoff applied during the catch-up sync (our SHA `da14439` was 20 days old
-by 2026-05-13). No way to disambiguate from the public record.
+the mirror's `validate-plugins/test-invariants.sh` suite. After auditing
+the surviving 1,715 entries — ~409 of which describe themselves as reading
+or persisting Claude session content (`remember`, `claude-cognis`,
+`munin-memory`, `agent-knowledge`, `ido4shape`, etc., all still listed) —
+the cull does not appear to be a policy verdict against the analyze
+skill's `~/.claude/projects/` access. The 209 removals also include
+plainly legitimate entries like `claude-skills` (205-skill library),
+`claude-flow`, `figma-to-flutter`, `dora-compliance`,
+`eu-ai-act-compliance`, `hipaa-compliance`, `pdf-forge`,
+`slack-enterprise`, even `socials` whose description begins *"Official
+Claude Code plugin for Socials (Brainrot Creations)"*. The single largest
+removal group was `CSOAI-ORG` losing 16 entries from one author at once.
+This pattern reads as a regression in Anthropic's internal sync pipeline
+(amplified by the anomalously small "+4 added" in the same PR — vs PR #12
+which added 285), not a quality / policy decision. We're caught in
+collateral damage. See the dated audit at the top of this file for the
+full reasoning chain.
 
 **Recovery path (owner-only):** re-submit through the form at
 [`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit).
@@ -287,8 +335,11 @@ auto-closed by the `close-external-prs.yml` workflow, and several users on
 [issue #14](https://github.com/anthropics/claude-plugins-community/issues/14)
 report that even "Published"-badged submissions do not always make it into
 later syncs (no Anthropic response on that thread since 2026-04-23), so
-this is not a one-shot guaranteed-success path. Re-submit, observe the next
-nightly sync (~24h), and revisit.
+this is not a one-shot guaranteed-success path. Mitigation for the active
+[`anthropics/claude-code#45051`](https://github.com/anthropics/claude-code/issues/45051)
+"oldest version served" bug: in any free-text submission field, note that
+the prior submission was culled in PR #28 and we're requesting a re-add
+(not a version bump). Re-submit, observe the next sync, and revisit.
 
 **Empty-result probe** (run before / after re-submission):
 
@@ -632,6 +683,16 @@ returns the annotated tag object SHA.
 Last checked 2026-05-15: still `OPEN` / `REVIEW_REQUIRED`, mergeable, zero
 reviewer comments. PR last updated **2026-04-25T17:46:59Z** — 20 days flat
 in the reviewer queue with no interaction at all.
+
+**Defensive re-validation 2026-05-15:** ran
+`go run ./cmd/validate --name vardoger` against a fresh clone of
+`docker/mcp-registry@main` with our submission's `server.yaml` copied in.
+All 11 checks still pass (`Name`, `Directory`, `Title`, `YAML formatting`,
+`Commit is pinned`, `Secrets`, `Config env`, `License`, `Icon`, `Remote
+validation skipped (not a remote server)`, `OAuth dynamic configuration`).
+So the submission has not bit-rotted in the 20 days since `ca30a5d`; if
+a reviewer ever picks it up, it will still validate clean against the
+registry's current rules.
 
 ### Cline MCP Marketplace
 
