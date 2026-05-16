@@ -15,7 +15,50 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-05-15** (UTC).
+Last refreshed: **2026-05-16** (UTC).
+
+2026-05-16: Owner posted the three browser-only actions queued in the
+2026-05-15 audit. Drafts in `/tmp/vardoger-marketplace-drafts/` (not
+committed) carry the verbatim text used.
+
+1. **Claude Code re-submission** — submitted via
+   [`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit)
+   with the "re-add request after PR #28 sync regression, not a version
+   bump" framing recommended in draft `01`. Probe still returns absent
+   the same day (`total=1715 vardoger_hits=0`) which is expected: the
+   mirror has had **no new commits since PR #28 on 2026-05-13** (4-day
+   quiet), and based on the recent cadence (PR #12 → #28 was 12 days)
+   the next bulk sync is realistically 2026-05-20 to 2026-05-27. So the
+   real check window opens ~2026-05-23 and closes ~2026-05-30. If still
+   absent at 30 days post-submit (~2026-06-15), the escalation path is
+   to file the optional `04` issue and contact Anthropic support.
+
+2. **Cursor defense-in-depth re-submission** — submitted via
+   [`cursor.com/marketplace/publish`](https://cursor.com/marketplace/publish)
+   with the honest "no acknowledgement of 2026-04-20 submit, please
+   deduplicate" framing from draft `02`. Public probes still 404 on
+   2026-05-16 (`/marketplace/vardoger`, `/plugins/vardoger`,
+   `gh api repos/cursor/plugins/contents/vardoger`) — expected; Cursor
+   has no public reviewer cadence to anchor an ETA against. Check
+   window opens ~2026-05-23 (7d) and closes ~2026-06-15 (30d). If still
+   absent at 30 days, the realistic next step is emailing Anysphere
+   support directly (no public escalation channel).
+
+3. **claudemarketplaces.com `/feedback`** — submitted via the site's
+   form with the neutral "0/2,566 hits, catalog count flat for 9+ days,
+   anything we should adjust?" text from draft `03`. Aggregator probe
+   still `total=2566 vardoger_hits=0` and per-URL probe still 404 on
+   2026-05-16 — expected; the maintainer has to manually triage the
+   feedback. Check window opens ~2026-05-23 (7d) and closes ~2026-06-15
+   (30d). If still absent at 30 days, this row is genuinely stuck (no
+   further escalation channel exists) and we accept that the
+   aggregator-discovery path doesn't work for us — not a critical
+   surface; no user-install path depends on it.
+
+All other rows (Cline, Docker, curated directory) unchanged from the
+2026-05-15 audit. No new mirror commits since PR #28; no Cline / Docker
+reviewer movement; no curated-directory inclusion. The Cline / Docker
+"60-day cadence" demotion stands.
 
 2026-05-15: Polled every open / watch-only row plus the recently-Live Claude
 Code community-catalog row. **One material regression**, three rows
@@ -234,8 +277,8 @@ history, surface details, and "last checked" context.
 | Marketplace | Plugin root | Status | Submitted | Live on | Link |
 | --- | --- | --- | --- | --- | --- |
 | [**PyPI**](#pypi) | (repo root) | Live | 2026-04-20 | 2026-04-24 | [pypi.org/project/vardoger](https://pypi.org/project/vardoger/) |
-| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Submitted | 2026-04-20 | — | [publisher dashboard](https://cursor.com/marketplace/publish) |
-| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Removed in upstream sync — re-submission required | 2026-04-20 (orig); 2026-05-15 (re-submit pending) | 2026-04-28 → 2026-05-13 (regressed) | [catalog entry](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
+| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Re-submitted | 2026-04-20 (orig); 2026-05-16 (re-submit) | — | [publisher dashboard](https://cursor.com/marketplace/publish) |
+| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Re-submitted (awaiting next sync) | 2026-04-20 (orig); 2026-05-16 (re-submit) | 2026-04-28 → 2026-05-13 (regressed); awaiting re-add | [catalog entry](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
 | [**Claude Code — curated directory**](#claude-code--curated-directory) | `plugins/claude-code/` | Not started (watch-only) | — | — | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
 | [**Codex — custom**](#codex--custom) | `plugins/codex/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `codex plugin marketplace add …` |
@@ -248,7 +291,7 @@ history, surface details, and "last checked" context.
 | [**Docker MCP Registry**](#docker-mcp-registry) | `plugins/docker-mcp/` | Submitted | 2026-04-24 | — | [PR #2949](https://github.com/docker/mcp-registry/pull/2949) |
 | [**Cline MCP Marketplace**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted | 2026-04-20 | — | [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) |
 | [**OpenClaw ClawHub**](#openclaw-clawhub) | `plugins/openclaw/skills/analyze/` | Live (self-served) | 2026-04-22 | 2026-04-24 | `npx clawhub publish …` |
-| [**claudemarketplaces.com**](#claudemarketplacescom) | `.claude-plugin/marketplace.json` | Pending ingestion (auto) | 2026-04-27 | — | [claudemarketplaces.com](https://claudemarketplaces.com) |
+| [**claudemarketplaces.com**](#claudemarketplacescom) | `.claude-plugin/marketplace.json` | Feedback submitted (awaiting triage) | 2026-04-27 (manifest); 2026-05-16 (/feedback) | — | [claudemarketplaces.com](https://claudemarketplaces.com) |
 
 ## Per-marketplace details
 
@@ -314,14 +357,16 @@ labels, no triage. Recent merges are exclusively from `maloneya` and
 sit even longer than the form does — strictly worse parallel path, not
 worth opening.
 
-**Re-submission fallback (active for 11+ days, owner-only):** the window
-opened 2026-05-04 and the probes above still return 404 as of 2026-05-15.
-Next time the owner is logged into `cursor.com` in a browser, re-fill the
-form at `cursor.com/marketplace/publish` as defense-in-depth against a
-silently-failed original submit. Claude cannot submit the form (it's
-behind Cursor's auth). If the form asks for a changelog reason,
-"defense-in-depth resubmission — no acknowledgement of 2026-04-20
-submit" is accurate and honest.
+**Re-submission completed 2026-05-16 (defense-in-depth).** Owner
+re-filled the form at `cursor.com/marketplace/publish` using the honest
+"no acknowledgement of 2026-04-20 submit through the publisher
+dashboard, please deduplicate against this resubmit" framing from
+draft `02-cursor-resubmit.md`. All three public probes still 404 the
+same day — expected; Cursor has no public reviewer cadence to anchor
+an ETA against. Check window opens ~2026-05-23 (7d post-submit) and
+closes ~2026-06-15 (30d). If still 404 at 30 days, the realistic
+next step is emailing Anysphere support directly — no public
+escalation channel exists.
 
 ### Claude Code — community catalog
 
@@ -369,22 +414,29 @@ which added 285), not a quality / policy decision. We're caught in
 collateral damage. See the dated audit at the top of this file for the
 full reasoning chain.
 
-**Recovery path (owner-only):** re-submit through the form at
-[`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit).
-This is the correct working URL; the README's
-`clau.de/plugin-directory-submission` is a NXDOMAIN dead link
-(documented in [`anthropics/claude-plugins-community#22`](https://github.com/anthropics/claude-plugins-community/issues/22),
-closed 2026-05-05, with maintainer-confirmed `platform.claude.com/plugins/submit`
-as the working alternative). Direct PRs against the mirror are
-auto-closed by the `close-external-prs.yml` workflow, and several users on
+**Re-submission completed 2026-05-16.** Owner re-filed the form at
+[`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit)
+using draft `01-claude-code-resubmit.md` (free-text framed as "re-add
+request after PR #28 sync regression, not a version bump" to mitigate
+the active [`anthropics/claude-code#45051`](https://github.com/anthropics/claude-code/issues/45051)
+duplicate-Published bug). Catalog probe the same day returns
+`total=1715 vardoger_hits=0` — expected; the mirror has had no new
+commits since PR #28 on 2026-05-13 and the next bulk sync is needed to
+potentially pick up the re-submit. Based on recent cadence
+(PR #12 → PR #28 was 12 days; PR #15 → PR #28 was 12 days), next sync
+is realistically 2026-05-20 to 2026-05-27. **Check window opens
+~2026-05-23 and closes ~2026-06-15 (30d post-submit).** If still
+absent at 30 days, the escalation path is to file the optional
+`04-anthropic-mirror-issue.md` issue and contact Anthropic support.
+
+The path is not one-shot guaranteed: README's
+`clau.de/plugin-directory-submission` is NXDOMAIN (documented in
+closed [issue #22](https://github.com/anthropics/claude-plugins-community/issues/22),
+2026-05-05); direct PRs against the mirror are auto-closed by
+`close-external-prs.yml`; and several users on
 [issue #14](https://github.com/anthropics/claude-plugins-community/issues/14)
-report that even "Published"-badged submissions do not always make it into
-later syncs (no Anthropic response on that thread since 2026-04-23), so
-this is not a one-shot guaranteed-success path. Mitigation for the active
-[`anthropics/claude-code#45051`](https://github.com/anthropics/claude-code/issues/45051)
-"oldest version served" bug: in any free-text submission field, note that
-the prior submission was culled in PR #28 and we're requesting a re-add
-(not a version bump). Re-submit, observe the next sync, and revisit.
+report that even "Published"-badged submissions do not always make it
+into later syncs (no Anthropic response since 2026-04-23).
 
 **Empty-result probe** (run before / after re-submission):
 
@@ -860,9 +912,21 @@ dstrupl. The per-URL probe
 `curl -sI https://claudemarketplaces.com/marketplace/vardoger | head -1`
 still returns `HTTP/2 404`.
 
-**Next action (owner-only):** after 18 days without a crawl hit, it's
-reasonable to assume the aggregator's discovery is either slower than the
-README's "daily" claim or failing silently on our manifest. Since the repo
+**Feedback submitted 2026-05-16.** Owner posted via the site's
+`/feedback` form using draft `03-claudemarketplaces-feedback.md` — neutral
+"0/2,566 hits, catalog count flat for 9+ days, anything we should adjust?"
+framing. Probes still 0 hits / 404 the same day — expected; maintainer
+has to manually triage the feedback (no API, no PR path — issues are
+disabled on the backing repo). **Check window opens ~2026-05-23 (7d)
+and closes ~2026-06-15 (30d).** If still absent at 30 days, this row
+is genuinely stuck (no further escalation channel) and we accept that
+aggregator-discovery doesn't work for us — not a critical surface;
+no user-install path depends on it.
+
+**Historical context** for the prior "next action" note (now superseded):
+after 18 days without a crawl hit, we assumed the aggregator's discovery
+was either slower than the README's "daily" claim or failing silently on
+our manifest. Since the repo
 has issues disabled, the only way to flag this to the maintainer is the
 site's `/feedback` form. Draft the following into the form from a browser:
 
@@ -930,37 +994,44 @@ Priority-ordered actions for the next agent/owner session. Each item links to
 its entry under [Per-marketplace details](#per-marketplace-details) for the
 full submission history and audit context.
 
-### 1. Owner-only actions (require browser / account access)
+### 1. Verify-after-posting probes (all three owner actions in flight)
 
-These three have hit their escalation windows but cannot be executed from a
-Claude session — they need the project owner in a browser.
+The three owner-only browser actions from the 2026-05-15 audit were all
+posted 2026-05-16. Drafts used live at `/tmp/vardoger-marketplace-drafts/`
+(not committed). Each has a check window: the 7-day mark opens
+~2026-05-23, the 30-day deadline is ~2026-06-15. If a row hasn't flipped
+by its 30-day deadline, the per-row escalation path is documented in the
+row's body (file an issue / email support / accept defeat).
 
-- **[Claude Code — community catalog re-submission](#claude-code--community-catalog)**
-  *(NEW 2026-05-15)* — vardoger was Live in the mirror from 2026-04-28 to
-  ~2026-05-01 and was removed in the
-  [2026-05-13 bulk sync (PR #28)](https://github.com/anthropics/claude-plugins-community/pull/28)
-  that cleaned up 209 entries with no per-row rationale published. Re-submit
-  via the form at
-  [`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit)
-  (the README's `clau.de/plugin-directory-submission` URL is NXDOMAIN —
-  confirmed in [issue #22](https://github.com/anthropics/claude-plugins-community/issues/22)
-  closed 2026-05-05). After re-submit, observe the next sync (~24h) with the
-  one-liner in the row's "Empty-result probe" section above; expect either
-  re-add or another silent drop. Do not open a PR against the mirror — it
-  will be auto-closed by `close-external-prs.yml`.
-- **[Cursor Plugin Registry re-submission](#cursor-plugin-registry)** —
-  original submit 2026-04-20, defense-in-depth window opened 2026-05-04
-  and has been open for 11 days now; public probes still `404` on
-  2026-05-15. Next time you're logged into `cursor.com`, re-fill the form
-  at `cursor.com/marketplace/publish` to guard against a silently-failed
-  original submit.
-- **[claudemarketplaces.com feedback form](#claudemarketplacescom)** —
-  our `.claude-plugin/marketplace.json` landed 2026-04-27 (18 days ago),
-  aggregator still reports 0/2,566 hits for vardoger on 2026-05-15 (via
-  `/api/marketplaces`; catalog count flat across at least 9 days). Backing
-  repo (`noobsaire/claudemarketplaces`) has issues disabled, so the only
-  channel left is the site's `/feedback` page. Updated draft text is in the
-  row's body.
+- **[Claude Code — community catalog](#claude-code--community-catalog)** —
+  re-submitted via `platform.claude.com/plugins/submit` with the
+  "re-add request, not version bump" framing. Probe (run after any new
+  mirror commit — next bulk sync ETA 2026-05-20 to 2026-05-27 based on
+  cadence):
+  ```bash
+  curl -sL https://raw.githubusercontent.com/anthropics/claude-plugins-community/main/.claude-plugin/marketplace.json \
+    | python3 -c 'import json,sys; print(len([p for p in json.load(sys.stdin)["plugins"] if p["name"]=="vardoger"]))'
+  ```
+  Expect `0` until the next sync includes us; `1` is success. 30-day
+  escalation: file the optional `04-anthropic-mirror-issue.md` draft and
+  contact Anthropic support.
+- **[Cursor Plugin Registry](#cursor-plugin-registry)** — defense-in-depth
+  resubmit via `cursor.com/marketplace/publish`. Probes:
+  ```bash
+  curl -sI https://cursor.com/marketplace/vardoger | head -1   # expect HTTP/2 200
+  curl -sI https://cursor.com/plugins/vardoger     | head -1   # expect 308 → 200
+  gh api repos/cursor/plugins/contents/vardoger?ref=main        # expect non-404
+  ```
+  30-day escalation: email Anysphere support directly (no public channel).
+- **[claudemarketplaces.com](#claudemarketplacescom)** — `/feedback` form
+  posted. Probes:
+  ```bash
+  curl -sL https://claudemarketplaces.com/api/marketplaces | python3 -c \
+    'import json,sys; d=json.load(sys.stdin); print(len([m for m in d if "vardoger" in __import__("json").dumps(m).lower()]))'
+  curl -sI https://claudemarketplaces.com/marketplace/vardoger | head -1
+  ```
+  Expect `>=1` and `200` once aggregator picks us up. 30-day escalation:
+  none (accept the row as stuck; not a critical surface).
 
 ### 2. Long-tail rows — deprioritized to 60-day polling cadence
 
