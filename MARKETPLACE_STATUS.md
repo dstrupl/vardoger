@@ -15,7 +15,38 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-05-16** (UTC).
+Last refreshed: **2026-05-21** (UTC).
+
+2026-05-21: Early probe before the planned 7-day re-check window. **No
+marketplace state changed, and there is no useful owner action today.**
+
+1. **Claude Code community catalog** is still waiting on Anthropic's next
+   mirror sync. The public mirror still has 1,715 plugins and zero
+   `vardoger` / `dstrupl` hits; latest commit remains the 2026-05-13
+   bulk sync `2ec490e` that removed the entry. Because the 2026-05-16
+   re-submission has not yet had a new mirror sync to ride, this is not a
+   failure signal yet. Keep the first meaningful check at ~2026-05-23 and
+   the 30-day escalation at ~2026-06-15.
+
+2. **Cursor Plugin Registry** is still absent from all public surfaces:
+   `cursor.com/marketplace/vardoger` and `/plugins/vardoger` both resolve
+   to 404, and `gh api repos/cursor/plugins/contents/vardoger` still
+   returns 404. The 2026-05-16 defense-in-depth re-submit is only five
+   days old, so do not re-submit again today; the next useful action is
+   the normal 7-day probe around 2026-05-23.
+
+3. **claudemarketplaces.com** still shows 2,566 marketplace entries with
+   zero `vardoger` hits, and `/marketplace/vardoger` still returns 404.
+   The feedback form was posted 2026-05-16; no additional escalation
+   channel exists, so wait through the same 7-day / 30-day window.
+
+4. **Long-tail GitHub queues remain unchanged:** `cline/mcp-marketplace#1394`
+   is still `OPEN` with no comments and `updatedAt=2026-04-25T17:46:20Z`;
+   `docker/mcp-registry#2949` is still `OPEN`, `REVIEW_REQUIRED`,
+   `MERGEABLE`, with no comments/reviews and
+   `updatedAt=2026-04-25T17:46:59Z`. The 60-day polling cadence still
+   applies; pinging either queue today would add noise without improving
+   odds.
 
 2026-05-16: Owner posted the three browser-only actions queued in the
 2026-05-15 audit. Drafts in `/tmp/vardoger-marketplace-drafts/` (not
