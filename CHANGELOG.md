@@ -6,6 +6,30 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-07-09
+
+### Fixed
+
+- Parse current Codex rollout files whose session metadata and messages are
+  nested under `session_meta.payload` and `response_item.payload`, while
+  preserving support for legacy flat rollout files.
+- Move the repository Codex marketplace catalog to
+  `.agents/plugins/marketplace.json`, update its install commands for the
+  current `codex plugin marketplace` CLI, and add the interface metadata and
+  starter prompts required by the current plugin manifest schema.
+- Isolate the Claude Code global-writer test from the developer's real home
+  directory.
+
+### Changed
+
+- Remove the obsolete `CVE-2026-3219` pip-audit exception now that the audit
+  passes without it.
+- Refresh the locked MCP transitive dependencies to patched releases after the
+  project-environment audit found advisories in `cryptography`, `idna`,
+  `pydantic-settings`, `PyJWT`, `python-multipart`, and `starlette`.
+- Track `uv.lock` and include it in CI dependency-cache invalidation.
+- Bump the Python package and platform plugin metadata to `0.3.2`.
+
 ## [0.3.1] — 2026-04-24
 
 ### Added

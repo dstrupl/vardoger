@@ -40,7 +40,7 @@ Then tell your assistant: **"Personalize my assistant."**
 > ClawHub) in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
-> `0.3.1` release. The beta install paths below stay here for anyone still pinning
+> `0.3.2` release. The beta install paths below stay here for anyone still pinning
 > an earlier release; new installs should not need them.
 >
 > ```bash

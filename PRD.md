@@ -1,6 +1,6 @@
 # vardoger — Product Requirements Document
 
-> **Version:** 0.3.1
+> **Version:** 0.3.2
 > **Date:** 2026-07-09
 > **Status:** Public beta (Phases 1–3 and 5 shipped; Phase 4 in progress)
 >
@@ -457,7 +457,7 @@ The core analysis logic must be shared across all platform integrations. Platfor
 **Goal:** Publish vardoger to the official plugin marketplaces after validating through limited beta.
 
 **Deliverables:**
-- [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.3.1)
+- [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.3.2)
 - [x] Cursor Plugin Registry — **Live**, verified 2026-07-09 at [`cursor.com/marketplace/vardoger`](https://cursor.com/marketplace/vardoger) (`plugins/cursor/`).
 - [x] Claude Code community catalog + custom marketplace — **Live**, re-add verified 2026-07-09 in [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community); the self-served `.claude-plugin/marketplace.json` path remains available through `/plugin marketplace add dstrupl/vardoger`.
 - [ ] Codex custom marketplace + official directory — the custom catalog has been repaired locally at `.agents/plugins/marketplace.json` and validates with the current CLI; publish requires merging/releasing these changes. OpenAI now accepts official directory submissions through its [plugin submission process](https://developers.openai.com/codex/submit-plugins); listing assets, terms, test cases, and owner submission are still outstanding.

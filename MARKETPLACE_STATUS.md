@@ -357,13 +357,14 @@ history, surface details, and "last checked" context.
 - **Surface:** `pipx install vardoger`
 - **Plugin root:** repo root
 
-Current version `0.3.1`. Releases:
+Current version `0.3.2`. Releases:
 [v0.1.0](https://github.com/dstrupl/vardoger/releases/tag/v0.1.0) ·
 [v0.2.0](https://github.com/dstrupl/vardoger/releases/tag/v0.2.0) ·
 [v0.2.1](https://github.com/dstrupl/vardoger/releases/tag/v0.2.1) ·
 [v0.2.2](https://github.com/dstrupl/vardoger/releases/tag/v0.2.2) ·
 [v0.3.0](https://github.com/dstrupl/vardoger/releases/tag/v0.3.0) ·
-[v0.3.1](https://github.com/dstrupl/vardoger/releases/tag/v0.3.1).
+[v0.3.1](https://github.com/dstrupl/vardoger/releases/tag/v0.3.1) ·
+[v0.3.2](https://github.com/dstrupl/vardoger/releases/tag/v0.3.2).
 Listing at [pypi.org/project/vardoger](https://pypi.org/project/vardoger/).
 
 ### Cursor Plugin Registry
