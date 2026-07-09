@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from vardoger.history.codex import discover_codex_files, read_codex_history
+from vardoger.history.models import Conversation, Message
 
 
 def _write_rollout(base: Path, subpath: str, lines: list[dict]) -> None:
@@ -43,6 +44,65 @@ def test_reads_basic_rollout():
         assert convos[0].platform == "codex"
         assert convos[0].session_id == "abc"
         assert convos[0].message_count == 2
+
+
+def test_reads_current_payload_wrapped_rollout(tmp_path: Path) -> None:
+    _write_rollout(
+        tmp_path,
+        "2026/07/09/rollout-current.jsonl",
+        [
+            {
+                "timestamp": "2026-07-09T10:00:00Z",
+                "type": "session_meta",
+                "payload": {
+                    "id": "current-abc",
+                    "timestamp": "2026-07-09T10:00:00Z",
+                    "cwd": "/tmp/project",
+                },
+            },
+            {
+                "timestamp": "2026-07-09T10:00:01Z",
+                "type": "event_msg",
+                "payload": {"type": "user_message", "message": "Hello"},
+            },
+            {
+                "timestamp": "2026-07-09T10:00:01Z",
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hello"}],
+                },
+            },
+            {
+                "timestamp": "2026-07-09T10:00:02Z",
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": "Hi"}],
+                },
+            },
+            {
+                "timestamp": "2026-07-09T10:00:03Z",
+                "type": "response_item",
+                "payload": {"type": "function_call", "name": "ignored"},
+            },
+        ],
+    )
+
+    assert read_codex_history(codex_dir=tmp_path) == [
+        Conversation(
+            messages=[
+                Message(role="user", content="Hello"),
+                Message(role="assistant", content="Hi"),
+            ],
+            platform="codex",
+            project=None,
+            session_id="current-abc",
+            source_path="2026/07/09/rollout-current.jsonl",
+        )
+    ]
 
 
 def test_source_path_set():

@@ -6,8 +6,9 @@ Codex stores session rollouts at:
   ~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl
   ~/.codex/sessions/rollout-*.jsonl  (older format, flat)
 
-Each file starts with a header line: {"id": "...", "timestamp": "..."}
-Subsequent lines are messages: {"type": "message", "role": "user"|"assistant", "content": [...]}
+Legacy files use flat header and message objects. Current files wrap session
+metadata and messages in ``payload`` objects under ``session_meta`` and
+``response_item`` entries.
 """
 
 from __future__ import annotations
@@ -62,17 +63,30 @@ def _iter_entries(path: Path) -> Iterator[CodexEntry]:
 def _entry_to_message_or_session(
     entry: CodexEntry, session_id: str | None
 ) -> tuple[Message | None, str | None]:
-    """Turn an entry into either a Message (for turns) or an updated session_id (for headers)."""
+    """Return a message or updated session ID from either rollout schema."""
     if entry.id and entry.timestamp and not entry.type:
         return None, entry.id
 
-    if entry.type != "message" or entry.role not in ("user", "assistant"):
+    if entry.type == "session_meta":
+        nested_id = entry.payload.id or entry.payload.session_id
+        return None, nested_id or session_id
+
+    if entry.type == "message":
+        role = entry.role
+        content = entry.content
+    elif entry.type == "response_item" and entry.payload.type == "message":
+        role = entry.payload.role
+        content = entry.payload.content
+    else:
         return None, session_id
 
-    text = extract_text(entry.content, text_types=CODEX_TEXT_TYPES)
+    if role not in ("user", "assistant"):
+        return None, session_id
+
+    text = extract_text(content, text_types=CODEX_TEXT_TYPES)
     if not text.strip():
         return None, session_id
-    return Message(role=entry.role, content=text), session_id
+    return Message(role=role, content=text), session_id
 
 
 def _parse_rollout(path: Path, rel_path: str) -> Conversation | None:

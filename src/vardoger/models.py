@@ -96,14 +96,25 @@ class ClaudeCodeEntry(BaseModel, extra="ignore"):
     message: dict[str, list[ContentBlock | str] | str] = {}
 
 
+class CodexPayload(BaseModel, extra="ignore"):
+    """Nested payload used by current Codex rollout entries."""
+
+    id: str | None = None
+    session_id: str | None = None
+    type: str = ""
+    role: str = ""
+    content: list[ContentBlock | str] | str = []
+
+
 class CodexEntry(BaseModel, extra="ignore"):
-    """Covers both the header line (id + timestamp) and message lines."""
+    """A legacy flat or current payload-wrapped Codex rollout entry."""
 
     id: str | None = None
     timestamp: str | None = None
     type: str = ""
     role: str = ""
-    content: list[ContentBlock | str] = []
+    content: list[ContentBlock | str] | str = []
+    payload: CodexPayload = CodexPayload()
 
 
 class SessionIndexEntry(BaseModel, extra="ignore"):
@@ -221,6 +232,9 @@ class CodexPluginInterface(BaseModel):
     category: str = "Productivity"
     capabilities: list[str] = []
     websiteURL: str | None = None
+    privacyPolicyURL: str | None = None
+    termsOfServiceURL: str | None = None
+    defaultPrompt: list[str] = []
 
 
 class CodexPluginManifest(BaseModel):
