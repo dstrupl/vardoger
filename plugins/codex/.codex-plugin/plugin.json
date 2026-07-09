@@ -27,6 +27,9 @@
     ],
     "websiteURL": "https://github.com/dstrupl/vardoger",
     "privacyPolicyURL": "https://github.com/dstrupl/vardoger/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/dstrupl/vardoger/blob/main/TERMS.md",
+    "composerIcon": "./assets/logo.png",
+    "logo": "./assets/logo.png",
     "defaultPrompt": [
       "Analyze my Codex history and personalize how you work with me.",
       "Show what you have learned about my working preferences.",

@@ -39,6 +39,9 @@ verified from a clean Codex home. Vardoger is not yet in OpenAI's universal
 Plugin Directory; that separate submission is tracked in
 [`MARKETPLACE_STATUS.md`](../../MARKETPLACE_STATUS.md) and follows OpenAI's
 [plugin submission process](https://developers.openai.com/codex/submit-plugins).
+The reviewer-ready listing copy, production logo, release notes, synthetic
+fixture, and exactly five positive plus three negative tests live in
+[`submission/`](./submission/README.md).
 
 ### Option B — Local marketplace (`pipx` + `vardoger setup codex`, always works)
 
