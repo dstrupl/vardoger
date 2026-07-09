@@ -174,6 +174,8 @@ The `publish.yml` workflow builds the package and uploads it to PyPI via [truste
 Public beta. Version `0.3.2` is published on PyPI and actively maintained.
 See [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md) for live listings and
 the remaining official-directory submissions.
+See [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md) for the
+owner-only submission, review, and publication steps.
 See [PRD.md](PRD.md) for the full product requirements document.
 
 ## Privacy and security

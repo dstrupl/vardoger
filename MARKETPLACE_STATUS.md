@@ -15,7 +15,18 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-07-09** (UTC).
+Last refreshed: **2026-07-10** (UTC).
+
+2026-07-10: Added the owner-facing
+[`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md) with exact
+Codex portal copy, Copilot PR review steps, Claude pin-refresh decision logic,
+and post-submission verification. Live checks confirmed Copilot PR #56 remains
+an untouched draft, Cline #1394 and Docker #2949 remain unchanged, and the
+Claude community entry still pins 0.3.1 commit `4831c7a`. Current Anthropic
+documentation now says approved entries are re-pinned automatically after
+repository pushes and the public catalog syncs nightly. The latest public
+catalog bump run preceded Vardoger's 2026-07-09 push, so the plan is to allow
+two complete nightly cycles before using the fallback owner form.
 
 2026-07-09: Full marketplace and product-compatibility refresh after the
 project had been idle.
@@ -462,13 +473,17 @@ escalation channel exists.
 - **Surface:** [clau.de/plugin-directory-submission](https://clau.de/plugin-directory-submission) (submission) → [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community) (read-only mirror)
 - **Plugin root:** `plugins/claude-code/`
 
-**Current status (verified 2026-07-09): Live again, pinned to 0.3.1.** The
+**Current status (verified 2026-07-10): Live, pinned to 0.3.1 while the
+automatic refresh is pending.** The
 current community catalog contains a `vardoger` entry whose Git source is
 pinned to commit `4831c7a419cf254cbd78690d8f0c52ed6f3def89`. That commit's
-Claude plugin manifest and package version are both 0.3.1, so the catalog
-needs another owner refresh to expose 0.3.2 metadata. Custom and direct
-install routes already resolve current `main`. The removal and re-submission
-timeline below explains the temporary 2026-05 regression.
+Claude plugin manifest and package version are both 0.3.1. Anthropic's current
+plugin documentation says approved community entries are automatically
+re-pinned after repository pushes and the public catalog syncs nightly. The
+catalog's 2026-07-09 bump run preceded Vardoger's latest push, so wait through
+2026-07-12 before using the fallback owner form. Custom and direct install
+routes already resolve current `main`. The removal and re-submission timeline
+below explains the temporary 2026-05 regression.
 
 Submitted 2026-04-20 via the `claude.ai/settings/plugins/submit` form (personal-
 account path; `platform.claude.com` is the org-account alternative and feeds
@@ -564,19 +579,13 @@ discovery catalog clients read; the community mirror above is) → 2026-05-15
 flipped to **Removed in upstream sync — re-submission required** after the
 2026-05-13 bulk sync (PR #28) cleaned up 209 entries including ours.
 
-**Side note: the original "sync freshness" concern is now moot for our row.**
-Until the 2026-05-13 cull, the more pressing issue with the mirror was that
-it pins source-url entries to the SHA they were submitted at and does not
-re-bump existing entries during later syncs — see
-[`anthropics/claude-code#45153`](https://github.com/anthropics/claude-code/issues/45153)
-(2026-04-25 comment by `b-coman` documenting the same lag for `ido4shape` and
-asking for an "update existing submission" dashboard flow). For vardoger,
-our pinned SHA was `da14439` (2026-04-23) — the `v0.3.1` tree was not what
-`/plugin` Discover-tab installs got. That's a non-issue now that we're not
-in the catalog at all; `pipx install vardoger` and the self-hosted custom
-marketplace row below remain the paths that track the latest release. Once
-re-submitted, the lag concern returns and we should plan to re-submit on
-each major release until Anthropic ships the dashboard update flow.
+**2026-07-10 correction to the old sync-freshness assumption.** Anthropic's
+current plugin documentation now explicitly says approved community entries
+are pinned to a commit and CI updates that pin automatically when the source
+repository advances. The public catalog then syncs nightly. That supersedes
+the earlier plan to re-submit every release. Use the automatic-update probe in
+[`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md) first and
+submit a refresh only if the pin remains stale after two full nightly cycles.
 
 ### Claude Code — curated directory
 
@@ -1151,15 +1160,19 @@ on behalf of the project owner.
 
 ## Next session pickup
 
+For owner-only click-through instructions and post-submission verification,
+see [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md).
+
 1. Owner-submit the prepared [Codex official directory](#codex--official-directory)
    package after confirming Apps Management write access and a verified
    developer identity in the OpenAI Platform organization.
 2. Review draft [`github/copilot-plugins#56`](https://github.com/github/copilot-plugins/pull/56)
    and mark it ready when satisfied with the two-file marketplace contribution.
-3. Refresh the Claude Code community-catalog submission so its pinned source
-   advances from 0.3.1 commit `4831c7a` to the current 0.3.2 tree.
+3. Allow Anthropic's automatic Claude Code pin updater two nightly cycles,
+   then use the documented fallback refresh submission only if the catalog is
+   still pinned to 0.3.1 commit `4831c7a` after 2026-07-12.
 4. Keep Cline issue #1394 and Docker PR #2949 on low-frequency monitoring;
-   both were still unchanged on 2026-07-09. Recheck ClawHub's packaged CLI
+   both were still unchanged on 2026-07-10. Recheck ClawHub's packaged CLI
    before the next release for resolution of the missing-module regression.
 
 ## Superseded 2026-05 pickup plan
