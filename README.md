@@ -92,7 +92,7 @@ Then tell your assistant: **"Personalize my assistant."**
 | **OpenAI Codex** | Session rollout JSONL | `~/.codex/AGENTS.md` | [Repository marketplace plugin](plugins/codex/README.md) |
 | **OpenClaw** | Session JSONL | `~/.openclaw/skills/vardoger-personalization/SKILL.md` | [Skill + ClawHub](plugins/openclaw/README.md) |
 | **GitHub Copilot CLI** | `~/.copilot/session-state/*.jsonl` | `~/.copilot/copilot-instructions.md` (global) or `<project>/.github/copilot-instructions.md` (project) — managed inside a `<!-- vardoger:start -->` fenced section | [Custom plugin + published skill](plugins/copilot/README.md) |
-| **Windsurf** | `~/.codeium/windsurf/**/*.jsonl` | `~/.codeium/windsurf/memories/global_rules.md` (global, fenced section) or `<project>/.windsurf/rules/vardoger.md` (project, dedicated file) | [CLI + MCP](plugins/windsurf/README.md) |
+| **Windsurf** | `~/.codeium/windsurf/**/*.jsonl` | `~/.codeium/windsurf/memories/global_rules.md` (global, fenced section) or `<project>/.windsurf/rules/vardoger.md` (project, dedicated file) | [Native skill + CLI + MCP](plugins/windsurf/README.md) |
 | **Cline** | VS Code `globalStorage/.../tasks/*/api_conversation_history.json` | `<project>/.clinerules/vardoger.md` if `.clinerules` is a directory, otherwise a fenced section in `<project>/.clinerules` (project-only) | [CLI + MCP](plugins/cline/README.md) |
 
 ## Development
@@ -184,5 +184,6 @@ See [PRD.md](PRD.md) for the full product requirements document.
 ## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
+See also the public [Privacy Policy](PRIVACY.md) and [Terms of Use](TERMS.md).
 
 <!-- mcp-name: io.github.dstrupl/vardoger -->

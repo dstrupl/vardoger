@@ -6,12 +6,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Ship a native Windsurf `vardoger-analyze` skill and install it through
+  `vardoger setup windsurf` alongside the existing rules and MCP integration.
+
 ### Documentation
 
 - Refresh the root and platform READMEs for the live Cursor and Claude
   listings, the released Codex marketplace, current Copilot discovery paths,
   Windsurf native-skill support, and the actual MCP Registry, McpMux, Docker,
   Cline, and ClawHub states.
+- Add public terms and a reviewer-ready Codex directory submission package
+  with production artwork, listing copy, release notes, a synthetic fixture,
+  and the required five positive and three negative test cases.
 
 ## [0.3.2] — 2026-07-09
 

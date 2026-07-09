@@ -328,9 +328,9 @@ Copilot CLI supports registering third-party plugin marketplaces via `copilot pl
 
 Windsurf's in-product MCP Store is currently editorial with no public submission form.
 
-**Recommended approach:** Ship an install snippet for `mcp_config.json` that wires vardoger as an MCP server (`VARDOGER_MCP_PLATFORM=windsurf`), plus a `vardoger setup windsurf` helper that records the install location in the checkpoint store. Revisit marketplace submission if Windsurf opens a self-serve flow.
+**Recommended approach:** Ship a native skill for Windsurf's user skill directory, an install snippet for `mcp_config.json` that wires vardoger as an MCP server (`VARDOGER_MCP_PLATFORM=windsurf`), and a `vardoger setup windsurf` helper that installs the skill and prepares the rules path. Revisit marketplace submission if Windsurf opens a self-serve flow.
 
-> **Status:** [x] `plugins/windsurf/README.md` contains the install snippet; `vardoger setup windsurf` registers the integration locally.
+> **Status:** [x] `plugins/windsurf/skills/vardoger-analyze/SKILL.md` is generated from the shared skill body, `plugins/windsurf/README.md` contains the MCP snippet, and the current `main` implementation of `vardoger setup windsurf` installs the native user skill and prepares global rules. The installer will reach PyPI in the next release after 0.3.2.
 
 ---
 
@@ -460,13 +460,13 @@ The core analysis logic must be shared across all platform integrations. Platfor
 - [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.3.2)
 - [x] Cursor Plugin Registry — **Live**, verified 2026-07-09 at [`cursor.com/marketplace/vardoger`](https://cursor.com/marketplace/vardoger) (`plugins/cursor/`).
 - [x] Claude Code community catalog + custom marketplace — **Live**, re-add verified 2026-07-09 in [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community); the self-served `.claude-plugin/marketplace.json` path remains available through `/plugin marketplace add dstrupl/vardoger`.
-- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json` and its `0.3.2` remote install has been verified with the current CLI. OpenAI also accepts universal directory submissions through its [plugin submission process](https://developers.openai.com/codex/submit-plugins); listing assets, terms, exactly five positive and three negative test cases, and owner submission are still outstanding.
-- [x] Skill publishing to ClawHub for OpenClaw — **live (self-served)** as [`vardoger-analyze@0.3.1`](https://clawhub.ai/skills/vardoger-analyze) (originally published 2026-04-22 as 0.3.0 with publish id `k9796s5r5hk5ea46kxbpwk49dd85axz8`; republished 2026-04-24 as 0.3.1 with publish id `k97ak6n0cc882ajv2x9tb9s7gs85ekp4` so the listing carries an explicit `license: Apache-2.0` matching the repo).
+- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json` and its `0.3.2` remote install has been verified with the current CLI. The universal-directory package is now reviewer-ready under `plugins/codex/submission/`, including public terms, production artwork, listing copy, a synthetic fixture, and exactly five positive plus three negative tests; verified developer identity and owner portal submission remain outstanding.
+- [x] Skill publishing to ClawHub for OpenClaw — **live (self-served)** as [`vardoger-analyze@0.3.2`](https://clawhub.ai/skills/vardoger-analyze), published 2026-07-09 with version id `k97bmm4d6dknnpcndy92csz3198a6ktj`; the current moderation verdict is clean and the platform-assigned listing license remains MIT-0 despite the skill's Apache-2.0 frontmatter.
 - [x] Plugin packaging and marketplace submission for GitHub Copilot CLI — **custom marketplace live (self-served)** via `plugins/copilot/marketplace.json` (Copilot CLI has no central registry for custom marketplaces — users install directly via `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot`); **`awesome-copilot` live** as [`vardoger-analyze`](https://github.com/github/awesome-copilot/blob/main/skills/vardoger-analyze/SKILL.md) ([PR #1461](https://github.com/github/awesome-copilot/pull/1461) merged 2026-04-28 by [`aaronpowell`](https://github.com/aaronpowell) into `staged` as [`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f); auto-published to `main`, installable today via `gh skills install github/awesome-copilot vardoger-analyze`)
-- [ ] GitHub Copilot CLI default marketplace — [`github/copilot-plugins`](https://github.com/github/copilot-plugins) accepts public contributions, but vardoger has not been submitted. This is the next high-value discovery channel after the already-live `awesome-copilot` skill.
-- [ ] Windsurf distribution — current Windsurf supports direct `.windsurf/skills/` installation, but no public third-party MCP Store submission flow was found. The Enterprise Internal MCP Registry path is covered by the official MCP Registry row below.
+- [ ] GitHub Copilot CLI default marketplace — focused draft [PR #56](https://github.com/github/copilot-plugins/pull/56) adds the externally hosted Vardoger 0.3.2 plugin and README discovery entry; mark it ready for review after owner review.
+- [x] Windsurf direct distribution — current `main` carries the native `vardoger-analyze` user skill and installer plus the existing MCP setup; source installation works now and the installer will reach PyPI in the next release after 0.3.2. The Enterprise Internal MCP Registry path is covered by the official MCP Registry row below. No public third-party MCP Store submission flow was found.
 - [ ] Cline MCP Marketplace submission — **submitted, awaiting review** ([issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) opened 2026-04-20)
-- [x] Official MCP Registry submission — **Live** (2026-04-24) as [`io.github.dstrupl/vardoger@0.3.1`](https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10). Tracked at `plugins/mcp-registry/server.json`; the entry remains active and latest.
+- [x] Official MCP Registry submission — **Live** as [`io.github.dstrupl/vardoger@0.3.2`](https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10), published and verified active/latest on 2026-07-09. Tracked at `plugins/mcp-registry/server.json`.
 - [x] McpMux community registry submission ([`mcpmux/mcp-servers`](https://github.com/mcpmux/mcp-servers)) — **Live** (2026-04-24). [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) merged as [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe) after addressing reviewer feedback (switched `VARDOGER_MCP_PLATFORM` from `text` to `select` input). Tracked server definition at `plugins/mcpmux/vardoger.json`; McpMux bundles `main` roughly hourly, so Cursor, Claude Desktop, VS Code, and Windsurf desktop clients on the McpMux gateway now pick up vardoger automatically.
 - [ ] Docker MCP Registry submission ([`docker/mcp-registry`](https://github.com/docker/mcp-registry)) — **submitted, awaiting review** ([PR #2949](https://github.com/docker/mcp-registry/pull/2949)); `source.commit` is correctly pinned to the peeled `v0.3.1` commit `98c9006f87880d907944557d343028f2b53cf635`.
 
@@ -609,7 +609,8 @@ Windsurf:
   History:  ~/.codeium/windsurf/**/*.jsonl
   Output:   ~/.codeium/windsurf/memories/global_rules.md (global, fenced section)
             <project>/.windsurf/rules/vardoger.md (project, dedicated file)
-  Plugin:   Windsurf MCP Store (editorial) — install snippet in plugins/windsurf/README.md
+  Skill:    ~/.codeium/windsurf/skills/vardoger-analyze/SKILL.md
+  Plugin:   Direct skill + MCP setup in plugins/windsurf/README.md; MCP Store remains editorial
 
 Cline:
   History:  <VS Code globalStorage>/saoudrizwan.claude-dev/tasks/<task-id>/api_conversation_history.json

@@ -6,9 +6,9 @@ as `io.github.dstrupl/vardoger`. The registry feed is consumed by Docker
 Desktop's MCP gallery, VS Code's MCP picker, Windsurf's enterprise Internal MCP
 Registry feature, and other MCP hosts.
 
-The public registry currently serves `0.3.1`; the tracked `server.json` is
-prepared for `0.3.2` and should be republished now that the corresponding PyPI
-release exists.
+The public registry serves `0.3.2` as the active latest version, matching the
+tracked `server.json` and PyPI release. That version was published and verified
+on 2026-07-09.
 
 ## What's in this folder
 
@@ -49,10 +49,8 @@ release exists.
 
 ```bash
 cd <workspace>
-cp plugins/mcp-registry/server.json ./server.json   # CLI expects it in CWD
-mcp-publisher login github                           # browser GitHub OAuth
-mcp-publisher publish
-rm server.json                                       # keep the tracked copy in plugins/mcp-registry/
+mcp-publisher login github
+mcp-publisher publish plugins/mcp-registry/server.json
 ```
 
 Verify with:

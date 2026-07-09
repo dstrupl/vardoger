@@ -20,9 +20,20 @@ This installs the vardoger analysis skill to `~/.openclaw/skills/vardoger/`. Ope
 
 Vardoger is also listed on
 [ClawHub as `vardoger-analyze`](https://clawhub.ai/skills/vardoger-analyze).
-The registry listing is maintained separately from the PyPI release and may
-trail the version in this repository; install the CLI with `pipx` in either
-case because the skill invokes it at runtime.
+Version `0.3.2` is live there as the `latest` tag and passed ClawHub's current
+moderation scan. Install the CLI with `pipx` in either case because the skill
+invokes it at runtime.
+
+Maintainers publish future versions with the current CLI shape:
+
+```bash
+clawhub skill publish plugins/openclaw/skills/analyze \
+  --slug vardoger-analyze \
+  --name "vardoger — Analyze History" \
+  --version X.Y.Z \
+  --tags latest \
+  --changelog "Describe the release"
+```
 
 ## Usage
 
