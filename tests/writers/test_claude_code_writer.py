@@ -22,17 +22,11 @@ def _as_project(dir_: Path) -> Path:
     return dir_
 
 
-def test_global_scope():
-    with tempfile.TemporaryDirectory() as tmp:
-        home = Path(tmp)
-        _ = home / ".claude" / "rules"
+def test_global_scope(fake_home: Path) -> None:
+    path = write_claude_code_rules("test content", scope="global")
 
-        path = write_claude_code_rules("test content", scope="global")
-        assert path.exists()
-        assert "test content" in path.read_text()
-
-        path.unlink()
-        path.parent.rmdir()
+    assert path == fake_home / ".claude" / "rules" / "vardoger.md"
+    assert path.read_text() == "test content"
 
 
 def test_project_scope():
