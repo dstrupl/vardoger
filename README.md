@@ -38,6 +38,9 @@ Then tell your assistant: **"Personalize my assistant."**
 > Looking for the in-app plugin listings? Track review status for each
 > marketplace (PyPI, Cursor, Claude Code, Codex, Copilot CLI, Windsurf, Cline,
 > ClawHub) in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
+> Vardoger is currently live on PyPI, the Cursor Marketplace, the Claude Code
+> community catalog, self-hosted Codex and Copilot marketplaces, ClawHub,
+> McpMux, and the Official MCP Registry.
 
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
 > `0.3.2` release. The beta install paths below stay here for anyone still pinning
@@ -84,13 +87,13 @@ Then tell your assistant: **"Personalize my assistant."**
 
 | Platform | History Source | Prompt Delivery | Integration |
 |---|---|---|---|
-| **Cursor** | Agent transcript JSONL | `.cursor/rules/vardoger.md` | MCP server |
-| **Claude Code** | Session JSONL | `.claude/rules/vardoger.md` | Plugin with skill |
-| **OpenAI Codex** | Session rollout JSONL | `~/.codex/AGENTS.md` | Plugin with skill |
-| **OpenClaw** | Session JSONL | `~/.openclaw/skills/vardoger-personalization/SKILL.md` | Skill |
-| **GitHub Copilot CLI** | `~/.copilot/session-state/*.jsonl` | `~/.copilot/copilot-instructions.md` (global) or `<project>/.github/copilot-instructions.md` (project) — managed inside a `<!-- vardoger:start -->` fenced section | CLI-only |
-| **Windsurf** | `~/.codeium/windsurf/**/*.jsonl` | `~/.codeium/windsurf/memories/global_rules.md` (global, fenced section) or `<project>/.windsurf/rules/vardoger.md` (project, dedicated file) | CLI-only |
-| **Cline** | VS Code `globalStorage/.../tasks/*/api_conversation_history.json` | `<project>/.clinerules/vardoger.md` if `.clinerules` is a directory, otherwise a fenced section in `<project>/.clinerules` (project-only) | CLI-only |
+| **Cursor** | Agent transcript JSONL | `.cursor/rules/vardoger.md` | [Marketplace plugin + MCP](plugins/cursor/README.md) |
+| **Claude Code** | Session JSONL | `.claude/rules/vardoger.md` | [Community/custom plugin](plugins/claude-code/README.md) |
+| **OpenAI Codex** | Session rollout JSONL | `~/.codex/AGENTS.md` | [Repository marketplace plugin](plugins/codex/README.md) |
+| **OpenClaw** | Session JSONL | `~/.openclaw/skills/vardoger-personalization/SKILL.md` | [Skill + ClawHub](plugins/openclaw/README.md) |
+| **GitHub Copilot CLI** | `~/.copilot/session-state/*.jsonl` | `~/.copilot/copilot-instructions.md` (global) or `<project>/.github/copilot-instructions.md` (project) — managed inside a `<!-- vardoger:start -->` fenced section | [Custom plugin + published skill](plugins/copilot/README.md) |
+| **Windsurf** | `~/.codeium/windsurf/**/*.jsonl` | `~/.codeium/windsurf/memories/global_rules.md` (global, fenced section) or `<project>/.windsurf/rules/vardoger.md` (project, dedicated file) | [CLI + MCP](plugins/windsurf/README.md) |
+| **Cline** | VS Code `globalStorage/.../tasks/*/api_conversation_history.json` | `<project>/.clinerules/vardoger.md` if `.clinerules` is a directory, otherwise a fenced section in `<project>/.clinerules` (project-only) | [CLI + MCP](plugins/cline/README.md) |
 
 ## Development
 
@@ -157,18 +160,20 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full walkthrough and [AGENTS.md](
 
 CI runs automatically on every push and PR (lint, type check, tests across Python 3.11–3.13). To publish a new version:
 
-1. Bump `version` in `pyproject.toml`
-2. Commit and push to `main`
-3. Go to [Releases](https://github.com/dstrupl/vardoger/releases) > **Create a new release**
-4. Create a new tag matching the version (e.g. `v0.1.0`), add a title and description
-5. Click **Publish release**
+1. Bump the package, generated setup manifests, platform manifests, and registry
+   metadata together; close the matching section in `CHANGELOG.md`.
+2. Run the complete quality, security, plugin-validation, and build checks.
+3. Commit and push to `main`, then wait for all required checks.
+4. Create an annotated `vX.Y.Z` tag and publish the matching
+   [GitHub release](https://github.com/dstrupl/vardoger/releases).
 
 The `publish.yml` workflow builds the package and uploads it to PyPI via [trusted publishers](https://docs.pypi.org/trusted-publishers/) (no API tokens needed). Once complete, `pipx install vardoger` will pull the new version.
 
 ## Status
 
-Public beta. The `0.3.x` line is published on PyPI and actively maintained;
-marketplace listings are rolling out per [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
+Public beta. Version `0.3.2` is published on PyPI and actively maintained.
+See [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md) for live listings and
+the remaining official-directory submissions.
 See [PRD.md](PRD.md) for the full product requirements document.
 
 ## Privacy and security

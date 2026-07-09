@@ -31,9 +31,9 @@ project had been idle.
 3. **Codex changed materially.** Current Codex expects the repository catalog
    at `.agents/plugins/marketplace.json`, uses `codex plugin marketplace ...`,
    and now has an [official directory submission process](https://developers.openai.com/codex/submit-plugins).
-   The repository marketplace repair is validated locally but is not public
-   until these changes are merged. Official submission assets and owner action
-   remain outstanding.
+   The repository marketplace repair shipped in `0.3.2` and was verified by a
+   clean Git-source install. Official submission assets and owner action remain
+   outstanding.
 4. **Another promotion path is available:** the public
    [`github/copilot-plugins`](https://github.com/github/copilot-plugins)
    default marketplace accepts contributions. Vardoger is already live as an
@@ -337,7 +337,7 @@ history, surface details, and "last checked" context.
 | [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Live | 2026-04-20 (orig); 2026-05-16 (re-submit) | Re-add verified 2026-07-09 | [catalog](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
 | [**Claude Code — curated directory**](#claude-code--curated-directory) | `plugins/claude-code/` | Not started (watch-only) | — | — | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
-| [**Codex — custom**](#codex--custom) | `.agents/plugins/` + `plugins/codex/` | Draft repair validated locally | — | — | `codex plugin marketplace add …` |
+| [**Codex — custom**](#codex--custom) | `.agents/plugins/` + `plugins/codex/` | Live (self-served) | 2026-07-09 | 2026-07-09 | `codex plugin marketplace add …` |
 | [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Not started — submission available | — | — | [submission guide](https://developers.openai.com/codex/submit-plugins) |
 | [**GitHub Copilot CLI — custom**](#github-copilot-cli--custom) | `plugins/copilot/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `copilot plugin marketplace add …` |
 | [**GitHub Copilot CLI — `awesome-copilot`**](#github-copilot-cli--awesome-copilot) | `plugins/copilot/` | Live | 2026-04-21 | 2026-04-28 | [PR #1461](https://github.com/github/awesome-copilot/pull/1461) |
@@ -628,8 +628,9 @@ codex plugin marketplace add dstrupl/vardoger --ref main \
 ```
 
 The previous `plugins/codex/marketplace.json` location and legacy
-`codex marketplace add` command are obsolete. Status remains **Draft repair
-validated locally** until the repository change is published.
+`codex marketplace add` command are obsolete. The repair shipped in `0.3.2`;
+a clean remote fetch and `codex plugin add vardoger@vardoger` resolved and
+installed plugin version `0.3.2`. Status is **Live (self-served)**.
 
 ### Codex — official directory
 
@@ -1089,8 +1090,9 @@ on behalf of the project owner.
 
 ## Next session pickup
 
-1. Merge and release the [Codex custom marketplace repair](#codex--custom),
-   then verify the Git-source install from a clean Codex home.
+1. Finish `0.3.2` release propagation: republish the Official MCP Registry and
+   ClawHub entries, check whether Claude's catalog pin needs refreshing, close
+   resolved issue #30, and record the resulting public versions here.
 2. Prepare the [Codex official directory](#codex--official-directory) listing:
    add a terms page and listing imagery, finalize copy, and write exactly five
    positive and three negative tests before the owner submits it.

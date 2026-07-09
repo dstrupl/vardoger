@@ -1,11 +1,12 @@
-# vardoger — McpMux community registry submission
+# vardoger — McpMux community registry
 
-Draft submission for [mcpmux/mcp-servers](https://github.com/mcpmux/mcp-servers),
+Vardoger is live in [mcpmux/mcp-servers](https://github.com/mcpmux/mcp-servers),
 the community-maintained JSON registry consumed by the
 [McpMux](https://mcpmux.com) desktop gateway. McpMux proxies MCP tools into
 Cursor, Claude Desktop, VS Code, and Windsurf through a single endpoint, so
-being listed here lands vardoger in one gateway reachable from every McpMux
-client at once.
+the listing makes vardoger reachable from every McpMux client at once. The
+original submission was merged in
+[PR #113](https://github.com/mcpmux/mcp-servers/pull/113).
 
 ## What's in this folder
 
@@ -13,7 +14,7 @@ client at once.
   repo's `schemas/server-definition.schema.json` (JSON Schema 2020-12) with
   schema version `2.1`.
 
-## Before opening the PR
+## Original submission recipe
 
 1. Fork and clone [`mcpmux/mcp-servers`](https://github.com/mcpmux/mcp-servers).
 2. Copy this file into `servers/` on the fork. The upstream repo names every
@@ -50,8 +51,8 @@ client at once.
      --body "Personalize AI coding assistants from local conversation history. Runs vardoger CLI via stdio. See https://github.com/dstrupl/vardoger."
    ```
 
-5. Wait for CI + maintainer review. On merge, the bundle updates within an
-   hour and McpMux desktop clients pick up the entry automatically.
+5. After merge, the bundle updates within roughly an hour and McpMux desktop
+   clients pick up the entry automatically.
 
 ## Maintenance
 

@@ -9,12 +9,20 @@ An OpenClaw skill that analyzes your conversation history and generates personal
 
 ## Install
 
+The direct setup path tracks the current PyPI release and is recommended:
+
 ```bash
 pipx install vardoger
 vardoger setup openclaw
 ```
 
 This installs the vardoger analysis skill to `~/.openclaw/skills/vardoger/`. OpenClaw discovers it automatically on the next session.
+
+Vardoger is also listed on
+[ClawHub as `vardoger-analyze`](https://clawhub.ai/skills/vardoger-analyze).
+The registry listing is maintained separately from the PyPI release and may
+trail the version in this repository; install the CLI with `pipx` in either
+case because the skill invokes it at runtime.
 
 ## Usage
 

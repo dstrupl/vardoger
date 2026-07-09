@@ -65,7 +65,8 @@ that lets users install servers with one click. We publish install guidance
 for Cline's "llms-install" flow in [`llms-install.md`](./llms-install.md).
 Once vardoger is accepted into the marketplace, Cline users will be able to
 install it directly from the MCP panel inside Cline. Until then, use the
-manual configuration in step 2.
+manual configuration in step 2. Submission progress is tracked in
+[cline/mcp-marketplace issue #1394](https://github.com/cline/mcp-marketplace/issues/1394).
 
 ## Usage
 

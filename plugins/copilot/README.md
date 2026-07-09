@@ -38,6 +38,20 @@ pipx install vardoger
 This installs into `~/.copilot/installed-plugins/_direct/<source-id>/` as a
 "direct" install. Use `copilot plugin update vardoger` to refresh.
 
+### Published skill and default-marketplace status
+
+The standalone `vardoger-analyze` skill is also live in
+[`github/awesome-copilot`](https://github.com/github/awesome-copilot):
+
+```bash
+gh skills install github/awesome-copilot vardoger-analyze
+```
+
+Vardoger has not yet been submitted to the separate
+[`github/copilot-plugins`](https://github.com/github/copilot-plugins) default
+plugin marketplace. Options A and B above are the supported full-plugin paths
+today.
+
 ### Option C — Local marketplace (`pipx` + `vardoger setup copilot`)
 
 ```bash

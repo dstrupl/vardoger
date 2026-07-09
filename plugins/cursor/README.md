@@ -12,7 +12,10 @@ Exposes vardoger as an MCP server that Cursor's agent can invoke to personalize 
 
 ## Install from Cursor Marketplace
 
-Once listed, install from the Cursor Marketplace panel and restart Cursor. The plugin ships a `.cursor-plugin/plugin.json` manifest plus an `mcp.json` that launches the server via `uvx` — no extra setup is needed if `uv` is on your PATH.
+Install [vardoger from the Cursor Marketplace](https://cursor.com/marketplace/vardoger)
+and restart Cursor. The plugin ships a `.cursor-plugin/plugin.json` manifest
+plus an `mcp.json` that launches the server via `uvx` — no extra setup is
+needed if `uv` is on your PATH.
 
 ## Install via pipx (fallback)
 

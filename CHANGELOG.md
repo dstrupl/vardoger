@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Documentation
+
+- Refresh the root and platform READMEs for the live Cursor and Claude
+  listings, the released Codex marketplace, current Copilot discovery paths,
+  Windsurf native-skill support, and the actual MCP Registry, McpMux, Docker,
+  Cline, and ClawHub states.
+
 ## [0.3.2] — 2026-07-09
 
 ### Fixed

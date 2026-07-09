@@ -1,28 +1,29 @@
-# vardoger — Official MCP Registry submission
+# vardoger — Official MCP Registry
 
-Draft submission for the official [Model Context Protocol Registry](https://github.com/modelcontextprotocol/registry)
-(`registry.modelcontextprotocol.io`). Landing here gives vardoger presence in a
-feed that is ingested by Docker Desktop's MCP gallery, VS Code's MCP picker,
-Windsurf's enterprise Internal MCP Registry feature, and any other MCP host
-that syncs the canonical registry.
+Vardoger is live in the official
+[Model Context Protocol Registry](https://github.com/modelcontextprotocol/registry)
+as `io.github.dstrupl/vardoger`. The registry feed is consumed by Docker
+Desktop's MCP gallery, VS Code's MCP picker, Windsurf's enterprise Internal MCP
+Registry feature, and other MCP hosts.
+
+The public registry currently serves `0.3.1`; the tracked `server.json` is
+prepared for `0.3.2` and should be republished now that the corresponding PyPI
+release exists.
 
 ## What's in this folder
 
 - [`server.json`](./server.json) — the registry metadata, conforming to the
   December 2025 schema (`https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`).
 
-## Before publishing (one-time prep)
+## Publishing a new version
 
 1. **PyPI ownership marker.** The registry verifies ownership by searching for
    `mcp-name: io.github.dstrupl/vardoger` in the package's README (which PyPI
-   publishes as the package description). That marker is already added to the
-   repo-root `README.md` as an HTML comment, so the next PyPI release will
-   carry it automatically.
-2. **Release to PyPI.** The registry only hosts metadata — the package itself
-   must exist on PyPI at the version in `server.json`. Bump vardoger, build,
-   and `uv publish` (or `twine upload`) before calling `mcp-publisher publish`,
-   and keep `packages[0].version` in this file in lock-step with
-   `pyproject.toml`.
+   publishes as the package description). The marker is already present in the
+   repo-root `README.md` and in the published package description.
+2. **Release to PyPI first.** The registry only hosts metadata. Confirm the
+   version in `server.json` already exists on PyPI, and keep both registry
+   version fields in lock-step with `pyproject.toml`.
 3. **Validate locally.** Install the publisher CLI and re-generate the
    scaffold so any new required fields get caught:
 
@@ -57,10 +58,10 @@ rm server.json                                       # keep the tracked copy in 
 Verify with:
 
 ```bash
-curl -s https://registry.modelcontextprotocol.io/v0/servers \
-  | jq '.servers[] | select(.name=="io.github.dstrupl/vardoger")'
+curl -s 'https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10' \
+  | jq '.servers[] | select(.server.name=="io.github.dstrupl/vardoger")'
 ```
 
-Update [`../../MARKETPLACE_STATUS.md`](../../MARKETPLACE_STATUS.md) to mark the
-row **Live** once the response includes the current version, and tick the
-matching Phase 4 checkbox in [`../../PRD.md`](../../PRD.md).
+Update [`../../MARKETPLACE_STATUS.md`](../../MARKETPLACE_STATUS.md) once the
+response includes the new version. The matching Phase 4 checkbox in
+[`../../PRD.md`](../../PRD.md) is already complete.

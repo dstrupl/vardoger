@@ -4,6 +4,11 @@ Tracked copy of the [`docker/mcp-registry`](https://github.com/docker/mcp-regist
 entry that publishes `mcp/vardoger` on Docker Hub and lists vardoger in Docker
 Desktop's MCP Toolkit.
 
+Submission [PR #2949](https://github.com/docker/mcp-registry/pull/2949) remains
+open. Its tracked registry entry is pinned to the `0.3.1` release commit; update
+both the submission branch and `server.yaml` together before moving it to a
+newer release.
+
 ## What's in this folder
 
 - [`server.yaml`](./server.yaml) — the registry metadata Docker's
@@ -36,15 +41,15 @@ repository root. It:
 ## Before submitting (one-time prep)
 
 1. **Cut a PyPI release.** `server.yaml` points at a specific commit in
-   `dstrupl/vardoger`. Cut the release (e.g. `v0.3.1`) and let the
+   `dstrupl/vardoger`. Cut the release (for example, `vX.Y.Z`) and let the
    [`publish.yml`](../../.github/workflows/publish.yml) workflow push the new
    wheel to PyPI. The Docker Hub image tag Docker builds for us tracks the
    tag plus `latest`, so a bump here means a bump on Docker Hub after the
    registry merges the PR.
 2. **Pin `source.commit`.** Replace the `TBD` placeholder in
    [`server.yaml`](./server.yaml) with the commit SHA of the release tag.
-   Use `git rev-list -1 v0.3.1` (or `git rev-parse v0.3.1^{}`) — **not**
-   `git rev-parse v0.3.1`, which returns the annotated tag object SHA and
+   Use `git rev-list -1 vX.Y.Z` (or `git rev-parse vX.Y.Z^{}`) — **not**
+   plain `git rev-parse vX.Y.Z`, which returns the annotated tag object SHA and
    is not what Docker's `source.commit` expects.
 3. **Smoke-test the image locally.** From a checkout at that commit:
 

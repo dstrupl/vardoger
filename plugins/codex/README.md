@@ -18,10 +18,13 @@ Register the vardoger repository marketplace with the current Codex CLI:
 ```bash
 codex plugin marketplace add dstrupl/vardoger --ref main \
   --sparse .agents/plugins --sparse plugins/codex
+codex plugin add vardoger@vardoger
 pipx install vardoger   # installs the `vardoger` CLI the plugin shells out to
 ```
 
-Then restart Codex, run `/plugins`, pick the **vardoger** marketplace, and install the `vardoger` plugin.
+The first command registers the Git marketplace; the second installs vardoger
+from it. Alternatively, restart the ChatGPT desktop app, open `/plugins`, pick
+the **vardoger** marketplace, and install it there.
 
 The repository catalog at `.agents/plugins/marketplace.json` points Codex to
 `plugins/codex/`, which contains the plugin manifest and analyze skill. Codex
@@ -30,6 +33,12 @@ records the Git source in `$CODEX_HOME/config.toml`. Pull later releases with:
 ```bash
 codex plugin marketplace upgrade vardoger
 ```
+
+The repository marketplace is live and the `0.3.2` Git-source install has been
+verified from a clean Codex home. Vardoger is not yet in OpenAI's universal
+Plugin Directory; that separate submission is tracked in
+[`MARKETPLACE_STATUS.md`](../../MARKETPLACE_STATUS.md) and follows OpenAI's
+[plugin submission process](https://developers.openai.com/codex/submit-plugins).
 
 ### Option B — Local marketplace (`pipx` + `vardoger setup codex`, always works)
 

@@ -8,8 +8,9 @@ It is consumed by two paths:
   the rendered `SKILL.md` into each `plugins/<platform>/skills/analyze/` so the
   marketplace-shipped plugins stay in lock-step.
 - Runtime — `vardoger setup {claude-code|codex|openclaw}` calls
-  `vardoger.prompts.analyze_skill_body()` and writes the same rendered file
-  into `~/.vardoger/plugins/<platform>/skills/analyze/SKILL.md`.
+  `vardoger.prompts.analyze_skill_body()` and writes the same rendered file to
+  each platform's install root: `~/.vardoger/plugins/claude-code/`,
+  `~/.codex/plugins/vardoger/`, or `~/.openclaw/skills/vardoger/`.
 
 ## Regenerate
 

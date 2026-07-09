@@ -13,6 +13,11 @@ integration surfaces that do work cleanly are:
 2. **MCP server** — vardoger also ships an MCP server (`vardoger mcp`) that
    Windsurf can talk to from Cascade.
 
+Windsurf now also supports native skill folders at project scope
+(`.windsurf/skills/`) and user scope (`~/.codeium/windsurf/skills/`). Vardoger
+does not yet ship a native Windsurf skill package, so the CLI writer and MCP
+server below remain the supported install paths for this release.
+
 ## Prerequisites
 
 - **Python 3.11+** and **pipx** — see the main

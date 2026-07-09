@@ -7,7 +7,18 @@ A Claude Code plugin that analyzes your conversation history and generates perso
 - **Python 3.11+** and **pipx** — see [installation instructions](../../README.md#prerequisites) in the main README
 - **Claude Code CLI** (`claude`) — [docs.anthropic.com/en/docs/claude-code](https://docs.anthropic.com/en/docs/claude-code/overview)
 
-## Install
+## Install from the Claude Code community catalog (recommended)
+
+```bash
+pipx install vardoger
+claude plugin marketplace add anthropics/claude-plugins-community
+claude plugin install vardoger@claude-community
+```
+
+The catalog entry is public and installable. The separate `pipx` command
+provides the `vardoger` CLI used by the bundled analyze skill.
+
+## Direct setup fallback
 
 ```bash
 pipx install vardoger
@@ -64,4 +75,7 @@ Once loaded, ask Claude Code to "analyze my conversation history" or "run the va
 
 ## Uninstall
 
-Simply stop passing `--plugin-dir` when starting Claude Code.
+Uninstall vardoger through Claude Code's plugin UI or CLI if you used a
+marketplace. If you used `--plugin-dir`, simply stop passing that option.
+Remove `~/.claude/rules/vardoger.md` separately if you also want to delete the
+generated personalization.
