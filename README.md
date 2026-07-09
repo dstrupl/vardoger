@@ -40,7 +40,7 @@ Then tell your assistant: **"Personalize my assistant."**
 > ClawHub) in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md).
 
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
-> `0.2.x` line. The beta install paths below stay here for anyone still pinning
+> `0.3.1` release. The beta install paths below stay here for anyone still pinning
 > an earlier release; new installs should not need them.
 >
 > ```bash
@@ -107,6 +107,7 @@ uv sync
 
 ```
 src/vardoger/          # shared core — history reading, analysis, prompt generation
+.agents/plugins/       # repository-level Codex marketplace catalog
 plugins/_shared/       # shared analysis/personalization skill authored once
 plugins/cursor/        # Cursor MCP server config, install script
 plugins/claude-code/   # Claude Code plugin manifest, skills
@@ -180,4 +181,3 @@ See [PRD.md](PRD.md) for the full product requirements document.
 Licensed under the [Apache License, Version 2.0](LICENSE).
 
 <!-- mcp-name: io.github.dstrupl/vardoger -->
-

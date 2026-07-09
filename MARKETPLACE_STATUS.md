@@ -15,7 +15,32 @@ Status vocabulary:
   address.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-05-21** (UTC).
+Last refreshed: **2026-07-09** (UTC).
+
+2026-07-09: Full marketplace and product-compatibility refresh after the
+project had been idle.
+
+1. **Cursor is Live.** The public vardoger listing now resolves at
+   [`cursor.com/marketplace/vardoger`](https://cursor.com/marketplace/vardoger).
+   The exact approval date is not exposed; 2026-07-09 is the first recorded
+   verification in this repository.
+2. **Claude Code is Live again.** `vardoger` is present in the current
+   [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community)
+   catalog after the 2026-05 removal and re-submission. The custom marketplace
+   remains a second supported install path.
+3. **Codex changed materially.** Current Codex expects the repository catalog
+   at `.agents/plugins/marketplace.json`, uses `codex plugin marketplace ...`,
+   and now has an [official directory submission process](https://developers.openai.com/codex/submit-plugins).
+   The repository marketplace repair is validated locally but is not public
+   until these changes are merged. Official submission assets and owner action
+   remain outstanding.
+4. **Another promotion path is available:** the public
+   [`github/copilot-plugins`](https://github.com/github/copilot-plugins)
+   default marketplace accepts contributions. Vardoger is already live as an
+   `awesome-copilot` skill, but has not been submitted as a default plugin.
+5. **Long-tail queues did not move.** Cline issue #1394 and Docker PR #2949
+   remain open without reviewer activity. `claudemarketplaces.com` now redirects
+   to CrossAI Tools and the former vardoger listing path returns 404.
 
 2026-05-21: Early probe before the planned 7-day re-check window. **No
 marketplace state changed, and there is no useful owner action today.**
@@ -308,21 +333,22 @@ history, surface details, and "last checked" context.
 | Marketplace | Plugin root | Status | Submitted | Live on | Link |
 | --- | --- | --- | --- | --- | --- |
 | [**PyPI**](#pypi) | (repo root) | Live | 2026-04-20 | 2026-04-24 | [pypi.org/project/vardoger](https://pypi.org/project/vardoger/) |
-| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Re-submitted | 2026-04-20 (orig); 2026-05-16 (re-submit) | — | [publisher dashboard](https://cursor.com/marketplace/publish) |
-| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Re-submitted (awaiting next sync) | 2026-04-20 (orig); 2026-05-16 (re-submit) | 2026-04-28 → 2026-05-13 (regressed); awaiting re-add | [catalog entry](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
+| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Live | 2026-04-20 (orig); 2026-05-16 (re-submit) | By 2026-07-09 (first verified) | [public listing](https://cursor.com/marketplace/vardoger) |
+| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Live | 2026-04-20 (orig); 2026-05-16 (re-submit) | Re-add verified 2026-07-09 | [catalog](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
 | [**Claude Code — curated directory**](#claude-code--curated-directory) | `plugins/claude-code/` | Not started (watch-only) | — | — | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
-| [**Codex — custom**](#codex--custom) | `plugins/codex/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `codex plugin marketplace add …` |
-| [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Not started — blocked upstream | — | — | [openai/codex#13712](https://github.com/openai/codex/pull/13712) |
+| [**Codex — custom**](#codex--custom) | `.agents/plugins/` + `plugins/codex/` | Draft repair validated locally | — | — | `codex plugin marketplace add …` |
+| [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Not started — submission available | — | — | [submission guide](https://developers.openai.com/codex/submit-plugins) |
 | [**GitHub Copilot CLI — custom**](#github-copilot-cli--custom) | `plugins/copilot/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `copilot plugin marketplace add …` |
 | [**GitHub Copilot CLI — `awesome-copilot`**](#github-copilot-cli--awesome-copilot) | `plugins/copilot/` | Live | 2026-04-21 | 2026-04-28 | [PR #1461](https://github.com/github/awesome-copilot/pull/1461) |
-| [**Windsurf MCP Store**](#windsurf-mcp-store) | `plugins/windsurf/` | N/A | — | — | (no public submission form) |
-| [**Official MCP Registry**](#official-mcp-registry) | `plugins/mcp-registry/` | Live | 2026-04-24 | 2026-04-24 | [registry feed](https://registry.modelcontextprotocol.io/v0/servers?search=vardoger) |
+| [**GitHub Copilot CLI — default marketplace**](#github-copilot-cli--default-marketplace) | `plugins/copilot/` | Not started | — | — | [github/copilot-plugins](https://github.com/github/copilot-plugins) |
+| [**Windsurf MCP Store**](#windsurf-mcp-store) | `plugins/windsurf/` | Direct install only | — | — | (no public submission form found) |
+| [**Official MCP Registry**](#official-mcp-registry) | `plugins/mcp-registry/` | Live | 2026-04-24 | 2026-04-24 | [registry feed](https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10) |
 | [**McpMux community registry**](#mcpmux-community-registry) | `plugins/mcpmux/` | Live | 2026-04-22 | 2026-04-24 | [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) |
 | [**Docker MCP Registry**](#docker-mcp-registry) | `plugins/docker-mcp/` | Submitted | 2026-04-24 | — | [PR #2949](https://github.com/docker/mcp-registry/pull/2949) |
 | [**Cline MCP Marketplace**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted | 2026-04-20 | — | [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) |
 | [**OpenClaw ClawHub**](#openclaw-clawhub) | `plugins/openclaw/skills/analyze/` | Live (self-served) | 2026-04-22 | 2026-04-24 | `npx clawhub publish …` |
-| [**claudemarketplaces.com**](#claudemarketplacescom) | `.claude-plugin/marketplace.json` | Feedback submitted (awaiting triage) | 2026-04-27 (manifest); 2026-05-16 (/feedback) | — | [claudemarketplaces.com](https://claudemarketplaces.com) |
+| [**claudemarketplaces.com / CrossAI Tools**](#claudemarketplacescom) | `.claude-plugin/marketplace.json` | Unavailable (redirect + 404) | 2026-04-27 (manifest); 2026-05-16 (/feedback) | — | [crossaitools.com](https://crossaitools.com) |
 
 ## Per-marketplace details
 
@@ -349,6 +375,10 @@ Manifest at `plugins/cursor/.cursor-plugin/plugin.json`; `mcp.json` boots via
 `uvx vardoger mcp`. Logotype URL in the form:
 `https://raw.githubusercontent.com/dstrupl/vardoger/main/assets/logo.svg`.
 Submitted via the form on 2026-04-20.
+
+**Current status (verified 2026-07-09): Live.** The public listing now
+resolves at [`cursor.com/marketplace/vardoger`](https://cursor.com/marketplace/vardoger).
+The historical submission investigation below is retained for provenance.
 
 **2026-04-28 dashboard finding:** the publisher page at
 `cursor.com/marketplace/publish` is **submit-only** — it serves a form for
@@ -403,6 +433,10 @@ escalation channel exists.
 
 - **Surface:** [clau.de/plugin-directory-submission](https://clau.de/plugin-directory-submission) (submission) → [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community) (read-only mirror)
 - **Plugin root:** `plugins/claude-code/`
+
+**Current status (verified 2026-07-09): Live again.** The current community
+catalog contains a `vardoger` entry. The removal and re-submission timeline
+below explains the temporary 2026-05 regression.
 
 Submitted 2026-04-20 via the `claude.ai/settings/plugins/submit` form (personal-
 account path; `platform.claude.com` is the org-account alternative and feeds
@@ -582,25 +616,31 @@ with each vardoger release.
 - **Surface:** `codex plugin marketplace add …`
 - **Plugin root:** `plugins/codex/`
 
-Codex has no central registry for custom marketplaces — our public manifest
-at `plugins/codex/marketplace.json` *is* the marketplace. Users install it
-directly with
-`codex plugin marketplace add https://github.com/dstrupl/vardoger.git --sparse plugins/codex`
-(or the legacy `codex marketplace add` shim). Nothing to submit; flipped to
-**Live** on 2026-04-22 after confirming there is no separate submission flow.
+Current Codex expects the repository marketplace at
+`.agents/plugins/marketplace.json`. This working tree now carries that catalog,
+pointing to `plugins/codex/`, and both the manifest validator and Codex CLI
+accept it. After the repair is merged, users can register the Git source with:
+
+```bash
+codex plugin marketplace add dstrupl/vardoger --ref main \
+  --sparse .agents/plugins --sparse plugins/codex
+```
+
+The previous `plugins/codex/marketplace.json` location and legacy
+`codex marketplace add` command are obsolete. Status remains **Draft repair
+validated locally** until the repository change is published.
 
 ### Codex — official directory
 
-- **Surface:** (pending self-serve)
+- **Surface:** [OpenAI plugin submission](https://developers.openai.com/codex/submit-plugins)
 - **Plugin root:** `plugins/codex/`
 
-[openai/codex#13712](https://github.com/openai/codex/pull/13712) merged
-2026-03-07, adding the curated plugin marketplace infrastructure. Per
-[developers.openai.com/codex/plugins/build](https://developers.openai.com/codex/plugins/build),
-"Adding plugins to the official Plugin Directory is coming soon. Self-serve
-plugin publishing and management are coming soon." Last checked 2026-04-22 —
-still no self-serve flow. Users install via the custom marketplace row above
-in the meantime.
+The former upstream block is gone. OpenAI now documents official directory
+submission for verified developers and businesses. Before owner submission,
+vardoger still needs final listing copy and imagery, a public terms URL, starter
+prompts, and the required positive and negative test cases. The repository
+manifest now includes three starter prompts, but no external submission has
+been made.
 
 ### GitHub Copilot CLI — custom
 
@@ -697,10 +737,26 @@ Row flipped to **Live**. No further maintenance expected until vardoger
 ships a breaking change to the `analyze` skill or the Copilot session-state
 path.
 
+### GitHub Copilot CLI — default marketplace
+
+- **Surface:** [`github/copilot-plugins`](https://github.com/github/copilot-plugins)
+- **Plugin root:** `plugins/copilot/`
+
+The default Copilot CLI plugin marketplace is public and accepts contributed
+plugins through pull requests. Vardoger is not present as of 2026-07-09. A
+submission would improve native plugin discovery beyond the already-live
+`awesome-copilot` skill; it should be prepared only after confirming the
+current repository entry schema and contribution checks.
+
 ### Windsurf MCP Store
 
 - **Surface:** (no public submission form)
 - **Plugin root:** `plugins/windsurf/`
+
+**Current status (verified 2026-07-09): direct distribution remains the
+actionable path.** Windsurf now supports skills under `.windsurf/skills/` and
+`~/.codeium/windsurf/skills/`, creating a packaging improvement opportunity,
+but no public third-party MCP Store submission flow was found.
 
 Re-verified 2026-04-22 against the
 [Windsurf MCP docs](https://docs.windsurf.com/windsurf/cascade/mcp)
@@ -727,8 +783,8 @@ OAuth device-flow login as `dstrupl`; tracked `server.json` lives at
 `<!-- mcp-name: io.github.dstrupl/vardoger -->` marker in the repo-root
 `README.md`, which the PyPI 0.3.1 wheel carries.
 
-Verified via
-`curl -sL "https://registry.modelcontextprotocol.io/v0/servers?search=vardoger"`:
+Re-verified 2026-07-09 via
+`https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10`:
 `status=active`, `isLatest=true`, package pinned to PyPI `vardoger@0.3.1`,
 stdio transport, lone `VARDOGER_MCP_PLATFORM` env var surfaced. The
 [MCP Registry preview](https://registry.modelcontextprotocol.io/docs) feed
@@ -771,6 +827,9 @@ maintenance until vardoger ships a breaking MCP-tool or CLI change.
 
 - **Surface:** [PR #2949](https://github.com/docker/mcp-registry/pull/2949)
 - **Plugin root:** `plugins/docker-mcp/`
+
+**Current status (verified 2026-07-09): still open with no reviewer
+movement.** Keep this on low-frequency monitoring.
 
 Docker's catalog (surfaces at [hub.docker.com/mcp](https://hub.docker.com/mcp)
 and inside Docker Desktop's MCP Toolkit) requires a working Docker image.
@@ -846,6 +905,9 @@ without #2949 merging.
 - **Surface:** [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394)
 - **Plugin root:** `plugins/cline/`
 
+**Current status (verified 2026-07-09): still open with no comments or
+reviewer movement.** Keep this on low-frequency monitoring.
+
 Server submission issue
 `[Server Submission]: vardoger — personalize AI assistants from local history`
 opened 2026-04-20 at cline/mcp-marketplace. Install guidance for the
@@ -910,6 +972,10 @@ and revisit if ClawHub adds a `--license` flag or a maintainer-appeal path.
 - **Surface:** [claudemarketplaces.com](https://claudemarketplaces.com)
 - **Plugin root:** `.claude-plugin/marketplace.json` (the repo-root manifest we
   added in the 2026-04-27 PR)
+
+**Current status (verified 2026-07-09): unavailable.** The domain redirects to
+CrossAI Tools, and the vardoger marketplace path returns 404. Treat this as a
+dead, low-priority discovery path; no supported install route depends on it.
 
 Third-party community aggregator of Claude Code plugin marketplaces. Built
 and maintained by `@noobsaire` (Marvih Ray) at
@@ -995,13 +1061,14 @@ on behalf of the project owner.
   users; they can install directly from the in-app marketplace.
 - **Claude Code directory** — same story for Claude Code; also enables
   discoverability and the `/plugin` install UX.
-- **Codex custom + official** — Codex's self-serve directory is still
-  being built, so the custom marketplace is our interim distribution.
+- **Codex custom + official** — the repaired custom marketplace is the direct
+  install route; the now-available official directory is the primary new
+  native discovery opportunity.
 - **Copilot CLI custom + `awesome-copilot`** — GitHub's plugin marketplace
   lets users register our repo as a source directly; `awesome-copilot` is
   supplementary for discoverability.
-- **Windsurf** — no public submission form today; the per-user MCP config
-  snippet is the primary install path.
+- **Windsurf** — no public submission form today; direct MCP configuration and
+  a native `.windsurf/skills/` package are the practical install paths.
 - **Cline MCP marketplace** — single-click install for Cline users once
   merged; the `llms-install.md` file guides Cline through the install.
 - **ClawHub** — ClawHub is the canonical skill registry for OpenClaw;
@@ -1021,9 +1088,23 @@ on behalf of the project owner.
 
 ## Next session pickup
 
-Priority-ordered actions for the next agent/owner session. Each item links to
-its entry under [Per-marketplace details](#per-marketplace-details) for the
-full submission history and audit context.
+1. Merge and release the [Codex custom marketplace repair](#codex--custom),
+   then verify the Git-source install from a clean Codex home.
+2. Prepare the [Codex official directory](#codex--official-directory) listing:
+   add a terms page and listing imagery, finalize copy, and write exactly five
+   positive and three negative tests before the owner submits it.
+3. Consider a focused contribution to the
+   [`github/copilot-plugins`](https://github.com/github/copilot-plugins)
+   default marketplace. This is incremental discovery beyond the already-live
+   `awesome-copilot` skill.
+4. Package the existing Windsurf flow as a native skill directory. Keep Cline
+   issue #1394 and Docker PR #2949 on low-frequency monitoring; both were still
+   unchanged on 2026-07-09.
+
+## Superseded 2026-05 pickup plan
+
+Retained below as historical submission evidence; its dates and actions are no
+longer the current plan.
 
 ### 1. Verify-after-posting probes (all three owner actions in flight)
 
@@ -1120,6 +1201,5 @@ refreshed" at the top of this file in the same commit.
   or makes the `windsurf-mcp-registry://` deeplink target third-party
   manifests. The Enterprise internal-registry path is covered by the
   **Official MCP Registry** row in the table above.
-- **Codex official directory** — blocked upstream; watch
-  `developers.openai.com/codex/plugins/build` for the "Self-serve plugin
-  publishing and management are coming soon" banner to disappear.
+- **Historical Codex note:** the directory was blocked upstream in 2026-05;
+  that block has since been removed. Follow the current submission plan above.
