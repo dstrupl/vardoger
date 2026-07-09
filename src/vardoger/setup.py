@@ -72,6 +72,7 @@ CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
         capabilities=["Read", "Write"],
         websiteURL="https://github.com/dstrupl/vardoger",
         privacyPolicyURL="https://github.com/dstrupl/vardoger/blob/main/PRIVACY.md",
+        termsOfServiceURL="https://github.com/dstrupl/vardoger/blob/main/TERMS.md",
         defaultPrompt=[
             "Analyze my Codex history and personalize how you work with me.",
             "Show what you have learned about my working preferences.",
