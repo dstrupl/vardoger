@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # Copyright 2026 David Strupl
 # SPDX-License-Identifier: Apache-2.0
-"""Render the three per-platform analyze/SKILL.md files from the shared template.
+"""Render the per-platform analyze skills from the shared template.
 
-The analyze skill body is identical across Claude Code, Codex, and OpenClaw
-except for the platform name shown in prose and the `--platform` slug used in
-example CLI invocations. OpenClaw additionally needs extra YAML frontmatter to
-satisfy ClawHub's schema (see `openclaw/clawhub` docs/skill-format.md).
+The skill body is identical across Claude Code, Codex, GitHub Copilot CLI,
+OpenClaw, and Windsurf except for the platform name shown in prose and the
+`--platform` slug used in example CLI invocations. OpenClaw additionally needs
+extra YAML frontmatter to satisfy ClawHub's schema (see `openclaw/clawhub`
+docs/skill-format.md).
 
 Usage:
 
@@ -40,11 +41,12 @@ class PluginTarget:
     platform_slug: str
     platform_name: str
     output: Path
+    skill_name: str = "analyze"
     frontmatter: tuple[str, ...] = field(default_factory=tuple)
 
 
 _COMMON_FRONTMATTER = (
-    "name: analyze",
+    "name: {skill_name}",
     'description: "Use when the user asks to personalize their assistant, to use'
     " vardoger, or to analyze their {platform_name} conversation history. Runs the"
     ' vardoger CLI to read past conversations and generate tailored instructions."',
@@ -66,6 +68,12 @@ _TARGETS: tuple[PluginTarget, ...] = (
         platform_slug="copilot",
         platform_name="GitHub Copilot CLI",
         output=REPO_ROOT / "plugins" / "copilot" / "skills" / "analyze" / "SKILL.md",
+    ),
+    PluginTarget(
+        platform_slug="windsurf",
+        platform_name="Windsurf",
+        output=(REPO_ROOT / "plugins" / "windsurf" / "skills" / "vardoger-analyze" / "SKILL.md"),
+        skill_name="vardoger-analyze",
     ),
     PluginTarget(
         platform_slug="openclaw",
@@ -91,7 +99,10 @@ def _render(target: PluginTarget) -> str:
     """Compose the frontmatter + body for a single plugin target."""
     body = analyze_skill_body(target.platform_slug, target.platform_name)
     common = tuple(
-        line.replace("{platform_name}", target.platform_name) for line in _COMMON_FRONTMATTER
+        line.replace("{platform_name}", target.platform_name).replace(
+            "{skill_name}", target.skill_name
+        )
+        for line in _COMMON_FRONTMATTER
     )
     frontmatter_lines = ("---", *common, *target.frontmatter, "---", "")
     return "\n".join(frontmatter_lines) + body

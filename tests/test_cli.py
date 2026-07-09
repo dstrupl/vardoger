@@ -164,8 +164,13 @@ def test_setup_windsurf_prepares_rules(
 ) -> None:
     main(["setup", "windsurf"])
     rules = fake_home / ".codeium" / "windsurf" / "memories" / "global_rules.md"
+    skill = fake_home / ".codeium" / "windsurf" / "skills" / "vardoger-analyze" / "SKILL.md"
     assert rules.is_file()
-    assert "Prepared Windsurf global rules" in capsys.readouterr().out
+    assert skill.is_file()
+    assert "name: vardoger-analyze" in skill.read_text(encoding="utf-8")
+    out = capsys.readouterr().out
+    assert "Prepared Windsurf global rules" in out
+    assert "Installed Windsurf skill" in out
 
 
 def test_setup_cline_prints_guidance(fake_home: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -184,6 +189,16 @@ def test_setup_cline_prints_guidance(fake_home: Path, capsys: pytest.CaptureFixt
             "openclaw",
             (".openclaw", "skills", "vardoger", "skills", "analyze", "SKILL.md"),
         ),
+        (
+            "windsurf",
+            (
+                ".codeium",
+                "windsurf",
+                "skills",
+                "vardoger-analyze",
+                "SKILL.md",
+            ),
+        ),
     ],
 )
 def test_setup_skill_has_valid_frontmatter(
@@ -192,8 +207,7 @@ def test_setup_skill_has_valid_frontmatter(
     fake_home: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The generated SKILL.md must begin with YAML frontmatter so Claude Code /
-    Codex / OpenClaw can auto-discover and fire the skill on user intent."""
+    """Generated skills need frontmatter so each host can discover them."""
     main(["setup", platform])
     capsys.readouterr()
     skill = fake_home.joinpath(*skill_path_parts)
@@ -204,7 +218,8 @@ def test_setup_skill_has_valid_frontmatter(
     closing_idx = lines.index("---", 1)
     frontmatter = "\n".join(lines[1:closing_idx])
 
-    assert "name: analyze" in frontmatter
+    expected_skill_name = "vardoger-analyze" if platform == "windsurf" else "analyze"
+    assert f"name: {expected_skill_name}" in frontmatter
     assert "description:" in frontmatter
     assert "personalize" in frontmatter
     assert "vardoger" in frontmatter

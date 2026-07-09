@@ -7,6 +7,7 @@ Handles post-install registration for each supported platform:
   - Claude Code: creates plugin directory and prints activation command
   - Codex: creates plugin directory and registers in marketplace.json
   - OpenClaw: installs analysis skill to ~/.openclaw/skills/vardoger/
+  - Windsurf: installs a native skill and prepares the global rules file
 """
 
 from __future__ import annotations
@@ -88,18 +89,24 @@ _PLATFORM_LABELS: dict[str, str] = {
     "claude-code": "Claude Code",
     "codex": "Codex",
     "openclaw": "OpenClaw",
+    "windsurf": "Windsurf",
+}
+
+_PLATFORM_SKILL_NAMES: dict[str, str] = {
+    "windsurf": "vardoger-analyze",
 }
 
 
 def _render_skill(platform: str) -> str:
     """Compose frontmatter + shared body into a full SKILL.md for a platform."""
     label = _PLATFORM_LABELS.get(platform, platform)
+    skill_name = _PLATFORM_SKILL_NAMES.get(platform, "analyze")
     description = (
         f"Use when the user asks to personalize their assistant, to use vardoger, "
         f"or to analyze their {label} conversation history. Runs the vardoger CLI "
         f"to read past conversations and generate tailored instructions."
     )
-    frontmatter = f'---\nname: analyze\ndescription: "{description}"\n---\n'
+    frontmatter = f'---\nname: {skill_name}\ndescription: "{description}"\n---\n'
     return frontmatter + analyze_skill_body(platform, label)
 
 
@@ -270,11 +277,12 @@ def setup_copilot() -> None:
 
 
 def setup_windsurf() -> None:
-    """Prepare Windsurf rules directories for vardoger output.
+    """Install the Windsurf skill and prepare rules directories.
 
-    Windsurf has no plugin registry. This command ensures both the global
-    memories directory and the project ``.windsurf/rules`` directory exist so
-    the writer can drop files in without surprising the user on first run.
+    Windsurf discovers user skills from ``~/.codeium/windsurf/skills``. This
+    command installs the Vardoger analyze skill there and prepares the global
+    memories file so the writer can update it without surprising the user on
+    first run.
     """
     global_dir = Path.home() / ".codeium" / "windsurf" / "memories"
     global_dir.mkdir(parents=True, exist_ok=True)
@@ -290,7 +298,12 @@ def setup_windsurf() -> None:
             encoding="utf-8",
         )
 
+    skill_dir = Path.home() / ".codeium" / "windsurf" / "skills" / "vardoger-analyze"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    (skill_dir / "SKILL.md").write_text(_render_skill("windsurf"), encoding="utf-8")
+
     print(f"Prepared Windsurf global rules at {rules_path}")
+    print(f"Installed Windsurf skill at {skill_dir}")
     print("Run `vardoger analyze --platform windsurf` to generate a personalization.")
     print()
     _print_getting_started()
