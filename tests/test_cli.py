@@ -16,6 +16,15 @@ import pytest
 
 from vardoger.checkpoint import CheckpointStore, content_hash
 from vardoger.cli import main
+from vardoger.models import (
+    CodexMarketplace,
+    CodexPluginManifest,
+    MarketplaceInterface,
+    MarketplacePlugin,
+    MarketplacePluginPolicy,
+    MarketplacePluginSource,
+)
+from vardoger.setup import CODEX_PLUGIN_MANIFEST
 
 
 def test_main_with_no_command_prints_help_and_exits(capsys: pytest.CaptureFixture[str]) -> None:
@@ -71,6 +80,12 @@ def test_setup_codex_creates_plugin_and_marketplace(
     assert interface["longDescription"]
     assert interface["developerName"]
     assert interface["category"]
+    assert interface["privacyPolicyURL"].endswith("/PRIVACY.md")
+    assert interface["defaultPrompt"] == [
+        "Analyze my Codex history and personalize how you work with me.",
+        "Show what you have learned about my working preferences.",
+        "Refresh my Vardoger personalization from recent conversations.",
+    ]
 
     data = json.loads(marketplace.read_text())
     assert data.get("interface", {}).get("displayName")
@@ -81,6 +96,38 @@ def test_setup_codex_creates_plugin_and_marketplace(
     assert entry["policy"]["authentication"] == "ON_INSTALL"
     assert entry["category"]
     assert "Created Codex plugin" in capsys.readouterr().out
+
+
+def test_tracked_codex_plugin_matches_setup_template() -> None:
+    repo_root = Path(__file__).parents[1]
+    manifest_path = repo_root / "plugins" / "codex" / ".codex-plugin" / "plugin.json"
+
+    assert CodexPluginManifest.model_validate_json(manifest_path.read_text()) == (
+        CODEX_PLUGIN_MANIFEST
+    )
+
+
+def test_tracked_codex_marketplace_points_to_plugin() -> None:
+    repo_root = Path(__file__).parents[1]
+    marketplace_path = repo_root / ".agents" / "plugins" / "marketplace.json"
+    marketplace = CodexMarketplace.model_validate_json(marketplace_path.read_text())
+
+    assert marketplace == CodexMarketplace(
+        name="vardoger",
+        interface=MarketplaceInterface(displayName="Vardoger"),
+        plugins=[
+            MarketplacePlugin(
+                name="vardoger",
+                source=MarketplacePluginSource(source="local", path="./plugins/codex"),
+                policy=MarketplacePluginPolicy(
+                    installation="AVAILABLE",
+                    authentication="ON_INSTALL",
+                ),
+                category="Productivity",
+            )
+        ],
+    )
+    assert (repo_root / "plugins" / "codex" / ".codex-plugin" / "plugin.json").is_file()
 
 
 def test_setup_openclaw_installs_skill(

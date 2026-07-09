@@ -14,5 +14,23 @@
     "skills",
     "local-first"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Vardoger",
+    "shortDescription": "Personalize your assistant from your own conversation history",
+    "longDescription": "Vardoger reads your Codex conversation history locally, extracts behavioral patterns, and generates a personalized AGENTS.md addition so the assistant adapts to how you actually work. All processing happens on your machine — no data leaves it.",
+    "developerName": "dstrupl",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/dstrupl/vardoger",
+    "privacyPolicyURL": "https://github.com/dstrupl/vardoger/blob/main/PRIVACY.md",
+    "defaultPrompt": [
+      "Analyze my Codex history and personalize how you work with me.",
+      "Show what you have learned about my working preferences.",
+      "Refresh my Vardoger personalization from recent conversations."
+    ]
+  }
 }

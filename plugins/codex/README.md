@@ -11,18 +11,25 @@ A Codex plugin that analyzes your conversation history and generates personalize
 
 Two paths are supported. Pick one.
 
-### Option A — Public marketplace (Codex 0.x with `marketplace add`, recommended)
+### Option A — Repository marketplace (recommended)
 
-If your Codex build includes the `codex marketplace add` command ([openai/codex#17087](https://github.com/openai/codex/pull/17087)), register the vardoger marketplace with one line:
+Register the vardoger repository marketplace with the current Codex CLI:
 
 ```bash
-codex marketplace add https://github.com/dstrupl/vardoger.git --sparse plugins/codex
+codex plugin marketplace add dstrupl/vardoger --ref main \
+  --sparse .agents/plugins --sparse plugins/codex
 pipx install vardoger   # installs the `vardoger` CLI the plugin shells out to
 ```
 
 Then restart Codex, run `/plugins`, pick the **vardoger** marketplace, and install the `vardoger` plugin.
 
-This pulls `plugins/codex/` out of the repo (containing `marketplace.json`, `.codex-plugin/plugin.json`, and the analyze skill), installs it under `$CODEX_HOME/.tmp/marketplaces/vardoger/`, and records the source in `$CODEX_HOME/config.toml`. Re-run the command or `codex marketplace update` to pull later releases.
+The repository catalog at `.agents/plugins/marketplace.json` points Codex to
+`plugins/codex/`, which contains the plugin manifest and analyze skill. Codex
+records the Git source in `$CODEX_HOME/config.toml`. Pull later releases with:
+
+```bash
+codex plugin marketplace upgrade vardoger
+```
 
 ### Option B — Local marketplace (`pipx` + `vardoger setup codex`, always works)
 

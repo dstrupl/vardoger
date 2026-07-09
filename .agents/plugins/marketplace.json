@@ -1,15 +1,14 @@
 {
   "name": "vardoger",
   "interface": {
-    "displayName": "vardoger",
-    "description": "Personalizes your AI assistant by analyzing local conversation history and generating tailored instructions. Runs entirely on your machine."
+    "displayName": "Vardoger"
   },
   "plugins": [
     {
       "name": "vardoger",
       "source": {
         "source": "local",
-        "path": "."
+        "path": "./plugins/codex"
       },
       "policy": {
         "installation": "AVAILABLE",
