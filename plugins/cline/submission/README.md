@@ -32,8 +32,6 @@ The catalog contribution was opened after these repository-side gates passed:
 
 - the host-compatibility release is published to PyPI and
   `uvx vardoger mcp` resolves to that release;
-- the clean-profile Cline lifecycle remains a separate host-acceptance gate
-  because the `cline` command is not installed on this machine;
 - the public homepage, repository, icon, license, privacy policy, and Cline
   instructions are reachable without authentication;
 - `npm run validate` passes in a fresh `cline/marketplace` checkout with only
@@ -55,3 +53,19 @@ replace the clean-profile runtime test or upstream review.
 
 The submitted fork commit is `536c66c` on `dstrupl/marketplace:add-vardoger`.
 PR #143 is open, mergeable, and awaiting upstream review.
+
+## Runtime acceptance evidence
+
+On 2026-09-27, Cline CLI 3.0.65 accepted the rendered command
+`cline mcp install vardoger -- uvx vardoger mcp` and stored the expected stdio
+transport plus `VARDOGER_MCP_PLATFORM=cline`. The public Vardoger 0.4.0 package
+then completed MCP protocol `2025-06-18` initialization and returned all nine
+tools from `tools/list`. The temporary MCP entry was uninstalled after the
+test.
+
+This test also found two Cline host defects: the published macOS ARM64 binary
+failed macOS validation with `CODESIGNING / Invalid Page` until the temporary,
+integrity-checked copy was locally ad-hoc signed, and the MCP installer ignored
+the CLI's `--data-dir` isolation flag. Neither defect changes the passing
+Vardoger configuration or MCP-runtime result. Marketplace-card click-through
+remains unavailable until PR #143 is merged.

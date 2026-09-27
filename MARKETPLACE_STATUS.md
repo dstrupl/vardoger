@@ -54,14 +54,21 @@ picture changed materially while the repository was idle.
 4. **Cline replaced the submission path.** Legacy issue #1394 is still open
    with no comments, but `cline/marketplace` is now the active PR-based catalog
    for plugins, skills, and MCP servers. The focused MCP entry is submitted as
-   PR #143 and upstream validation passes all 204 entries. Clean-profile Cline
-   UI acceptance is unverified because the CLI is unavailable locally. Keep
-   the old issue only as historical evidence.
+   PR #143 and upstream validation passes all 204 entries. Cline CLI 3.0.65
+   accepted the exact marketplace command and persisted
+   `VARDOGER_MCP_PLATFORM=cline`; public Vardoger 0.4.0 then completed an MCP
+   initialize/tools-list handshake with all nine tools. Keep the old issue only
+   as historical evidence. Cline's macOS ARM64 package currently needs a local
+   re-sign because its published binary fails code-signature validation, and
+   the MCP installer ignores `--data-dir`; those are upstream host defects, not
+   Vardoger failures.
 5. **Windsurf became Devin Desktop.** Legacy Cascade paths remain readable.
    Vardoger now also has a separate first-class Devin Local target using only
    its documented, user-enabled ATIF exports plus documented global/project
    rules, skill, and MCP paths. It never inspects private Devin session state;
-   clean-profile host acceptance remains an owner gate.
+   clean-profile host acceptance remains account-gated. The owner declined to
+   create a Devin account solely for this validation, so synthetic coverage is
+   retained and no live acceptance claim is made.
 6. **ClawHub regressed.** The public owner-qualified listing currently reports
    version 0.3.1, security status `Review`, and the mandatory MIT-0 license.
    ClawHub's current skill format explicitly disallows per-skill license
@@ -449,12 +456,12 @@ history, surface details, and "last checked" context.
 | [**GitHub Copilot CLI — custom**](#github-copilot-cli--custom) | `plugins/copilot/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `copilot plugin marketplace add …` |
 | [**GitHub Copilot CLI — `awesome-copilot`**](#github-copilot-cli--awesome-copilot) | `plugins/copilot/` | Live | 2026-04-21 | 2026-04-28 | [PR #1461](https://github.com/github/awesome-copilot/pull/1461) |
 | [**GitHub Copilot CLI — default marketplace**](#github-copilot-cli--default-marketplace) | `plugins/copilot/` | Ready for review — mergeable | 2026-07-09 | — | [PR #56](https://github.com/github/copilot-plugins/pull/56) |
-| [**Devin Local / legacy Windsurf**](#windsurf-mcp-store) | `plugins/devin/` + `plugins/windsurf/` | Direct integration released; clean-profile Devin acceptance pending | — | — | [Devin guide](plugins/devin/README.md) / [legacy guide](plugins/windsurf/README.md) |
+| [**Devin Local / legacy Windsurf**](#windsurf-mcp-store) | `plugins/devin/` + `plugins/windsurf/` | Direct integration released; live Devin acceptance account-gated | — | — | [Devin guide](plugins/devin/README.md) / [legacy guide](plugins/windsurf/README.md) |
 | [**Official MCP Registry**](#official-mcp-registry) | `plugins/mcp-registry/` | Live (0.4.0 latest) | 2026-04-24 | 2026-09-27 (current release) | [registry feed](https://registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10) |
 | [**McpMux community registry**](#mcpmux-community-registry) | `plugins/mcpmux/` | Live | 2026-04-22 | 2026-04-24 | [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) |
 | [**Docker MCP Registry**](#docker-mcp-registry) | `plugins/docker-mcp/` | Submitted — refreshed to 0.4.0 | 2026-04-24 | — | [PR #2949](https://github.com/docker/mcp-registry/pull/2949) |
 | [**Cline legacy MCP queue**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted — superseded path | 2026-04-20 | — | [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) |
-| [**Cline current marketplace**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted — awaiting review | 2026-09-27 | — | [PR #143](https://github.com/cline/marketplace/pull/143) |
+| [**Cline current marketplace**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted — CLI configuration + MCP handshake accepted; awaiting review | 2026-09-27 | — | [PR #143](https://github.com/cline/marketplace/pull/143) |
 | [**OpenClaw ClawHub**](#openclaw-clawhub) | `plugins/openclaw/skills/analyze/` | Live at 0.3.1; 0.4.0 republish license-blocked | 2026-04-22 | Current listing verified 2026-09-27 | [public listing](https://clawhub.ai/dstrupl/vardoger-analyze) |
 | [**claudemarketplaces.com / CrossAI Tools**](#claudemarketplacescom) | `.claude-plugin/marketplace.json` | Unavailable (redirect + 404) | 2026-04-27 (manifest); 2026-05-16 (/feedback) | — | [crossaitools.com](https://crossaitools.com) |
 
@@ -941,6 +948,13 @@ catalog submission contract suitable for this repository was identified.
 Direct setup and the Official MCP Registry therefore remain the supported
 distribution paths while the host migration is implemented.
 
+The official Devin CLI 3000.11.3 was installed on 2026-09-27, but live use
+requires a registered Devin account. The owner chose not to create an account
+solely for Vardoger validation. Clean-profile ATIF export, plugin discovery,
+and rules/skills acceptance therefore remain explicitly account-gated; the
+fixture-backed adapter, writer, setup, and package tests are not presented as
+live host evidence.
+
 ### Official MCP Registry
 
 - **Surface:** `mcp-publisher publish` against `registry.modelcontextprotocol.io`
@@ -1110,9 +1124,22 @@ project-scoped `.clinerules` delivery. Vardoger 0.4.0 publishes that support.
 On 2026-09-27 the focused entry was submitted as
 [`cline/marketplace#143`](https://github.com/cline/marketplace/pull/143) from
 fork commit `536c66c`. The PR is open, mergeable, and awaiting review. Upstream
-`npm run validate` passed all 204 entries. The `cline` command is not installed
-on this machine, so clean-profile Cline UI acceptance—including persistence of
-`VARDOGER_MCP_PLATFORM=cline`—remains unverified and was disclosed in the PR.
+`npm run validate` passed all 204 entries. Cline CLI 3.0.65 then accepted the
+submitted `cline mcp install vardoger -- uvx vardoger mcp` command and persisted
+the required `VARDOGER_MCP_PLATFORM=cline` environment variable. The public
+`uvx vardoger mcp` package completed protocol `2025-06-18` initialization and
+returned all nine tools. The temporary Vardoger MCP entry was removed after
+the test and the pre-existing Cline profile was restored.
+
+Two host defects limit how this evidence should be described. The official
+macOS ARM64 npm binary is currently killed by macOS with `CODESIGNING / Invalid
+Page`; the integrity-checked temporary binary had to be locally ad-hoc signed
+before it would start. Also, `cline --data-dir <temporary> mcp install ...`
+ignored the isolated directory and wrote to `~/.cline/data/settings` instead.
+Those defects belong to Cline, while Vardoger's install metadata, persisted
+configuration, public package startup, MCP negotiation, and tool discovery all
+passed. A marketplace-card click-through remains unavailable until PR #143 is
+merged.
 
 Server submission issue
 `[Server Submission]: vardoger — personalize AI assistants from local history`
@@ -1329,12 +1356,15 @@ on behalf of the project owner.
 For owner-only click-through instructions and post-submission verification,
 see [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md).
 
-1. Clean-profile test the released Devin Local ATIF export, skill, and rules
-   flow. Devin has no persistent memories; keep private storage out of scope.
-2. Monitor Cline PR #143 and respond to review feedback. Clean-profile Cline
-   UI acceptance remains outstanding; leave legacy issue #1394 untouched.
-3. Clean-profile test the schema-valid Cursor recovery package, then re-submit
-   the missing listing through the owner form.
+1. Monitor Cline PR #143 and respond to review feedback. CLI install,
+   configuration persistence, public-package startup, and nine-tool discovery
+   now pass; marketplace-card click-through waits on merge. Leave legacy issue
+   #1394 untouched.
+2. Monitor the submitted Cursor recovery and clean-profile test it when the
+   host application is available. Do not duplicate the owner application.
+3. Keep Devin live acceptance account-gated unless the owner later chooses to
+   register; do not inspect private storage or substitute synthetic tests for
+   ATIF host evidence.
 4. Monitor the ready, mergeable Copilot PR #56. Treat the Codex universal
    directory as lower-priority distribution work because native memory already
    overlaps heavily; rerun its reviewer tests before portal submission.

@@ -9,11 +9,12 @@ obtain explicit owner approval immediately before each submission or PR update.
 
 ## Recommended order
 
-1. Clean-profile test the supported Devin Local ATIF export workflow.
-2. Monitor the submitted Cline marketplace PR without duplicating the legacy
-   issue.
-3. Monitor the submitted Cursor recovery and clean-profile test when the host
+1. Monitor the submitted Cline marketplace PR without duplicating the legacy
+   issue; CLI install and MCP runtime acceptance now pass.
+2. Monitor the submitted Cursor recovery and clean-profile test when the host
    application is available.
+3. Keep Devin Local acceptance account-gated unless the owner later chooses to
+   register; synthetic tests do not replace a real ATIF export.
 4. Treat the Codex official-directory submission as lower priority than hosts where
    Vardoger remains clearly differentiated.
 5. Keep ClawHub unpublished for current OpenClaw 2.0 until both compatibility
@@ -116,10 +117,13 @@ duplicate, or close it without owner approval.
 Current review item: [`cline/marketplace#143`](https://github.com/cline/marketplace/pull/143).
 The focused `registry/mcps/vardoger/entry.json` contribution was submitted on
 2026-09-27 from commit `536c66c`. Upstream `npm run validate` passed all 204
-entries. The local `cline` command is not installed, so clean-profile Cline UI
-acceptance remains separate from schema/catalog validation and is disclosed in
-the PR. Monitor the PR and respond to reviewer feedback; leave legacy issue
-#1394 untouched.
+entries. Cline CLI 3.0.65 accepted the exact rendered install command, persisted
+`VARDOGER_MCP_PLATFORM=cline`, and public Vardoger 0.4.0 completed MCP
+initialization and exposed all nine tools. The temporary entry was removed
+afterward. Cline's published macOS ARM64 binary currently has an invalid code
+signature and its MCP installer ignores `--data-dir`; keep those host defects
+separate from Vardoger's passing lifecycle. Monitor the PR and respond to
+reviewer feedback; leave legacy issue #1394 untouched.
 
 ## 5. OpenAI universal Plugins Directory
 

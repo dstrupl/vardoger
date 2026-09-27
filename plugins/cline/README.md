@@ -61,14 +61,15 @@ Cursor's rules. Pass `scope="project"` and `project_path="<workspace>"` to an
 MCP write when the personalization should apply to only one project. Cline
 will pick the change up on next reload.
 
-### 3. (Future) Install via Cline's marketplace
+### 3. Install via Cline's marketplace after approval
 
 Cline's current [`cline/marketplace`](https://github.com/cline/marketplace)
 catalog accepts validated pull requests for plugins, skills, and MCP servers.
-Vardoger has not submitted there yet, but the current MCP entry and PR text are
-prepared and schema-validated in the [submission package](./submission/README.md).
-Use the manual configuration in step 2 until an upstream PR is approved and
-the catalog entry is public.
+Vardoger's current MCP entry is submitted as
+[`cline/marketplace#143`](https://github.com/cline/marketplace/pull/143) and is
+schema-validated; see the [submission package](./submission/README.md). Use the
+manual configuration in step 2 until that PR is approved and the catalog entry
+is public.
 The old [cline/mcp-marketplace issue #1394](https://github.com/cline/mcp-marketplace/issues/1394)
 remains open only as historical evidence of the superseded issue-based flow.
 
