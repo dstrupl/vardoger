@@ -16,6 +16,8 @@ Status vocabulary:
 - **Unavailable** — a previously published route is no longer installable.
 - **Superseded** — the submission still exists, but the vendor replaced its
   intake path.
+- **Frozen** — a listing remains reachable but is intentionally not updated;
+  use the documented supported alternative.
 - **Live** — listing is public and installable.
 
 Last refreshed: **2026-09-27** (UTC).
@@ -69,11 +71,12 @@ picture changed materially while the repository was idle.
    clean-profile host acceptance remains account-gated. The owner declined to
    create a Devin account solely for this validation, so synthetic coverage is
    retained and no live acceptance claim is made.
-6. **ClawHub regressed.** The public owner-qualified listing currently reports
+6. **ClawHub is frozen.** The public owner-qualified listing currently reports
    version 0.3.1, security status `Review`, and the mandatory MIT-0 license.
    ClawHub's current skill format explicitly disallows per-skill license
-   overrides, so the source artifact's Apache-2.0 frontmatter must be resolved
-   before publishing 0.4.0.
+   overrides. On 2026-09-27 the owner declined dual-licensing, retained
+   Apache-2.0, and froze this distribution route. Direct OpenClaw installation
+   remains supported; do not publish 0.4.0 to ClawHub.
 7. **The shared registries remain healthy.** PyPI is now at 0.4.0; the
    official MCP Registry reports 0.4.0 active/latest at its current
    `registry.modelcontextprotocol.io` endpoint; McpMux still carries the
@@ -463,7 +466,7 @@ history, surface details, and "last checked" context.
 | [**Docker MCP Registry**](#docker-mcp-registry) | `plugins/docker-mcp/` | Submitted — refreshed to 0.4.0 | 2026-04-24 | — | [PR #2949](https://github.com/docker/mcp-registry/pull/2949) |
 | [**Cline legacy MCP queue**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted — superseded path | 2026-04-20 | — | [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) |
 | [**Cline current marketplace**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted — CLI configuration + MCP handshake accepted; awaiting review | 2026-09-27 | — | [PR #143](https://github.com/cline/marketplace/pull/143) |
-| [**OpenClaw ClawHub**](#openclaw-clawhub) | `plugins/openclaw/skills/analyze/` | Live at 0.3.1; 0.4.0 republish license-blocked | 2026-04-22 | Current listing verified 2026-09-27 | [public listing](https://clawhub.ai/dstrupl/vardoger-analyze) |
+| [**OpenClaw ClawHub**](#openclaw-clawhub) | `plugins/openclaw/skills/analyze/` | Frozen at exposed 0.3.1; direct install supported | 2026-04-22 | Freeze decision 2026-09-27 | [public listing](https://clawhub.ai/dstrupl/vardoger-analyze) |
 | [**claudemarketplaces.com / CrossAI Tools**](#claudemarketplacescom) | `.claude-plugin/marketplace.json` | Unavailable (redirect + 404) | 2026-04-27 (manifest); 2026-05-16 (/feedback) | — | [crossaitools.com](https://crossaitools.com) |
 
 ## Per-marketplace details
@@ -1174,16 +1177,14 @@ vardoger by following the `llms-install.md` guidance manually.
 - **Surface:** `clawhub skill publish …` (after `clawhub login` — GitHub browser OAuth)
 - **Plugin root:** `plugins/openclaw/skills/analyze/`
 
-**Current status (verified 2026-09-27): the public owner-qualified listing is
-live, but currently exposes 0.3.1 with security status `Review` and license
-MIT-0.** The previously observed 0.3.2 publication is no longer the public
-latest version, so it must not be treated as current distribution evidence.
-The current ClawHub skill-format contract says every published skill is MIT-0
-and explicitly prohibits conflicting per-skill license terms. Because the
-source `SKILL.md` declares Apache-2.0, obtain an owner decision on accepting
-MIT-0 distribution before preparing another publish. If accepted, generate a
-ClawHub-specific artifact without contradictory license metadata and publish
-0.3.2 or its successor; otherwise retire this distribution surface.
+**Current status (verified and frozen 2026-09-27): the public owner-qualified
+listing remains reachable, but exposes 0.3.1 with security status `Review` and
+license MIT-0.** The previously observed 0.3.2 publication is no longer the
+public latest version, so it must not be treated as current distribution
+evidence. The current ClawHub skill-format contract says every published skill
+is MIT-0 and explicitly prohibits conflicting per-skill license terms. The
+owner declined dual-licensing and retained Apache-2.0. Do not publish another
+ClawHub version; use the supported direct OpenClaw installation instead.
 
 The working tree now has a supported-protocol compatibility path for current
 OpenClaw history: after explicit `VARDOGER_OPENCLAW_GATEWAY=1` enablement, a
@@ -1341,8 +1342,9 @@ on behalf of the project owner.
   a native `.windsurf/skills/` package are the practical install paths.
 - **Cline MCP marketplace** — single-click install for Cline users once
   merged; the `llms-install.md` file guides Cline through the install.
-- **ClawHub** — ClawHub is the canonical skill registry for OpenClaw;
-  publishing there is required for OpenClaw users to find vardoger.
+- **ClawHub** — the legacy listing remains discoverable but is frozen because
+  its mandatory MIT-0 terms conflict with Vardoger's retained Apache-2.0
+  license. Direct setup is the supported OpenClaw install path.
 - **Official MCP Registry** — `registry.modelcontextprotocol.io` is the
   canonical cross-vendor MCP feed, ingested by Docker Desktop's MCP Toolkit,
   VS Code's MCP picker, Windsurf's enterprise Internal MCP Registry feature,
@@ -1373,9 +1375,9 @@ see [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md).
 4. Monitor the ready, mergeable Copilot PR #56. Treat the Codex universal
    directory as lower-priority distribution work because native memory already
    overlaps heavily; rerun its reviewer tests before portal submission.
-5. The opt-in OpenClaw Gateway reader has passed disposable clean-profile
-   acceptance. Do not republish ClawHub until the owner explicitly decides
-   whether mandatory MIT-0 distribution is acceptable.
+5. Keep the legacy ClawHub listing frozen. The Gateway reader passed
+   disposable clean-profile acceptance, but the owner declined mandatory
+   MIT-0 distribution and retained Apache-2.0; direct setup remains supported.
 6. Continue low-frequency monitoring of refreshed Docker PR #2949. Claude
    community and custom routes, Official MCP Registry, McpMux, PyPI, and the
    Copilot skill need no action.
