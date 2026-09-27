@@ -12,7 +12,8 @@ obtain explicit owner approval immediately before each submission or PR update.
 1. Clean-profile test the supported Devin Local ATIF export workflow.
 2. Monitor the submitted Cline marketplace PR without duplicating the legacy
    issue.
-3. Clean-profile test and recover the Cursor listing.
+3. Monitor the submitted Cursor recovery and clean-profile test when the host
+   application is available.
 4. Treat the Codex official-directory submission as lower priority than hosts where
    Vardoger remains clearly differentiated.
 5. Keep ClawHub unpublished for current OpenClaw 2.0 until both compatibility
@@ -85,13 +86,11 @@ Current public state: `https://cursor.com/marketplace/vardoger` displays
 The current official schemas have been checked locally. Use the prepared
 [listing copy and recovery checklist](plugins/cursor/submission/README.md).
 
-1. Publish the compatibility release and confirm the manifest version matches.
-2. Test the MCP server and `.mdc` rule lifecycle from a clean Cursor profile.
-3. Open `https://cursor.com/marketplace/publish` while signed in as the owner.
-4. Submit the current repository and `plugins/cursor` path using the prepared
-   listing material. Mention that this restores a previously public slug.
-5. Record the source commit and acknowledgement, then verify the public route
-   in a signed-out browser before marking the row Live.
+The owner submitted the current publisher application on 2026-09-27 and Cursor
+confirmed receipt. Do not submit another duplicate while it is under review.
+The remaining work is to test the MCP server and `.mdc` rule lifecycle from a
+clean Cursor profile when the host application is available, then verify the
+public route in a signed-out browser before marking the row Live.
 
 ## 3. GitHub Copilot CLI default marketplace
 
@@ -145,7 +144,11 @@ and [plugin packaging guide](https://developers.openai.com/plugins/build/plugins
 Repository-side evidence is complete: Codex CLI 0.146.0 clean-installed
 Vardoger 0.4.0 from public `main`, and the deterministic four-file archive has
 SHA-256 `c193c9c4ee119d4283baf11099c282cc990279c075e8a3cb65289bf33ff6861d`.
-The remaining portal cases, identity selection, attestations, submission, and
+The OpenAI individual developer identity is now verified. The portal still
+exposes only **With MCP**, not the documented **Skills only** path. Do not use
+`With MCP`: Vardoger's MCP server is local stdio and is not a stable public
+HTTPS endpoint. The next gate is OpenAI access/support for Skills-only upload;
+after that, the remaining reviewer cases, attestations, submission, and
 post-approval publication are human/representational actions.
 
 ## 6. OpenClaw ClawHub

@@ -87,6 +87,14 @@ enabled at version 0.4.0. The deterministic four-file upload archive is
 The portal reviewer cases and policy attestations remain human submission
 steps rather than repository validation.
 
+On the same date, the OpenAI Platform individual developer identity was
+verified successfully. The Plugins portal nevertheless exposed only **With
+MCP** in its `Create plugin` menu, both before and after verification; the
+documented **Skills only** choice was absent. Do not create a `With MCP` draft
+for Vardoger: its MCP server is local stdio, not a public HTTPS endpoint. The
+submission is blocked on OpenAI enabling or supporting the Skills-only upload
+path for this organization.
+
 ## Availability
 
 Select all countries and regions offered by the portal where this open-source

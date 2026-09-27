@@ -34,13 +34,14 @@ and sdist SHA-256
 2026-09-27: Full marketplace and host-product refresh. The distribution
 picture changed materially while the repository was idle.
 
-1. **Cursor regressed.** `https://cursor.com/marketplace/vardoger` now serves
+1. **Cursor recovery is submitted.** `https://cursor.com/marketplace/vardoger` serves
    Cursor's explicit **Marketplace Plugin Not Found** page. The plugin is no
    longer publicly installable from the registry, even though the route still
    returns HTTP 200. Direct `pipx` setup remains available. Both supported
-   manifests now pass their current official schemas, and an owner-facing
-   [recovery package](plugins/cursor/submission/README.md) is ready. Clean
-   Cursor acceptance and form submission remain owner gates.
+   manifests pass their current official schemas. On 2026-09-27 the owner
+   submitted the current recovery application and Cursor displayed “Thanks for
+   applying” / “We've received your submission.” Clean Cursor acceptance and
+   publication remain separate gates.
 2. **Claude Code caught up automatically.** The community catalog now pins
    Vardoger to current repository commit `f813e9c` (the 0.3.2 plugin), so the
    expired fallback refresh action is closed. The repo-root custom-marketplace
@@ -439,12 +440,12 @@ history, surface details, and "last checked" context.
 | Marketplace | Plugin root | Status | Submitted | Live on | Link |
 | --- | --- | --- | --- | --- | --- |
 | [**PyPI**](#pypi) | (repo root) | Live (0.4.0) | 2026-04-20 | 2026-09-27 (current release) | [pypi.org/project/vardoger](https://pypi.org/project/vardoger/) |
-| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Unavailable — re-submit required | 2026-04-20 (orig); 2026-05-16 (re-submit) | Formerly live by 2026-07-09; missing 2026-09-27 | [public route](https://cursor.com/marketplace/vardoger) |
+| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Submitted — recovery awaiting review | 2026-04-20 (orig); 2026-05-16; 2026-09-27 (current recovery) | Formerly live by 2026-07-09; missing 2026-09-27 | [public route](https://cursor.com/marketplace/vardoger) |
 | [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Live (0.3.2/current pin) | 2026-04-20 (orig); 2026-05-16 (re-submit) | Re-add verified 2026-07-09 | [catalog](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
 | [**Claude Code — curated directory**](#claude-code--curated-directory) | `plugins/claude-code/` | Not started (watch-only) | — | — | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served; 0.4.0 on main) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
 | [**Codex — custom**](#codex--custom) | `.agents/plugins/` + `plugins/codex/` | Live (self-served) | 2026-07-09 | 2026-07-09 | `codex plugin marketplace add …` |
-| [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Ready to submit — portal action required | — | — | [submission package](plugins/codex/submission/README.md) |
+| [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Blocked — portal omits Skills only | — | — | [submission package](plugins/codex/submission/README.md) |
 | [**GitHub Copilot CLI — custom**](#github-copilot-cli--custom) | `plugins/copilot/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `copilot plugin marketplace add …` |
 | [**GitHub Copilot CLI — `awesome-copilot`**](#github-copilot-cli--awesome-copilot) | `plugins/copilot/` | Live | 2026-04-21 | 2026-04-28 | [PR #1461](https://github.com/github/awesome-copilot/pull/1461) |
 | [**GitHub Copilot CLI — default marketplace**](#github-copilot-cli--default-marketplace) | `plugins/copilot/` | Ready for review — mergeable | 2026-07-09 | — | [PR #56](https://github.com/github/copilot-plugins/pull/56) |
@@ -483,21 +484,24 @@ Listing at [pypi.org/project/vardoger](https://pypi.org/project/vardoger/).
 Portable manifest at `plugins/cursor/plugin.json`, with
 `plugins/cursor/.cursor-plugin/plugin.json` retained for compatibility;
 `mcp.json` boots via `uvx vardoger mcp`. Logotype URL in the form:
-`https://raw.githubusercontent.com/dstrupl/vardoger/main/assets/logo.svg`.
+`https://raw.githubusercontent.com/dstrupl/vardoger/main/plugins/cursor/assets/logo.svg`.
 Submitted via the form on 2026-04-20. Current listing copy, recovery context,
 and owner gates are collected in the
 [Cursor recovery package](plugins/cursor/submission/README.md).
 
-**Current status (verified 2026-09-27): unavailable; re-submission required.**
+**Current status (verified 2026-09-27): recovery submitted; awaiting review.**
 The former public URL now renders Cursor's explicit **Marketplace Plugin Not
 Found** page. This is a real regression rather than an HTTP-only false alarm:
 the route returns HTTP 200 but its title and rendered body both identify the
 missing listing. Cursor's current documentation still accepts public Git
 repositories through `cursor.com/marketplace/publish` and supports both the
 Cursor-specific manifest and the Agent Plugins 1.0 root manifest. The portable
-manifest consolidation is complete in this working tree; revalidate it against
-the current schema, then submit it again. The historical submission
-investigation below is retained for provenance.
+manifest consolidation is complete. The owner submitted the refreshed publisher
+application from `cursor.com/marketplace/publish` on 2026-09-27 using the public
+Vardoger repository, current logo, and local-first privacy copy. Cursor
+confirmed “Thanks for applying” and “We've received your submission.” The
+historical submission investigation below is retained for provenance; do not
+submit another duplicate while this recovery is under review.
 
 **Local readiness evidence (2026-09-27):** the compatibility manifest passed
 Cursor's official Draft 7 schema at `cursor/plugins` commit
@@ -783,6 +787,16 @@ and confirm that the portal accepts the declared external `vardoger` CLI
 dependency before attesting, selecting a verified identity, and submitting.
 Approval does not publish automatically; the owner must publish the approved
 version from the portal.
+
+**Portal blocker verified 2026-09-27:** the `Personal` organization now shows
+individual identity status **Verified**, and the owner can open the Plugins
+submission portal. However, both before and after verification, the `Create
+plugin` menu exposes only **With MCP**; the documented **Skills only** choice is
+absent. Vardoger must not use the available path because its MCP server is
+local stdio, while OpenAI requires a stable public HTTPS MCP endpoint for
+`With MCP`. Repository preparation is complete; the next action is to obtain
+OpenAI access/support for the missing Skills-only upload path, not to create a
+misclassified MCP draft.
 
 ### GitHub Copilot CLI — custom
 
