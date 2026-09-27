@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Documentation
+
+- Record disposable-profile acceptance of the OpenClaw 2026.9.6 Gateway
+  reader, including synthetic history filtering and authentication-rotation
+  behavior, while keeping the separate ClawHub MIT-0 publication gate open.
+
 ## [0.4.0] — 2026-09-27
 
 This is a minor release because it adds new public CLI commands and supported
