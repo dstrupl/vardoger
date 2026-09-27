@@ -10,7 +10,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Record disposable-profile acceptance of the OpenClaw 2026.9.6 Gateway
   reader, including synthetic history filtering and authentication-rotation
-  behavior, while keeping the separate ClawHub MIT-0 publication gate open.
+  behavior, and freeze the legacy ClawHub route after the owner declined its
+  mandatory MIT-0 distribution terms in favor of retaining Apache-2.0.
 
 ## [0.4.0] — 2026-09-27
 

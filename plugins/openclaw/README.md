@@ -58,23 +58,11 @@ This installs the vardoger analysis skill to `~/.openclaw/skills/vardoger/`. Ope
 Vardoger is also listed on
 [ClawHub as `vardoger-analyze`](https://clawhub.ai/dstrupl/vardoger-analyze),
 but the public listing currently exposes 0.3.1 with security status `Review`
-and mandatory MIT-0 terms. The source skill declares Apache-2.0, so do not use
-ClawHub for a new install or publish another version until the owner explicitly
-decides whether MIT-0 distribution is acceptable. This distribution issue is
-separate from the Gateway runtime path, which passed disposable-profile live
-acceptance on 2026-09-27.
-
-If the owner accepts ClawHub's distribution terms, maintainers can publish a
-ClawHub-specific artifact with the current CLI shape:
-
-```bash
-clawhub skill publish plugins/openclaw/skills/analyze \
-  --slug vardoger-analyze \
-  --name "vardoger — Analyze History" \
-  --version X.Y.Z \
-  --tags latest \
-  --changelog "Describe the release"
-```
+and mandatory MIT-0 terms. On 2026-09-27 the owner declined dual-licensing and
+retained Apache-2.0, so the ClawHub route is intentionally frozen. Do not use
+that listing for a new install or publish another version. The direct setup
+above remains supported, and its Gateway runtime path passed disposable-profile
+live acceptance on 2026-09-27.
 
 ## Usage
 

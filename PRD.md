@@ -43,7 +43,7 @@ vardoger targets the leading AI coding environments:
 | **Cursor** | Anysphere | Cursor Plugin Registry (MCP server) + `pipx install` direct-install fallback |
 | **Claude Code** | Anthropic | Claude Code plugin marketplace (GitHub-based) |
 | **OpenAI Codex** | OpenAI | Codex plugin directory + custom marketplaces |
-| **OpenClaw** | OpenClaw (open-source) | ClawHub skill registry + local skill directories |
+| **OpenClaw** | OpenClaw (open-source) | Direct local skill install; frozen legacy ClawHub listing |
 | **GitHub Copilot CLI** | GitHub / Microsoft | Copilot CLI plugin marketplace (custom sources) + `pipx install` direct-install fallback |
 | **Devin Local / legacy Windsurf** | Cognition | Direct skill + CLI/MCP setup; supported ATIF exports for Devin, legacy Cascade paths for Windsurf |
 | **Cline** | Cline (open-source VS Code extension) | `cline/marketplace` pull request + `pipx install` direct-install fallback |
@@ -526,7 +526,7 @@ The core analysis logic must be shared across all platform integrations. Platfor
 - [ ] Cursor Plugin Registry — **recovery submitted 2026-09-27, awaiting review**; Cursor confirmed receipt of the current Vardoger publisher application. The public route still displays “Marketplace Plugin Not Found,” so publication and signed-out installability remain open.
 - [x] Claude Code community catalog + custom marketplace — **Live**, re-add verified 2026-07-09 in [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community); the self-served `.claude-plugin/marketplace.json` path remains available through `/plugin marketplace add dstrupl/vardoger`.
 - [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json`; Codex CLI 0.146.0 clean-installed Vardoger 0.4.0. The portable manifest and deterministic archive (`c193c9c4…`) are validated, and the individual OpenAI developer identity is verified. The portal currently exposes only **With MCP**, not the documented **Skills only** upload path, so submission is blocked on OpenAI access/support rather than repository work.
-- [x] Skill publishing to ClawHub for OpenClaw — publishing was achieved, but the [current public listing](https://clawhub.ai/dstrupl/vardoger-analyze) has regressed to 0.3.1 with security status `Review` and mandatory MIT-0 terms. An explicit distribution-license decision is required before another release.
+- [x] Skill publishing to ClawHub for OpenClaw — publishing was achieved, but the [current public listing](https://clawhub.ai/dstrupl/vardoger-analyze) has regressed to 0.3.1 with security status `Review` and mandatory MIT-0 terms. On 2026-09-27 the owner declined those terms, retained Apache-2.0, and intentionally froze this distribution route; direct local installation remains supported.
 - [x] Plugin packaging and marketplace submission for GitHub Copilot CLI — **custom marketplace live (self-served)** via `plugins/copilot/marketplace.json` (Copilot CLI has no central registry for custom marketplaces — users install directly via `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot`); **`awesome-copilot` live** as [`vardoger-analyze`](https://github.com/github/awesome-copilot/blob/main/skills/vardoger-analyze/SKILL.md) ([PR #1461](https://github.com/github/awesome-copilot/pull/1461) merged 2026-04-28 by [`aaronpowell`](https://github.com/aaronpowell) into `staged` as [`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f); auto-published to `main`, installable today via `gh skills install github/awesome-copilot vardoger-analyze`)
 - [ ] GitHub Copilot CLI default marketplace — [PR #56](https://github.com/github/copilot-plugins/pull/56) was rebased onto current upstream, reduced to the focused Vardoger object and README line, clean-installed with Copilot CLI 1.0.88, and marked ready. It is mergeable and awaits required review.
 - [x] Windsurf and Devin direct distribution — 0.4.0 supports both the legacy Cascade skill/rules/history paths and first-class Devin ATIF imports, `.devin/*` rules, and `~/.config/devin/*` setup.
@@ -614,9 +614,10 @@ host-integration capabilities without breaking existing contracts.
 - [ ] Recover remaining marketplace reach: monitor the submitted Cursor
   recovery and obtain access/support for Codex's missing Skills-only portal
   path. Copilot PR #56 and Cline PR #143 await upstream review.
-- [ ] Resolve whether ClawHub's mandatory MIT-0 distribution is acceptable;
-  republish only if the owner accepts it and the OpenClaw integration remains
-  supported after the native-memory review.
+- [x] Resolve ClawHub's mandatory MIT-0 distribution gate. On 2026-09-27 the
+  owner declined dual-licensing, retained Apache-2.0, and froze the legacy
+  listing at its currently exposed 0.3.1 version. Direct OpenClaw installation
+  remains supported.
 - [x] Publish the validated 0.4.0 compatibility release. PR #37 was rebase
   merged at `f189c2a`; main CI passed, annotated tag `v0.4.0` and the GitHub
   release are live, and trusted publication delivered matching wheel/sdist

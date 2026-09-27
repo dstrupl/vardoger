@@ -45,9 +45,9 @@ Then tell your assistant: **"Personalize my assistant."**
 > Vardoger is currently live on PyPI, the Claude Code community catalog,
 > self-hosted Codex and Copilot marketplaces, McpMux, and the Official MCP
 > Registry. The former Cursor listing is currently unavailable. ClawHub has
-> regressed to 0.3.1. Current OpenClaw history now has an opt-in, full-read
-> Gateway CLI path, but that path still requires clean-profile acceptance
-> before any ClawHub republish.
+> regressed to 0.3.1 and is intentionally frozen because its mandatory MIT-0
+> terms conflict with this Apache-2.0 project. Current OpenClaw history has a
+> live-accepted, opt-in full-read Gateway CLI path through the direct install.
 
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
 > `0.4.0` release. The beta install paths below stay here for anyone still pinning

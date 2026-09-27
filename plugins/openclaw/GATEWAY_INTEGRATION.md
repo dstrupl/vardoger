@@ -1,7 +1,7 @@
 # OpenClaw 2.0 history integration decision
 
-Status: opt-in read path implemented and live-accepted; publication remains
-gated on the ClawHub license decision.
+Status: opt-in read path implemented and live-accepted; direct installation is
+supported and the legacy ClawHub route is intentionally frozen.
 
 ## Supported history contract
 
@@ -77,20 +77,16 @@ control for this Vardoger path; rotating or removing the authentication source
 resolved by the official CLI is. Vardoger neither reads nor persists that
 credential.
 
-## ClawHub license gate
+## ClawHub distribution decision
 
 ClawHub publishes every skill under MIT-0 and does not permit a conflicting
-per-skill license override. The repository is Apache-2.0, so the owner must
-choose one of these before another ClawHub release:
-
-1. Dual-license only the published OpenClaw skill artifact under MIT-0, remove
-   conflicting license metadata from that artifact, and retain Apache-2.0 for
-   the rest of Vardoger.
-2. Decline MIT-0 distribution and retire or clearly freeze the ClawHub route;
-   local OpenClaw installation can remain available under Apache-2.0.
-
-No ClawHub publish or license change should happen implicitly as part of a
-general compatibility release.
+per-skill license override. On 2026-09-27 the owner declined dual-licensing,
+retained Apache-2.0 for Vardoger and its OpenClaw skill, and froze the existing
+ClawHub route. Do not publish another ClawHub version or treat its exposed
+0.3.1 artifact as the supported current package. The direct local OpenClaw
+installation remains supported under Apache-2.0. Reopening ClawHub publication
+requires a new explicit owner decision or a platform contract that can preserve
+the project's license.
 
 ## Official references
 
