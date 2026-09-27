@@ -6,9 +6,9 @@ as `io.github.dstrupl/vardoger`. The registry feed is consumed by Docker
 Desktop's MCP gallery, VS Code's MCP picker, Windsurf's enterprise Internal MCP
 Registry feature, and other MCP hosts.
 
-The public registry serves `0.3.2` as the active latest version, matching the
+The public registry serves `0.4.0` as the active latest version, matching the
 tracked `server.json` and PyPI release. That version was published and verified
-on 2026-07-09.
+on 2026-09-27.
 
 ## What's in this folder
 

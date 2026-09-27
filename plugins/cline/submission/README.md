@@ -1,8 +1,8 @@
 # Cline marketplace submission package
 
-This directory contains the locally prepared contribution for Cline's current
-[`cline/marketplace`](https://github.com/cline/marketplace) catalog. It does
-not represent an opened pull request.
+This directory contains the contribution submitted as
+[`cline/marketplace#143`](https://github.com/cline/marketplace/pull/143) to
+Cline's current catalog.
 
 ## Prepared upstream file
 
@@ -26,21 +26,19 @@ The catalog's `install.env` metadata must prompt for
 cross-client MCP server while making platform-optional tool calls use Cline
 history and Cline rules by default.
 
-## Owner preflight
+## Submission preflight
 
-Do not open the upstream pull request until all of these are true:
+The catalog contribution was opened after these repository-side gates passed:
 
 - the host-compatibility release is published to PyPI and
   `uvx vardoger mcp` resolves to that release;
-- a clean Cline profile can install the generated command and complete one
-  synthetic analyze/preview/write/reject cycle;
-- the environment prompt saves `VARDOGER_MCP_PLATFORM=cline` in the installed
-  server configuration;
+- the clean-profile Cline lifecycle remains a separate host-acceptance gate
+  because the `cline` command is not installed on this machine;
 - the public homepage, repository, icon, license, privacy policy, and Cline
   instructions are reachable without authentication;
 - `npm run validate` passes in a fresh `cline/marketplace` checkout with only
   the prepared `entry.json` added; and
-- the focused diff and [`PR_BODY.md`](./PR_BODY.md) have owner approval.
+- the focused diff and [`PR_BODY.md`](./PR_BODY.md) had owner approval.
 
 The old `cline/mcp-marketplace#1394` issue belongs to a superseded intake
 flow. Do not ping, duplicate, or close it as part of this contribution unless
@@ -54,3 +52,6 @@ On 2026-09-27, this entry was copied into a clean snapshot of
 `npm run validate` command passed all 204 catalog entries, including
 Vardoger. This establishes schema and catalog compatibility; it does not
 replace the clean-profile runtime test or upstream review.
+
+The submitted fork commit is `536c66c` on `dstrupl/marketplace:add-vardoger`.
+PR #143 is open, mergeable, and awaiting upstream review.

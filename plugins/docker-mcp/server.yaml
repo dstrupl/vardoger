@@ -40,9 +40,9 @@ about:
 source:
   project: https://github.com/dstrupl/vardoger
   branch: main
-  # Peeled commit SHA of the vardoger 0.3.1 release tag (`git rev-list -1 v0.3.1`).
+  # Peeled commit SHA of the vardoger 0.4.0 release tag (`git rev-list -1 v0.4.0`).
   # Must be a commit SHA, not the annotated tag object SHA.
-  commit: 98c9006f87880d907944557d343028f2b53cf635
+  commit: f189c2a824b795c1f5985c3f4a6729f2d645e348
 run:
   volumes:
     - "{{vardoger.home_path}}:/host-home"

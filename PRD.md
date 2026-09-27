@@ -1,6 +1,6 @@
 # vardoger — Product Requirements Document
 
-> **Version:** 0.4.0 release candidate
+> **Version:** 0.4.0
 > **Date:** 2026-09-27
 > **Status:** Public beta (Phases 1–3 and 5 shipped; marketplace and host refresh in progress)
 >
@@ -232,7 +232,7 @@ Plugins are git repositories. Installation clones into `~/.claude/plugins/cache/
 
 Codex supports Agent Plugins plus its legacy-compatible package shape:
 
-- **Manifest:** Agent Plugins 1.0 root `plugin.json`; Vardoger 0.3.2 currently
+- **Manifest:** Agent Plugins 1.0 root `plugin.json`; Vardoger 0.4.0 currently
   uses the `.codex-plugin/plugin.json` compatibility fallback
 - **Marketplace:** Universal Plugins Directory + custom marketplace JSON
 - **CLI:** `/plugins` in TUI, `@` to target skills
@@ -364,7 +364,7 @@ Windsurf's in-product MCP Store is currently editorial with no public submission
 
 **Recommended approach:** Ship a native skill for Windsurf's user skill directory, an install snippet for `mcp_config.json` that wires vardoger as an MCP server (`VARDOGER_MCP_PLATFORM=windsurf`), and a `vardoger setup windsurf` helper that installs the skill and prepares the rules path. Revisit marketplace submission if Windsurf opens a self-serve flow.
 
-> **Status:** [x] Vardoger 0.3.2 supports the legacy Cascade product surface:
+> **Status:** [x] Vardoger 0.4.0 supports the legacy Cascade product surface:
 > the shared native skill, MCP snippet, user skill installer, history reader,
 > and rules writer. Windsurf has since become Devin Desktop and new tabs
 > default to Devin Local. Phase 6 adds a separate `devin` target for documented
@@ -522,18 +522,18 @@ The core analysis logic must be shared across all platform integrations. Platfor
 **Goal:** Publish vardoger to the official plugin marketplaces after validating through limited beta.
 
 **Deliverables:**
-- [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.3.2)
+- [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.4.0)
 - [ ] Cursor Plugin Registry — **previously live, unavailable as of 2026-09-27**; the public route now displays "Marketplace Plugin Not Found." Revalidate the portable manifest and re-submit after the compatibility release.
 - [x] Claude Code community catalog + custom marketplace — **Live**, re-add verified 2026-07-09 in [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community); the self-served `.claude-plugin/marketplace.json` path remains available through `/plugin marketplace add dstrupl/vardoger`.
-- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json`. The portable root manifest, final-directory text limits, deterministic four-file archive, and a clean `CODEX_HOME` install are validated locally. The eight portal reviewer cases, acceptance of the external CLI dependency, verified identity, submission, and publication remain human gates.
+- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json`; Codex CLI 0.146.0 clean-installed Vardoger 0.4.0. The portable root manifest, final-directory text limits, and deterministic four-file archive (`c193c9c4…`) are validated locally. The eight portal reviewer cases, acceptance of the external CLI dependency, verified identity, submission, and publication remain human gates.
 - [x] Skill publishing to ClawHub for OpenClaw — publishing was achieved, but the [current public listing](https://clawhub.ai/dstrupl/vardoger-analyze) has regressed to 0.3.1 with security status `Review` and mandatory MIT-0 terms. An explicit distribution-license decision is required before another release.
 - [x] Plugin packaging and marketplace submission for GitHub Copilot CLI — **custom marketplace live (self-served)** via `plugins/copilot/marketplace.json` (Copilot CLI has no central registry for custom marketplaces — users install directly via `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot`); **`awesome-copilot` live** as [`vardoger-analyze`](https://github.com/github/awesome-copilot/blob/main/skills/vardoger-analyze/SKILL.md) ([PR #1461](https://github.com/github/awesome-copilot/pull/1461) merged 2026-04-28 by [`aaronpowell`](https://github.com/aaronpowell) into `staged` as [`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f); auto-published to `main`, installable today via `gh skills install github/awesome-copilot vardoger-analyze`)
-- [ ] GitHub Copilot CLI default marketplace — draft [PR #56](https://github.com/github/copilot-plugins/pull/56) remains open but is `CONFLICTING` / `DIRTY`; an exact [refresh kit](plugins/copilot/submission/README.md) is ready, but rebase/push and current-CLI clean acceptance remain owner gates.
-- [x] Windsurf direct distribution — 0.3.2 supports legacy Cascade skill, rules, history, and MCP paths. The compatibility worktree now also includes first-class Devin ATIF imports, `.devin/*` rules, and `~/.config/devin/*` setup, pending release.
-- [ ] Cline Marketplace submission — legacy [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) is still open but superseded. Prepare a validated entry for the current PR-based [`cline/marketplace`](https://github.com/cline/marketplace) after the Cline global-rule update.
-- [x] Official MCP Registry submission — **Live** as [`io.github.dstrupl/vardoger@0.3.2`](https://registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10), verified active/latest on 2026-09-27. Tracked at `plugins/mcp-registry/server.json`.
+- [ ] GitHub Copilot CLI default marketplace — [PR #56](https://github.com/github/copilot-plugins/pull/56) was rebased onto current upstream, reduced to the focused Vardoger object and README line, clean-installed with Copilot CLI 1.0.88, and marked ready. It is mergeable and awaits required review.
+- [x] Windsurf and Devin direct distribution — 0.4.0 supports both the legacy Cascade skill/rules/history paths and first-class Devin ATIF imports, `.devin/*` rules, and `~/.config/devin/*` setup.
+- [ ] Cline Marketplace submission — legacy [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) is still open but superseded. The validated current-catalog entry is submitted as [`cline/marketplace#143`](https://github.com/cline/marketplace/pull/143) and awaits review; clean-profile Cline UI acceptance remains separate because the CLI is unavailable locally.
+- [x] Official MCP Registry submission — **Live** as [`io.github.dstrupl/vardoger@0.4.0`](https://registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10), published and verified active/latest on 2026-09-27. Tracked at `plugins/mcp-registry/server.json`.
 - [x] McpMux community registry submission ([`mcpmux/mcp-servers`](https://github.com/mcpmux/mcp-servers)) — **Live** (2026-04-24). [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) merged as [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe) after addressing reviewer feedback (switched `VARDOGER_MCP_PLATFORM` from `text` to `select` input). Tracked server definition at `plugins/mcpmux/vardoger.json`; McpMux bundles `main` roughly hourly, so Cursor, Claude Desktop, VS Code, and Windsurf desktop clients on the McpMux gateway now pick up vardoger automatically.
-- [ ] Docker MCP Registry submission ([`docker/mcp-registry`](https://github.com/docker/mcp-registry)) — **submitted, awaiting review** ([PR #2949](https://github.com/docker/mcp-registry/pull/2949)); `source.commit` is correctly pinned to the peeled `v0.3.1` commit `98c9006f87880d907944557d343028f2b53cf635`.
+- [ ] Docker MCP Registry submission ([`docker/mcp-registry`](https://github.com/docker/mcp-registry)) — **submitted, awaiting review** ([PR #2949](https://github.com/docker/mcp-registry/pull/2949)); the refreshed branch is rebased onto current upstream and `source.commit` is pinned to the peeled `v0.4.0` commit `f189c2a824b795c1f5985c3f4a6729f2d645e348`.
 
 Full per-marketplace status (with submission dates and review feedback) lives in [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md), which is the single source of truth for Phase 4 progress.
 
@@ -610,16 +610,17 @@ host-integration capabilities without breaking existing contracts.
 - [x] Make Claude and Codex synthesis aware of native host memory so generated
   instructions retain durable cross-project preferences instead of duplicating
   episodic or repository-scoped host-managed context.
-- [ ] Recover marketplace reach only after runtime fixes: re-submit Cursor,
-  apply the prepared Copilot PR #56 refresh, submit the prepared Cline catalog
-  PR, and complete the remaining clean-environment Codex reviewer cases.
+- [ ] Recover remaining marketplace reach: re-submit Cursor and complete the
+  remaining clean-environment Codex reviewer cases. Copilot PR #56 and Cline
+  PR #143 are refreshed/submitted and now await upstream review.
 - [ ] Resolve whether ClawHub's mandatory MIT-0 distribution is acceptable;
   republish only if the owner accepts it and the OpenClaw integration remains
   supported after the native-memory review.
-- [ ] Publish the prepared and locally validated 0.4.0 compatibility release,
-  then update public registry records that carry explicit versions. Packaging,
-  version metadata, generated artifacts, and local acceptance are complete;
-  commit, CI, tag, GitHub release, and PyPI publication remain owner gates.
+- [x] Publish the validated 0.4.0 compatibility release. PR #37 was rebase
+  merged at `f189c2a`; main CI passed, annotated tag `v0.4.0` and the GitHub
+  release are live, and trusted publication delivered matching wheel/sdist
+  hashes to PyPI. The Official MCP Registry is also live at 0.4.0; Docker's
+  separately versioned PR is refreshed and awaits review.
 
 **Success criteria:** Current product defaults work without relying on legacy
 paths, direct installs remain backward-compatible, and every public status row

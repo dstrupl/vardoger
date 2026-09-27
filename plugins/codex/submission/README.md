@@ -77,6 +77,16 @@ Use the exactly five positive and three negative cases in
 private or internal data and can be copied into a disposable reviewer's
 `~/.codex/sessions/` directory.
 
+## Current build evidence
+
+On 2026-09-27, Codex CLI 0.146.0 added the public `main` marketplace in a
+disposable `CODEX_HOME`, installed `vardoger@vardoger`, and listed it as
+enabled at version 0.4.0. The deterministic four-file upload archive is
+`dist/vardoger-codex-submission-0.4.0.zip`, SHA-256
+`c193c9c4ee119d4283baf11099c282cc990279c075e8a3cb65289bf33ff6861d`.
+The portal reviewer cases and policy attestations remain human submission
+steps rather than repository validation.
+
 ## Availability
 
 Select all countries and regions offered by the portal where this open-source
