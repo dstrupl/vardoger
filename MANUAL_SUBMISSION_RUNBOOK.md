@@ -9,29 +9,28 @@ obtain explicit owner approval immediately before each submission or PR update.
 
 ## Recommended order
 
-1. Review and publish the prepared 0.4.0 host-compatibility release described
-   in PRD Phase 6.
-2. Clean-profile test the supported Devin Local ATIF export workflow.
-3. Clean-profile test and submit the prepared Cline marketplace PR.
-4. Clean-profile test and recover the Cursor listing.
-5. Treat Copilot and Codex marketplace work as lower priority than hosts where
+1. Clean-profile test the supported Devin Local ATIF export workflow.
+2. Monitor the submitted Cline marketplace PR without duplicating the legacy
+   issue.
+3. Clean-profile test and recover the Cursor listing.
+4. Treat the Codex official-directory submission as lower priority than hosts where
    Vardoger remains clearly differentiated.
-6. Keep ClawHub unpublished for current OpenClaw 2.0 until both compatibility
+5. Keep ClawHub unpublished for current OpenClaw 2.0 until both compatibility
    and licensing are resolved.
-7. Monitor Docker without reposting or pinging.
+6. Monitor the refreshed Docker and Copilot PRs without reposting or pinging.
 
 Claude Code's community entry, the Official MCP Registry, McpMux, PyPI, and
 the `awesome-copilot` skill are current and need no owner action.
 
 ## Common preflight
 
-- [ ] Work from a clean, public `main` at or after `f813e9ca00a39371d55994dcfdc75ae6172f26c6`.
-- [ ] Confirm the intended release is on PyPI and every manifest carries the
+- [x] Work from clean public `main` at `f189c2a824b795c1f5985c3f4a6729f2d645e348` or later.
+- [x] Confirm the intended release is on PyPI and every manifest carries the
   same version.
-- [ ] Run `uv run ruff check .`, `uv run ruff format --check .`,
+- [x] Run `uv run ruff check .`, `uv run ruff format --check .`,
   `uv run mypy src/`, and `uv run pytest`.
-- [ ] Use the GitHub account `dstrupl` for repository submissions.
-- [ ] Record the submission URL or ID, date, exact source commit, and current
+- [x] Use the GitHub account `dstrupl` for repository submissions.
+- [x] Record the submission URL or ID, date, exact source commit, and current
   review state in `MARKETPLACE_STATUS.md` before ending the session.
 
 ## 1. Host-compatibility release
@@ -72,8 +71,11 @@ Local evidence captured on 2026-09-27:
 - Record fresh SHA-256 values after the final documentation edit and artifact
   rebuild; do not embed the sdist's own digest in a file included by the sdist.
 
-The remaining release gate is owner review followed by commit/push, required
-CI, an annotated `v0.4.0` tag, GitHub release, and trusted PyPI publication.
+Release delivery completed on 2026-09-27: PR #37 was rebase merged, main CI
+passed, annotated tag `v0.4.0` and the GitHub release are live, and trusted
+publishing uploaded the matching wheel (`a364b910...`) and source distribution
+(`ad3ddd53...`) to PyPI. Host UI acceptance and separately versioned registry
+updates remain independent follow-up gates.
 
 ## 2. Cursor Plugin Registry
 
@@ -94,20 +96,17 @@ The current official schemas have been checked locally. Use the prepared
 ## 3. GitHub Copilot CLI default marketplace
 
 Current review item: [`github/copilot-plugins#56`](https://github.com/github/copilot-plugins/pull/56).
-It is open, draft, `CONFLICTING`, and `DIRTY`, with no reviews or checks.
+On 2026-09-27 it was rebased onto upstream `fbf7c53`, reduced to the exact
+Vardoger marketplace object plus README line, force-pushed with lease, and
+marked ready for review. GitHub reports it mergeable and blocked only on
+required review.
 
-1. Fetch current upstream and rebase the submission branch.
-2. Follow the exact [conflict-resolution kit](plugins/copilot/submission/README.md),
-   preserving current upstream files and reapplying only its prepared Vardoger
-   marketplace object and README line.
-3. Confirm the released source package has the portable Agent Plugins 1.0
-   layout, then run the upstream repository's documented validation and inspect
-   the final diff for only the Vardoger entry and discovery metadata.
-4. Upgrade the local Copilot CLI before clean-profile acceptance; version
-   0.0.343 on this machine predates plugin-management commands.
-5. Push the rebased branch with lease protection.
-6. Recheck mergeability and required checks, then ask the owner to mark the PR
-   ready. Do not mark it ready while conflicts or failing checks remain.
+Copilot CLI 1.0.88 installed the public source package from
+`dstrupl/vardoger:plugins/copilot` in a clean temporary profile and listed
+Vardoger 0.4.0 as enabled. The refreshed submission head is `226217c`; see the
+[recorded evidence](plugins/copilot/submission/README.md). Monitor the PR and
+respond to reviewer feedback, but do not repost or ping without a material
+change.
 
 ## 4. Cline marketplace
 
@@ -115,17 +114,13 @@ Legacy issue [`cline/mcp-marketplace#1394`](https://github.com/cline/mcp-marketp
 is still open but no longer represents the current intake path. Do not ping,
 duplicate, or close it without owner approval.
 
-The current [submission package](plugins/cline/submission/README.md) contains
-the upstream-ready `registry/mcps/vardoger/entry.json` and PR body. It passed
-upstream `npm run validate` against all 204 entries on 2026-09-27.
-
-1. Publish the compatibility release with Cline global-rule support.
-2. Install the rendered command in a clean Cline profile, set
-   `VARDOGER_MCP_PLATFORM=cline`, and complete the synthetic lifecycle.
-3. Copy the prepared entry into a fresh `cline/marketplace` fork and rerun
-   `npm run validate` at the final upstream head.
-4. Present the focused diff and prepared PR body for owner approval.
-5. After explicit approval, open the PR and record its URL and source commit.
+Current review item: [`cline/marketplace#143`](https://github.com/cline/marketplace/pull/143).
+The focused `registry/mcps/vardoger/entry.json` contribution was submitted on
+2026-09-27 from commit `536c66c`. Upstream `npm run validate` passed all 204
+entries. The local `cline` command is not installed, so clean-profile Cline UI
+acceptance remains separate from schema/catalog validation and is disclosed in
+the PR. Monitor the PR and respond to reviewer feedback; leave legacy issue
+#1394 untouched.
 
 ## 5. OpenAI universal Plugins Directory
 
@@ -146,6 +141,12 @@ and [plugin packaging guide](https://developers.openai.com/plugins/build/plugins
    verified identity, review all attestations, and submit.
 6. After approval, explicitly publish the approved version; approval alone
    does not make it visible in the shared ChatGPT/Codex Plugins Directory.
+
+Repository-side evidence is complete: Codex CLI 0.146.0 clean-installed
+Vardoger 0.4.0 from public `main`, and the deterministic four-file archive has
+SHA-256 `c193c9c4ee119d4283baf11099c282cc990279c075e8a3cb65289bf33ff6861d`.
+The remaining portal cases, identity selection, attestations, submission, and
+post-approval publication are human/representational actions.
 
 ## 6. OpenClaw ClawHub
 
@@ -171,10 +172,15 @@ Stop for an explicit owner decision:
 ## 7. Docker MCP Registry
 
 [`docker/mcp-registry#2949`](https://github.com/docker/mcp-registry/pull/2949)
-remains open, mergeable, blocked on review, and untouched by reviewers. The
-Official MCP Registry already supplies a live Docker-compatible discovery
-route. Check this PR only at low frequency; do not repost or ping without new
-review feedback or a material upstream schema change.
+remains open, mergeable, and blocked on review. On 2026-09-27 its branch was
+rebased onto current upstream and refreshed to the peeled Vardoger 0.4.0 commit
+`f189c2a`, with Devin metadata and corrected local-versus-host-model privacy
+copy. The one-file YAML diff parses successfully; Go, Task, and Docker are not
+installed here, so the previously successful 11-check validation and image
+tool discovery were not rerun. The Official MCP Registry already supplies a
+live Docker-compatible discovery route. Check this PR only at low frequency;
+do not repost or ping without new review feedback or a material upstream
+schema change.
 
 ## Completion bookkeeping
 

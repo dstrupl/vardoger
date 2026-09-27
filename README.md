@@ -50,7 +50,7 @@ Then tell your assistant: **"Personalize my assistant."**
 > before any ClawHub republish.
 
 > **Previous pre-releases.** `pipx install vardoger` now resolves to the stable
-> `0.3.2` release. The beta install paths below stay here for anyone still pinning
+> `0.4.0` release. The beta install paths below stay here for anyone still pinning
 > an earlier release; new installs should not need them.
 >
 > ```bash
@@ -223,9 +223,8 @@ The `publish.yml` workflow builds the package and uploads it to PyPI via [truste
 
 ## Status
 
-Public beta. Version `0.3.2` remains the published PyPI release; this source
-tree is the locally validated `0.4.0` release candidate pending owner review,
-CI, tagging, and publication.
+Public beta. Version `0.4.0` is published on PyPI and tagged on GitHub; this
+source tree tracks that released version.
 See [`MARKETPLACE_STATUS.md`](./MARKETPLACE_STATUS.md) for live listings and
 the remaining official-directory submissions.
 See [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md) for the

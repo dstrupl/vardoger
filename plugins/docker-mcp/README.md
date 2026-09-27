@@ -5,9 +5,9 @@ entry that publishes `mcp/vardoger` on Docker Hub and lists vardoger in Docker
 Desktop's MCP Toolkit.
 
 Submission [PR #2949](https://github.com/docker/mcp-registry/pull/2949) remains
-open. Its tracked registry entry is pinned to the `0.3.1` release commit; update
-both the submission branch and `server.yaml` together before moving it to a
-newer release.
+open. On 2026-09-27 its branch was rebased onto current upstream and both the
+submitted and tracked entries were pinned to the peeled `0.4.0` release commit
+`f189c2a824b795c1f5985c3f4a6729f2d645e348`.
 
 ## What's in this folder
 
