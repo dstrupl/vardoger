@@ -1,8 +1,8 @@
 # Cursor Marketplace recovery package
 
-This directory holds the owner-facing material for restoring Vardoger's
-missing Cursor Marketplace listing. It is preparation only: no form has been
-submitted from this working tree.
+This directory holds the owner-facing material used to restore Vardoger's
+missing Cursor Marketplace listing. The current recovery application was
+submitted on 2026-09-27 and Cursor confirmed receipt.
 
 ## Source submitted to Cursor
 
@@ -80,6 +80,15 @@ Cursor's publisher page is a submission form, not a submission-history
 dashboard. Do not mark the integration Live until a signed-out visit to
 `https://cursor.com/marketplace/vardoger` shows the actual listing rather than
 the current not-found page.
+
+## Current submission evidence
+
+On 2026-09-27 the owner submitted as the individual publisher `dstrupl`, using
+the public Vardoger repository, the committed Cursor logo, the project website,
+and the local-first description above. The success page displayed “Thanks for
+applying” and “We've received your submission.” Cursor supplied no public
+submission ID or review dashboard, so subsequent verification must use email
+from `marketplace-publishing@cursor.com` and the signed-out public route.
 
 ## Local validation evidence
 

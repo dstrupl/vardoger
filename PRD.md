@@ -523,9 +523,9 @@ The core analysis logic must be shared across all platform integrations. Platfor
 
 **Deliverables:**
 - [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.4.0)
-- [ ] Cursor Plugin Registry — **previously live, unavailable as of 2026-09-27**; the public route now displays "Marketplace Plugin Not Found." Revalidate the portable manifest and re-submit after the compatibility release.
+- [ ] Cursor Plugin Registry — **recovery submitted 2026-09-27, awaiting review**; Cursor confirmed receipt of the current Vardoger publisher application. The public route still displays “Marketplace Plugin Not Found,” so publication and signed-out installability remain open.
 - [x] Claude Code community catalog + custom marketplace — **Live**, re-add verified 2026-07-09 in [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community); the self-served `.claude-plugin/marketplace.json` path remains available through `/plugin marketplace add dstrupl/vardoger`.
-- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json`; Codex CLI 0.146.0 clean-installed Vardoger 0.4.0. The portable root manifest, final-directory text limits, and deterministic four-file archive (`c193c9c4…`) are validated locally. The eight portal reviewer cases, acceptance of the external CLI dependency, verified identity, submission, and publication remain human gates.
+- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json`; Codex CLI 0.146.0 clean-installed Vardoger 0.4.0. The portable manifest and deterministic archive (`c193c9c4…`) are validated, and the individual OpenAI developer identity is verified. The portal currently exposes only **With MCP**, not the documented **Skills only** upload path, so submission is blocked on OpenAI access/support rather than repository work.
 - [x] Skill publishing to ClawHub for OpenClaw — publishing was achieved, but the [current public listing](https://clawhub.ai/dstrupl/vardoger-analyze) has regressed to 0.3.1 with security status `Review` and mandatory MIT-0 terms. An explicit distribution-license decision is required before another release.
 - [x] Plugin packaging and marketplace submission for GitHub Copilot CLI — **custom marketplace live (self-served)** via `plugins/copilot/marketplace.json` (Copilot CLI has no central registry for custom marketplaces — users install directly via `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot`); **`awesome-copilot` live** as [`vardoger-analyze`](https://github.com/github/awesome-copilot/blob/main/skills/vardoger-analyze/SKILL.md) ([PR #1461](https://github.com/github/awesome-copilot/pull/1461) merged 2026-04-28 by [`aaronpowell`](https://github.com/aaronpowell) into `staged` as [`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f); auto-published to `main`, installable today via `gh skills install github/awesome-copilot vardoger-analyze`)
 - [ ] GitHub Copilot CLI default marketplace — [PR #56](https://github.com/github/copilot-plugins/pull/56) was rebased onto current upstream, reduced to the focused Vardoger object and README line, clean-installed with Copilot CLI 1.0.88, and marked ready. It is mergeable and awaits required review.
@@ -610,9 +610,9 @@ host-integration capabilities without breaking existing contracts.
 - [x] Make Claude and Codex synthesis aware of native host memory so generated
   instructions retain durable cross-project preferences instead of duplicating
   episodic or repository-scoped host-managed context.
-- [ ] Recover remaining marketplace reach: re-submit Cursor and complete the
-  remaining clean-environment Codex reviewer cases. Copilot PR #56 and Cline
-  PR #143 are refreshed/submitted and now await upstream review.
+- [ ] Recover remaining marketplace reach: monitor the submitted Cursor
+  recovery and obtain access/support for Codex's missing Skills-only portal
+  path. Copilot PR #56 and Cline PR #143 await upstream review.
 - [ ] Resolve whether ClawHub's mandatory MIT-0 distribution is acceptable;
   republish only if the owner accepts it and the OpenClaw integration remains
   supported after the native-memory review.
