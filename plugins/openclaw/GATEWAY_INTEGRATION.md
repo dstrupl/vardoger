@@ -1,6 +1,7 @@
 # OpenClaw 2.0 history integration decision
 
-Status: opt-in read path implemented; live acceptance and publication gated.
+Status: opt-in read path implemented and live-accepted; publication remains
+gated on the ClawHub license decision.
 
 ## Supported history contract
 
@@ -46,20 +47,35 @@ Vardoger does not accept authentication or endpoint overrides.
 
 ## Acceptance criteria
 
-- [ ] Works against a disposable OpenClaw profile without direct SQLite access.
+- [x] Works against a disposable OpenClaw profile without direct SQLite access.
 - [x] Uses only `sessions.list` and `chat.history` with
   `operator.sessions.read` (or the older broader read-only scope).
 - [x] Handles pagination and filters synthetic reset/compaction rows.
 - [ ] Persists stable message anchors for incremental reads.
 - [x] Produces the same normalized conversation model as other history adapters.
-- [ ] Has fixture-based protocol tests plus one human-approved live acceptance
+- [x] Has fixture-based protocol tests plus one human-approved live acceptance
   test against a disposable Gateway.
-- [ ] Revoking the paired device prevents future reads without damaging local
+- [x] Rotating the authentication credential resolved by the official CLI
+  prevents future reads with the retired credential without damaging local
   OpenClaw state.
 
 Fixture-backed pagination, filtering, CLI-argument, missing-binary, and config
-tests are implemented. The final live acceptance test remains an owner action
-because this checkout has no `openclaw` executable or disposable Gateway.
+tests are implemented. On 2026-09-27, OpenClaw 2026.9.6 ran with a verified
+Node 24.21.0 runtime in a disposable profile and loopback-only Gateway. A
+synthetic session containing one user preference and one internal failure row
+was stored in OpenClaw's SQLite state. Vardoger's real
+`prepare --platform openclaw --full` workflow returned one conversation and
+included only the user text, confirming that it delegated to `sessions.list`
+and `chat.history` while filtering the internal row. After the Gateway token
+was rotated, the retired credential failed with exit code 2, the replacement
+credential restored access, and the same conversation remained readable.
+
+Current OpenClaw deliberately treats direct loopback `gateway call` requests
+authenticated by a shared token or password as backend RPCs that do not depend
+on a paired-device record. Device removal therefore is not the revocation
+control for this Vardoger path; rotating or removing the authentication source
+resolved by the official CLI is. Vardoger neither reads nor persists that
+credential.
 
 ## ClawHub license gate
 

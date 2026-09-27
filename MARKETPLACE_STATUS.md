@@ -83,8 +83,9 @@ picture changed materially while the repository was idle.
    current working tree fixes Cursor `.mdc` rule delivery, nested Copilot
    `events.jsonl` discovery, and Cline global rules. OpenClaw 2.0 canonical
    SQLite is never queried; an explicit full-read adapter now delegates only
-   `sessions.list` and `chat.history` to the official Gateway CLI. Live
-   clean-profile acceptance is still pending.
+   `sessions.list` and `chat.history` to the official Gateway CLI. Disposable
+   clean-profile acceptance passed on OpenClaw 2026.9.6; incremental Gateway
+   checkpoints remain intentionally disabled.
 9. **The 0.4.0 release is published.** The SemVer minor bump
    reflects new public profile-compiler commands and host integrations without
    removing existing contracts. Package/manifests, generated skills, wheel,
@@ -1187,9 +1188,13 @@ ClawHub-specific artifact without contradictory license metadata and publish
 The working tree now has a supported-protocol compatibility path for current
 OpenClaw history: after explicit `VARDOGER_OPENCLAW_GATEWAY=1` enablement, a
 `--full` analysis delegates only `sessions.list` and `chat.history` to the
-official OpenClaw CLI and never queries SQLite. Fixture-backed tests pass, but
-no `openclaw` executable or disposable Gateway is available in this checkout,
-so clean-profile runtime acceptance remains required before republishing.
+official OpenClaw CLI and never queries SQLite. Fixture-backed tests pass. On
+2026-09-27, OpenClaw 2026.9.6 also passed live acceptance in a disposable,
+loopback-only profile: Vardoger read one synthetic session, excluded an
+internal failure row, rejected a rotated-out Gateway credential, and read the
+same intact session with the replacement credential. Current direct loopback
+CLI calls use OpenClaw's shared-credential backend path rather than a paired
+device, so credential rotation is the applicable revocation control.
 
 The public route is
 [`clawhub.ai/dstrupl/vardoger-analyze`](https://clawhub.ai/dstrupl/vardoger-analyze),
@@ -1368,8 +1373,8 @@ see [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md).
 4. Monitor the ready, mergeable Copilot PR #56. Treat the Codex universal
    directory as lower-priority distribution work because native memory already
    overlaps heavily; rerun its reviewer tests before portal submission.
-5. Do not republish ClawHub until the opt-in OpenClaw Gateway reader passes a
-   disposable clean-profile acceptance test and the owner explicitly decides
+5. The opt-in OpenClaw Gateway reader has passed disposable clean-profile
+   acceptance. Do not republish ClawHub until the owner explicitly decides
    whether mandatory MIT-0 distribution is acceptable.
 6. Continue low-frequency monitoring of refreshed Docker PR #2949. Claude
    community and custom routes, Official MCP Registry, McpMux, PyPI, and the

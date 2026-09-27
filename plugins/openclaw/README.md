@@ -61,7 +61,8 @@ but the public listing currently exposes 0.3.1 with security status `Review`
 and mandatory MIT-0 terms. The source skill declares Apache-2.0, so do not use
 ClawHub for a new install or publish another version until the owner explicitly
 decides whether MIT-0 distribution is acceptable. This distribution issue is
-separate from the pending live Gateway acceptance test above.
+separate from the Gateway runtime path, which passed disposable-profile live
+acceptance on 2026-09-27.
 
 If the owner accepts ClawHub's distribution terms, maintainers can publish a
 ClawHub-specific artifact with the current CLI shape:

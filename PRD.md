@@ -599,8 +599,9 @@ host-integration capabilities without breaking existing contracts.
   across Copilot history, writer, setup, and status code.
 - [x] Detect OpenClaw 2.0 canonical SQLite safely, preserve legacy JSONL, emit
   valid skill frontmatter, and provide an explicit full-read adapter through
-  the official Gateway CLI's `sessions.list` and `chat.history`. Incremental
-  checkpoints and clean-profile live acceptance remain open.
+  the official Gateway CLI's `sessions.list` and `chat.history`. Disposable
+  clean-profile live acceptance passed on OpenClaw 2026.9.6; incremental
+  checkpoints remain open.
 - [x] Add a first-class `devin` adapter around Devin CLI's documented,
   user-enabled ATIF `--export` contract; deliver global/project rules and a
   native skill through documented paths while retaining `windsurf` as the
