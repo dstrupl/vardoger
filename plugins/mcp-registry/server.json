@@ -7,12 +7,12 @@
     "url": "https://github.com/dstrupl/vardoger",
     "source": "github"
   },
-  "version": "0.3.2",
+  "version": "0.4.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "vardoger",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "transport": {
         "type": "stdio"
       },
@@ -25,7 +25,7 @@
       "environmentVariables": [
         {
           "name": "VARDOGER_MCP_PLATFORM",
-          "description": "Override the host platform identifier (cursor, claude-code, codex, copilot, windsurf, cline, openclaw). When unset, vardoger uses the calling host's defaults.",
+          "description": "Override the host platform identifier (cursor, claude-code, codex, copilot, devin, windsurf, cline, openclaw). When unset, vardoger uses the calling host's defaults.",
           "isRequired": false,
           "isSecret": false,
           "format": "string"

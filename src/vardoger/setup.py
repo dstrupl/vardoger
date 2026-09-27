@@ -8,6 +8,7 @@ Handles post-install registration for each supported platform:
   - Codex: creates plugin directory and registers in marketplace.json
   - OpenClaw: installs analysis skill to ~/.openclaw/skills/vardoger/
   - Windsurf: installs a native skill and prepares the global rules file
+  - Devin: installs a native skill and prepares supported ATIF imports/rules
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from vardoger import __version__
+from vardoger.config import CopilotConfig
 from vardoger.models import (
     ClaudePluginManifest,
     CodexMarketplace,
@@ -31,13 +34,14 @@ from vardoger.models import (
     PluginAuthor,
 )
 from vardoger.prompts import analyze_skill_body
+from vardoger.writers.cline import cline_global_rules_dir
 
 CLAUDE_PLUGIN_MANIFEST = ClaudePluginManifest(
     name="vardoger",
-    version="0.3.2",
+    version=__version__,
     description=(
-        "Personalizes your AI assistant by analyzing conversation "
-        "history and generating tailored rules. Runs entirely on your machine."
+        "Personalizes your AI assistant from local conversation history "
+        "using the active host model."
     ),
     author=PluginAuthor(name="David Strupl"),
     homepage="https://github.com/dstrupl/vardoger",
@@ -48,10 +52,10 @@ CLAUDE_PLUGIN_MANIFEST = ClaudePluginManifest(
 
 CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
     name="vardoger",
-    version="0.3.2",
+    version=__version__,
     description=(
-        "Personalizes your AI assistant by analyzing conversation "
-        "history and generating tailored instructions. Runs entirely on your machine."
+        "Personalizes your AI assistant from local conversation history "
+        "using the active host model."
     ),
     author=PluginAuthor(name="David Strupl"),
     homepage="https://github.com/dstrupl/vardoger",
@@ -60,14 +64,15 @@ CODEX_PLUGIN_MANIFEST = CodexPluginManifest(
     keywords=["personalization", "productivity", "skills", "local-first"],
     interface=CodexPluginInterface(
         displayName="Vardoger",
-        shortDescription="Personalize your assistant from your own conversation history",
+        shortDescription="Personalize from your history",
         longDescription=(
             "Vardoger reads your Codex conversation history locally, extracts "
             "behavioral patterns, and generates a personalized AGENTS.md "
             "addition so the assistant adapts to how you actually work. "
-            "All processing happens on your machine — no data leaves it."
+            "Local history handling stays on your machine; model-side analysis "
+            "follows your host assistant's data policy."
         ),
-        developerName="dstrupl",
+        developerName="David Strupl",
         category="Productivity",
         capabilities=["Read", "Write"],
         websiteURL="https://github.com/dstrupl/vardoger",
@@ -91,6 +96,7 @@ _PLATFORM_LABELS: dict[str, str] = {
     "codex": "Codex",
     "openclaw": "OpenClaw",
     "windsurf": "Windsurf",
+    "devin": "Devin Local",
 }
 
 _PLATFORM_SKILL_NAMES: dict[str, str] = {
@@ -107,8 +113,21 @@ def _render_skill(platform: str) -> str:
         f"or to analyze their {label} conversation history. Runs the vardoger CLI "
         f"to read past conversations and generate tailored instructions."
     )
-    frontmatter = f'---\nname: {skill_name}\ndescription: "{description}"\n---\n'
-    return frontmatter + analyze_skill_body(platform, label)
+    frontmatter = [f"name: {skill_name}", f'description: "{description}"']
+    if platform == "openclaw":
+        frontmatter.extend(
+            (
+                f'version: "{__version__}"',
+                "license: Apache-2.0",
+                'homepage: "https://github.com/dstrupl/vardoger"',
+                "metadata:",
+                "  openclaw:",
+                "    requires:",
+                "      bins:",
+                "        - vardoger",
+            )
+        )
+    return "\n".join(("---", *frontmatter, "---", analyze_skill_body(platform, label)))
 
 
 def _write_skill(plugin_dir: Path, platform: str) -> None:
@@ -140,6 +159,7 @@ def setup_cursor() -> None:
     mcp_config_path.write_text(config.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
     print(f"Registered vardoger MCP server in {mcp_config_path}")
+    print("Project personalizations use `.cursor/rules/vardoger.mdc`.")
     print("Restart Cursor to activate.")
     print()
     _print_getting_started()
@@ -247,13 +267,13 @@ def setup_copilot() -> None:
     Copilot CLI does have a plugin marketplace (see ``plugins/copilot/`` in
     this repo) but plugin installation goes through ``copilot plugin install``
     rather than a ``vardoger setup`` flow. This command focuses on the
-    personalization surface: it ensures ``~/.copilot/copilot-instructions.md``
+    personalization surface: it ensures ``<copilot-home>/copilot-instructions.md``
     exists (creating a short placeholder when absent) so that
     ``vardoger analyze --platform copilot`` can write a fenced
     ``<!-- vardoger:start --> ... <!-- vardoger:end -->`` block without
     clobbering user-authored instructions.
     """
-    instructions_path = Path.home() / ".copilot" / "copilot-instructions.md"
+    instructions_path = CopilotConfig.from_env().instructions_path
     instructions_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not instructions_path.is_file():
@@ -311,16 +331,44 @@ def setup_windsurf() -> None:
 
 
 def setup_cline() -> None:
-    """Prepare Cline rules path for vardoger output.
+    """Prepare Cline's documented user-global rules directory."""
+    rules_dir = cline_global_rules_dir()
+    rules_dir.mkdir(parents=True, exist_ok=True)
 
-    Cline has no global rules path and no plugin registry. This command just
-    prints guidance; the writer creates ``.clinerules`` on first analyze.
-    """
-    print("Cline uses project-local rules only.")
-    print("Run `vardoger analyze --platform cline --scope project --project .`")
-    print("inside a project directory to generate a personalization.")
-    print("The writer will create ``.clinerules`` (or ``.clinerules/vardoger.md``")
-    print("if a ``.clinerules/`` directory already exists).")
+    print(f"Prepared Cline global rules directory at {rules_dir}")
+    print("Run `vardoger analyze --platform cline` to generate a user-wide")
+    print("personalization in `vardoger.md`.")
+    print("For project-only rules, pass `--scope project --project .`; the writer")
+    print("will preserve Cline's existing `.clinerules` file-or-directory layout.")
+    print()
+    _print_getting_started()
+
+
+def setup_devin() -> None:
+    """Install Devin's skill and prepare supported export and rule paths."""
+    import_dir = Path.home() / ".vardoger" / "imports" / "devin"
+    import_dir.mkdir(parents=True, exist_ok=True)
+
+    rules_path = Path.home() / ".config" / "devin" / "AGENTS.md"
+    rules_path.parent.mkdir(parents=True, exist_ok=True)
+    if not rules_path.is_file():
+        rules_path.write_text(
+            "# Devin global rules\n\n"
+            "Vardoger manages only the fenced section marked by "
+            "`<!-- vardoger:start -->` and `<!-- vardoger:end -->`.\n",
+            encoding="utf-8",
+        )
+
+    skill_dir = Path.home() / ".config" / "devin" / "skills" / "analyze"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    (skill_dir / "SKILL.md").write_text(_render_skill("devin"), encoding="utf-8")
+
+    print(f"Prepared Devin ATIF import directory at {import_dir}")
+    print(f"Prepared Devin global rules at {rules_path}")
+    print(f"Installed Devin skill at {skill_dir}")
+    print("Enable a supported transcript for each new CLI session with:")
+    print(f"  devin --export {import_dir}/<session-name>.json -- <prompt>")
+    print("Then run `vardoger analyze --platform devin`.")
     print()
     _print_getting_started()
 

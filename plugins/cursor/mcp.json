@@ -1,8 +1,13 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "vardoger": {
+      "type": "stdio",
       "command": "uvx",
-      "args": ["vardoger", "mcp"]
+      "args": [
+        "vardoger",
+        "mcp"
+      ]
     }
   }
 }

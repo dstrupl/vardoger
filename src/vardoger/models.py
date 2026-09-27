@@ -12,9 +12,10 @@ Organised by domain:
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
 # Group 0: Personalization output (confidence-scored rules)
@@ -34,6 +35,92 @@ class RuleConfidence(BaseModel):
 class PersonalizationDoc(BaseModel):
     confidence: list[RuleConfidence] = []
     body: str
+
+
+# ---------------------------------------------------------------------------
+# Group 0b: Cross-host profile compilation
+# ---------------------------------------------------------------------------
+
+PreferenceState = Literal["active", "conflict", "superseded"]
+RedactionPolicy = Literal["drop", "mask"]
+
+
+class ProfileSourceSelection(BaseModel):
+    """One explicitly selected generation from the checkpoint store."""
+
+    platform: str
+    generation: int | Literal["latest"] = "latest"
+
+
+class ProfileGenerationSummary(BaseModel):
+    """One available reviewed generation exposed for explicit selection."""
+
+    platform: str
+    generation: int
+    generated_at: datetime
+    conversations_analyzed: int
+    output_path: str
+    output_hash: str
+    rule_count: int
+
+
+class PreferenceEvidence(BaseModel):
+    """Auditable provenance for one normalized preference."""
+
+    platform: str
+    generation: int
+    generated_at: datetime
+    output_path: str
+    output_hash: str
+    rule_id: str | None = None
+
+
+class NormalizedPreference(BaseModel):
+    """A deterministic preference derived from a reviewed generation."""
+
+    id: str
+    text: str
+    category: str
+    confidence: ConfidenceLevel
+    observed_at: datetime
+    age_days: int
+    state: PreferenceState = "active"
+    superseded_by: str | None = None
+    evidence: list[PreferenceEvidence]
+
+
+class ProfileConflict(BaseModel):
+    """Opposing preferences withheld from active instructions."""
+
+    key: str
+    preference_ids: list[str]
+
+
+class ProfileExclusion(BaseModel):
+    """A rule removed by a user-selected retention or redaction control."""
+
+    source: str
+    reason: str
+
+
+class ProfileCompileOptions(BaseModel):
+    """Controls that affect deterministic profile compilation."""
+
+    min_confidence: ConfidenceLevel = "low"
+    max_age_days: int | None = Field(default=None, ge=0)
+    redact_patterns: list[str] = []
+    redaction_policy: RedactionPolicy = "drop"
+
+
+class CompiledProfile(BaseModel):
+    """Reviewable cross-host profile and its full decision record."""
+
+    schema_version: int = 1
+    reference_time: datetime
+    sources: list[ProfileSourceSelection]
+    preferences: list[NormalizedPreference]
+    conflicts: list[ProfileConflict] = []
+    exclusions: list[ProfileExclusion] = []
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +228,68 @@ class OpenClawEntry(BaseModel, extra="ignore"):
     metadata: OpenClawMessageMetadata = OpenClawMessageMetadata()
 
 
+class OpenClawGatewaySessionsParams(BaseModel):
+    """Read-only ``sessions.list`` parameters used by Vardoger."""
+
+    limit: int
+    offset: int
+    archived: str = "all"
+    includeGlobal: bool = True
+    includeUnknown: bool = False
+
+
+class OpenClawGatewaySession(BaseModel, extra="ignore"):
+    """Session identity returned by the supported Gateway projection."""
+
+    key: str
+    sessionId: str = ""
+    agentId: str = ""
+
+
+class OpenClawGatewaySessionsResult(BaseModel, extra="ignore"):
+    """Page returned by ``sessions.list``."""
+
+    sessions: list[OpenClawGatewaySession] = []
+    total: int | None = None
+
+
+class OpenClawGatewayHistoryParams(BaseModel):
+    """Read-only ``chat.history`` parameters used by Vardoger."""
+
+    sessionKey: str
+    agentId: str | None = None
+    limit: int
+    offset: int
+    maxChars: int
+
+
+class OpenClawGatewayHistoryMetadata(BaseModel, extra="ignore"):
+    """Stable metadata projected onto a Gateway history row."""
+
+    id: str = ""
+    seq: int | None = None
+    kind: str = ""
+
+
+class OpenClawGatewayMessage(BaseModel, extra="ignore"):
+    """Display-normalized history message returned by ``chat.history``."""
+
+    role: str = ""
+    content: list[ContentBlock | str] | str = ""
+    openclaw: OpenClawGatewayHistoryMetadata = Field(
+        default_factory=OpenClawGatewayHistoryMetadata,
+        alias="__openclaw",
+    )
+
+
+class OpenClawGatewayHistoryResult(BaseModel, extra="ignore"):
+    """Normal paginated response from ``chat.history``."""
+
+    messages: list[OpenClawGatewayMessage] = []
+    hasMore: bool = False
+    nextOffset: int | None = None
+
+
 class CopilotEntryData(BaseModel, extra="ignore"):
     """Payload carried by a Copilot CLI session entry."""
 
@@ -148,7 +297,7 @@ class CopilotEntryData(BaseModel, extra="ignore"):
 
 
 class CopilotEntry(BaseModel, extra="ignore"):
-    """One line of a Copilot CLI ``~/.copilot/session-state/*.jsonl`` file.
+    """One line of a Copilot CLI session ``events.jsonl`` file.
 
     Each line wraps a ``type`` (``user.message``, ``assistant.message``,
     ``session.start``, ``session.info``, etc.) with a nested ``data`` object.
@@ -193,6 +342,40 @@ class ClineConversation(BaseModel, extra="ignore"):
     messages: list[ClineMessage] = []
 
 
+class AtifContentPart(BaseModel, extra="ignore"):
+    """One text/image/audio part from an ATIF trajectory message."""
+
+    type: str = ""
+    text: str = ""
+
+
+class AtifStep(BaseModel, extra="ignore"):
+    """One user, agent, or system step in an exported ATIF trajectory."""
+
+    step_id: int
+    timestamp: str | None = None
+    source: Literal["system", "user", "agent"]
+    message: list[AtifContentPart] | str
+    is_copied_context: bool = False
+
+
+class AtifAgent(BaseModel, extra="ignore"):
+    """Agent identity required by the ATIF interchange format."""
+
+    name: str
+    version: str
+
+
+class AtifTrajectory(BaseModel, extra="ignore"):
+    """Supported Devin CLI ``--export`` conversation representation."""
+
+    schema_version: str
+    session_id: str | None = None
+    trajectory_id: str | None = None
+    agent: AtifAgent
+    steps: list[AtifStep]
+
+
 # ---------------------------------------------------------------------------
 # Group 3: Setup / config models
 # ---------------------------------------------------------------------------
@@ -201,6 +384,7 @@ class ClineConversation(BaseModel, extra="ignore"):
 class McpServerConfig(BaseModel, extra="allow"):
     command: str
     args: list[str] = []
+    env: dict[str, str] = {}
 
 
 class CursorMcpConfig(BaseModel, extra="allow"):

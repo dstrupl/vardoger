@@ -28,7 +28,7 @@ from vardoger.history.claude_code import read_claude_code_history
 from vardoger.history.codex import read_codex_history
 from vardoger.history.cursor import read_cursor_history
 from vardoger.history.models import Conversation
-from vardoger.models import FeedbackEvent, HookOutput, SessionStartContext
+from vardoger.models import CompiledProfile, FeedbackEvent, HookOutput, SessionStartContext
 from vardoger.personalization import annotate_tentative, parse_personalization
 from vardoger.prompts import feedback_context_prompt, summarize_prompt, synthesize_prompt
 from vardoger.quality import compare as compare_quality
@@ -38,6 +38,7 @@ from vardoger.writers.cline import clear_cline_rules, write_cline_rules
 from vardoger.writers.codex import clear_codex_rules, write_codex_rules
 from vardoger.writers.copilot import clear_copilot_rules, write_copilot_rules
 from vardoger.writers.cursor import clear_cursor_rules, write_cursor_rules
+from vardoger.writers.devin import clear_devin_rules, write_devin_rules
 from vardoger.writers.openclaw import clear_openclaw_rules, write_openclaw_rules
 from vardoger.writers.windsurf import clear_windsurf_rules, write_windsurf_rules
 
@@ -51,6 +52,7 @@ PLATFORM_KEY = {
     "copilot": "copilot",
     "windsurf": "windsurf",
     "cline": "cline",
+    "devin": "devin",
 }
 
 PLATFORM_CHOICES = [
@@ -61,6 +63,7 @@ PLATFORM_CHOICES = [
     "copilot",
     "windsurf",
     "cline",
+    "devin",
 ]
 
 
@@ -132,6 +135,12 @@ def _cline_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
     return read_cline_history(file_filter=file_filter)
 
 
+def _devin_reader(file_filter: _FileFilter | None = None) -> list[Conversation]:
+    from vardoger.history.devin import read_devin_history
+
+    return read_devin_history(file_filter=file_filter)
+
+
 _HISTORY_DISPATCH: dict[str, Callable[..., list[Conversation]]] = {
     "cursor": _cursor_reader,
     "claude-code": _claude_code_reader,
@@ -140,6 +149,7 @@ _HISTORY_DISPATCH: dict[str, Callable[..., list[Conversation]]] = {
     "copilot": _copilot_reader,
     "windsurf": _windsurf_reader,
     "cline": _cline_reader,
+    "devin": _devin_reader,
 }
 
 
@@ -199,6 +209,9 @@ _WRITE_DISPATCH: dict[str, Callable[..., Path]] = {
     "cline": lambda content, scope, project_path: write_cline_rules(
         content, scope=scope, project_path=project_path
     ),
+    "devin": lambda content, scope, project_path: write_devin_rules(
+        content, scope=scope, project_path=project_path
+    ),
 }
 
 _CLEAR_DISPATCH: dict[str, Callable[..., bool]] = {
@@ -217,6 +230,7 @@ _CLEAR_DISPATCH: dict[str, Callable[..., bool]] = {
         scope=scope, project_path=project_path
     ),
     "cline": lambda scope, project_path: clear_cline_rules(scope=scope, project_path=project_path),
+    "devin": lambda scope, project_path: clear_devin_rules(scope=scope, project_path=project_path),
 }
 
 
@@ -240,11 +254,12 @@ def _clear_platform(platform: str, scope: str, project_path: Path | None) -> boo
 
 def _get_reader_base(platform: str) -> Path:
     """Return the base directory for a platform's history files."""
+    from vardoger.config import CopilotConfig
     from vardoger.history.claude_code import DEFAULT_CLAUDE_DIR
     from vardoger.history.cline import DEFAULT_CLINE_DIR
     from vardoger.history.codex import DEFAULT_CODEX_DIR
-    from vardoger.history.copilot import DEFAULT_COPILOT_DIR
     from vardoger.history.cursor import DEFAULT_CURSOR_DIR
+    from vardoger.history.devin import DEFAULT_DEVIN_DIR
     from vardoger.history.openclaw import DEFAULT_OPENCLAW_DIR
     from vardoger.history.windsurf import DEFAULT_WINDSURF_DIR
 
@@ -253,9 +268,10 @@ def _get_reader_base(platform: str) -> Path:
         "claude-code": DEFAULT_CLAUDE_DIR,
         "codex": DEFAULT_CODEX_DIR,
         "openclaw": DEFAULT_OPENCLAW_DIR,
-        "copilot": DEFAULT_COPILOT_DIR,
+        "copilot": CopilotConfig.from_env().session_state_dir,
         "windsurf": DEFAULT_WINDSURF_DIR,
         "cline": DEFAULT_CLINE_DIR,
+        "devin": DEFAULT_DEVIN_DIR,
     }[platform]
 
 
@@ -285,6 +301,7 @@ def _run_setup(args: argparse.Namespace) -> None:
         setup_codex,
         setup_copilot,
         setup_cursor,
+        setup_devin,
         setup_openclaw,
         setup_windsurf,
     )
@@ -304,6 +321,8 @@ def _run_setup(args: argparse.Namespace) -> None:
         setup_windsurf()
     elif platform == "cline":
         setup_cline()
+    elif platform == "devin":
+        setup_devin()
 
 
 # -- status --
@@ -418,7 +437,7 @@ def _run_prepare(args: argparse.Namespace) -> None:
             print()
             print("---")
             print()
-        print(synthesize_prompt())
+        print(synthesize_prompt(platform))
         return
 
     _check_for_edits(platform, scope="global", project_path=None)
@@ -648,6 +667,170 @@ def _run_compare(args: argparse.Namespace) -> None:
         _print_comparison(comp)
 
 
+# -- profile (cross-host compiler) --
+
+
+def _run_profile_sources(args: argparse.Namespace) -> None:
+    from vardoger.models import ProfileGenerationSummary
+    from vardoger.profile import parse_generation_time
+
+    store = CheckpointStore()
+    platforms = (
+        [PLATFORM_KEY[args.platform]] if args.platform else sorted(set(PLATFORM_KEY.values()))
+    )
+    summaries = [
+        ProfileGenerationSummary(
+            platform=platform,
+            generation=index,
+            generated_at=parse_generation_time(record.generated_at),
+            conversations_analyzed=record.conversations_analyzed,
+            output_path=record.output_path,
+            output_hash=record.output_hash,
+            rule_count=len(record.confidence),
+        )
+        for platform in platforms
+        for index, record in enumerate(store.get_generation_history(platform), start=1)
+    ]
+    if args.json:
+        print(json.dumps([item.model_dump(mode="json") for item in summaries], indent=2))
+        return
+    if not summaries:
+        print("No Vardoger generations are available for profile compilation.")
+        return
+    for item in summaries:
+        print(
+            f"{item.platform}:{item.generation}  {item.generated_at.isoformat()}  "
+            f"{item.rule_count} confidence rule(s)  {item.output_path}"
+        )
+
+
+def _compile_profile_args(args: argparse.Namespace) -> tuple[CompiledProfile, str, Path, str]:
+    from vardoger.models import ProfileCompileOptions
+    from vardoger.profile import (
+        ProfileSelectionError,
+        compile_profile,
+        load_selected_generations,
+        parse_source_selection,
+        preview_agents_diff,
+        render_agents_profile,
+    )
+
+    selections = []
+    for value in args.source:
+        selection = parse_source_selection(value)
+        selection.platform = PLATFORM_KEY.get(selection.platform, selection.platform)
+        if selection.platform not in set(PLATFORM_KEY.values()):
+            message = f"Unsupported generation platform {selection.platform!r}."
+            raise ProfileSelectionError(message)
+        selections.append(selection)
+    options = ProfileCompileOptions(
+        min_confidence=args.min_confidence,
+        max_age_days=args.max_age,
+        redact_patterns=args.redact,
+        redaction_policy=args.redaction_policy,
+    )
+    selected = load_selected_generations(CheckpointStore(), selections)
+    profile = compile_profile(selected, options)
+    rendered = render_agents_profile(profile)
+    target = Path(args.target).expanduser().resolve()
+    if target.name != "AGENTS.md":
+        message = "The portable profile target must be named AGENTS.md."
+        raise ProfileSelectionError(message)
+    return profile, rendered, target, preview_agents_diff(target, rendered)
+
+
+def _run_profile_preview(args: argparse.Namespace) -> None:
+    profile, rendered, target, diff = _compile_profile_args(args)
+    if args.json:
+        print(profile.model_dump_json(indent=2))
+        return
+    _print_profile_review(profile, rendered, target, diff)
+
+
+def _print_profile_review(
+    profile: CompiledProfile, rendered: str, target: Path, diff: str
+) -> None:
+    """Print the rendered instructions, audit decisions, and exact write diff."""
+    active = sum(rule.state == "active" for rule in profile.preferences)
+    print(rendered, end="")
+    print(
+        f"\nReview summary: {active} active, {len(profile.conflicts)} conflict(s) withheld, "
+        f"{len(profile.exclusions)} excluded."
+    )
+    by_id = {rule.id: rule for rule in profile.preferences}
+    for conflict in profile.conflicts:
+        texts = " versus ".join(repr(by_id[item].text) for item in conflict.preference_ids)
+        print(f"  conflict [{conflict.key}]: {texts}")
+    for exclusion in profile.exclusions:
+        print(f"  excluded [{exclusion.reason}]: {exclusion.source}")
+    print(f"\nProposed diff for {target}:")
+    print(diff or "(no changes)", end="" if diff.endswith("\n") else "\n")
+
+
+def _run_profile_write(args: argparse.Namespace) -> None:
+    from vardoger.profile import write_agents_profile
+
+    profile, rendered, target, diff = _compile_profile_args(args)
+    if not args.apply:
+        _print_profile_review(profile, rendered, target, diff)
+        print(
+            "vardoger: preview only; rerun with --apply after reviewing this diff.",
+            file=sys.stderr,
+        )
+        return
+    write_agents_profile(target, rendered)
+    print(f"vardoger: wrote reviewed cross-host profile to {target}")
+
+
+def _add_profile_compile_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--source",
+        action="append",
+        required=True,
+        metavar="PLATFORM:GENERATION",
+        help="Explicit generation selection; GENERATION is one-based or 'latest'. Repeatable.",
+    )
+    parser.add_argument(
+        "--target",
+        default="AGENTS.md",
+        help="Portable AGENTS.md to preview or update (default: ./AGENTS.md).",
+    )
+    parser.add_argument(
+        "--min-confidence",
+        choices=["low", "medium", "high"],
+        default="low",
+        help="Exclude rules below this confidence level.",
+    )
+    parser.add_argument(
+        "--max-age",
+        type=_non_negative_int,
+        default=None,
+        metavar="DAYS",
+        help="Exclude rules older than DAYS relative to the newest selected generation.",
+    )
+    parser.add_argument(
+        "--redact",
+        action="append",
+        default=[],
+        metavar="REGEX",
+        help="Drop or mask rules matching this case-insensitive regular expression. Repeatable.",
+    )
+    parser.add_argument(
+        "--redaction-policy",
+        choices=["drop", "mask"],
+        default="drop",
+        help="How matching rules are handled (default: drop).",
+    )
+
+
+def _non_negative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        message = "must be zero or greater"
+        raise argparse.ArgumentTypeError(message)
+    return parsed
+
+
 # -- CLI argument parsing --
 
 
@@ -859,6 +1042,51 @@ def main(argv: list[str] | None = None) -> None:
         help="Emit machine-readable JSON.",
     )
 
+    # profile
+    profile_parser = subparsers.add_parser(
+        "profile",
+        help="Compile selected reviewed generations into a portable AGENTS.md profile.",
+    )
+    profile_subparsers = profile_parser.add_subparsers(dest="profile_command", required=True)
+    profile_sources = profile_subparsers.add_parser(
+        "sources",
+        help="List existing Vardoger generations available for explicit selection.",
+    )
+    profile_sources.add_argument(
+        "--platform",
+        choices=PLATFORM_CHOICES,
+        default=None,
+        help="Limit the list to one platform.",
+    )
+    profile_sources.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Emit machine-readable generation metadata.",
+    )
+    profile_preview = profile_subparsers.add_parser(
+        "preview",
+        help="Render and diff a profile without writing anything.",
+    )
+    _add_profile_compile_args(profile_preview)
+    profile_preview.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Emit the normalized profile and provenance as JSON.",
+    )
+    profile_write = profile_subparsers.add_parser(
+        "write",
+        help="Preview by default; update only a fenced AGENTS.md block with --apply.",
+    )
+    _add_profile_compile_args(profile_write)
+    profile_write.add_argument(
+        "--apply",
+        action="store_true",
+        default=False,
+        help="Apply the displayed profile to the target's Vardoger-owned block.",
+    )
+
     # hidden: _hook-session-start (invoked by plugin hooks, not user-facing)
     hook_parser = subparsers.add_parser("_hook-session-start")
     hook_parser.add_argument("platform", choices=PLATFORM_CHOICES)
@@ -880,6 +1108,20 @@ def main(argv: list[str] | None = None) -> None:
         format="%(name)s: %(message)s",
     )
 
+    from vardoger.history.openclaw import UnsupportedOpenClawHistoryError
+    from vardoger.profile import ProfileSelectionError
+
+    try:
+        _dispatch_command(args, parser)
+    except (UnsupportedOpenClawHistoryError, ProfileSelectionError) as exc:
+        print(f"vardoger: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+
+def _dispatch_command(  # noqa: C901, PLR0912
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> None:
+    """Run the parsed command."""
     if args.command == "setup":
         _run_setup(args)
     elif args.command == "status":
@@ -896,6 +1138,12 @@ def main(argv: list[str] | None = None) -> None:
         _run_feedback(args)
     elif args.command == "compare":
         _run_compare(args)
+    elif args.command == "profile" and args.profile_command == "preview":
+        _run_profile_preview(args)
+    elif args.command == "profile" and args.profile_command == "write":
+        _run_profile_write(args)
+    elif args.command == "profile" and args.profile_command == "sources":
+        _run_profile_sources(args)
     elif args.command == "mcp":
         _run_mcp()
     else:

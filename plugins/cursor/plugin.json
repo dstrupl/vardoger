@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "vardoger",
+  "version": "0.4.0",
+  "description": "Personalizes your AI assistant from local conversation history using the active host model.",
+  "author": {
+    "name": "David Strupl"
+  },
+  "homepage": "https://github.com/dstrupl/vardoger",
+  "repository": "https://github.com/dstrupl/vardoger",
+  "license": "Apache-2.0",
+  "keywords": [
+    "personalization",
+    "productivity",
+    "mcp",
+    "local-first"
+  ]
+}

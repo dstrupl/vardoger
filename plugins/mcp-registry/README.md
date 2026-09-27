@@ -56,7 +56,7 @@ mcp-publisher publish plugins/mcp-registry/server.json
 Verify with:
 
 ```bash
-curl -s 'https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10' \
+curl -s 'https://registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10' \
   | jq '.servers[] | select(.server.name=="io.github.dstrupl/vardoger")'
 ```
 

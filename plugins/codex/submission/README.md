@@ -2,8 +2,9 @@
 
 This directory contains the reviewer-ready material for Vardoger's initial
 skills-only submission to the universal plugin directory. It follows the
-[OpenAI plugin submission guide](https://developers.openai.com/codex/submit-plugins)
-as checked on 2026-07-09.
+[OpenAI plugin submission guide](https://developers.openai.com/plugins/deploy/submission)
+and [packaging guide](https://developers.openai.com/plugins/build/plugins) as
+checked on 2026-09-27.
 
 The repository marketplace under `.agents/plugins/` is already live. This
 package is for the separate public directory available in ChatGPT and Codex.
@@ -19,7 +20,7 @@ Codex session files.
 | Field | Value |
 |---|---|
 | Plugin name | Vardoger |
-| Short description | Personalize your assistant from your own conversation history |
+| Short description | Personalize from your history |
 | Category | Productivity |
 | Developer | Select David Strupl's verified individual identity |
 | Website | `https://github.com/dstrupl/vardoger` |
@@ -39,13 +40,29 @@ instructions you wrote yourself. Vardoger has no account, telemetry, or hosted
 backend; the CLI runs locally, and model-side analysis stays within the Codex
 session you are already using.
 
-## Skill bundle
+## Build and validate the skill bundle
 
-Upload `plugins/codex/skills/analyze/` as the final skill directory or ZIP
-that directory without adding repository-only submission material. The skill
-has no authentication or demo-account requirement. Reviewers need Python
-3.11+ and `vardoger` on `PATH`; install the released package with
-`pipx install vardoger==0.3.2`.
+Run the repository-owned validator before creating the upload:
+
+```bash
+.venv/bin/python scripts/build-codex-submission.py --check
+.venv/bin/python scripts/build-codex-submission.py
+```
+
+The second command writes a deterministic archive under `dist/`, with the
+version derived from `pyproject.toml`. It contains exactly:
+
+- `plugin.json`, the portable Agent Plugins 1.0 manifest;
+- `.codex-plugin/plugin.json`, the OpenAI interface overlay;
+- `skills/analyze/SKILL.md`; and
+- `assets/logo.png`.
+
+The overlay is required in this package because the portable manifest leaves
+OpenAI-specific listing metadata there. The builder excludes this
+`submission/` directory, repository caches, and all reviewer fixtures. The
+skill has no authentication or demo-account requirement. Reviewers need
+Python 3.11+ and `vardoger` on `PATH`; install the same released version named
+by the manifest before running the tests.
 
 ## Starter prompts
 
@@ -68,7 +85,7 @@ documentation and best-effort support through the public issue tracker.
 
 ## Initial release notes
 
-Initial submission of Vardoger 0.3.2 as a skills-only plugin. The plugin
+Initial submission of Vardoger 0.4.0 as a skills-only plugin. The plugin
 analyzes local Codex history in batches, synthesizes working preferences, and
 manages only a fenced Vardoger section in `AGENTS.md`. No account, remote
 backend, demo credentials, or additional authentication is required.
@@ -80,6 +97,9 @@ backend, demo credentials, or additional authentication is required.
 - Select David Strupl's verified individual developer identity.
 - Confirm the website, support, privacy, and terms URLs resolve from public
   `main`.
-- Upload the production logo and the final `analyze` skill directory or ZIP.
+- Run `scripts/build-codex-submission.py --check`, build the archive, and
+  inspect `unzip -l dist/vardoger-codex-submission-<version>.zip` before upload.
+- Upload the deterministic plugin ZIP and provide the production logo
+  separately if the portal requests it for listing media.
 - Copy the starter prompts and the eight test cases into the portal.
 - Review availability and policy attestations, then submit for review.

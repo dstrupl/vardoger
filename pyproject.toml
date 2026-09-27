@@ -1,6 +1,6 @@
 [project]
 name = "vardoger"
-version = "0.3.2"
+version = "0.4.0"
 description = "Personalize AI coding assistants by analyzing conversation history"
 readme = "README.md"
 license = "Apache-2.0"
@@ -23,7 +23,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "mcp>=1.0.0",
+    "mcp>=1.0.0,<2",
     "pydantic>=2.0",
     "pyyaml>=6.0.3",
 ]

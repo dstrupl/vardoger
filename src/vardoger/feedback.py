@@ -38,6 +38,7 @@ _PLATFORM_STATE_KEY = {
     "copilot": "copilot",
     "windsurf": "windsurf",
     "cline": "cline",
+    "devin": "devin",
 }
 
 _BULLET_RE = re.compile(r"^\s*[-*]\s+(?P<text>.+?)\s*$")
@@ -81,13 +82,15 @@ def _windsurf_reader(scope: str, project_path: Path | None) -> str | None:
 
 
 def _cline_reader(scope: str, project_path: Path | None) -> str | None:
-    # Cline has no user-level rules; quietly no-op for the global scope
-    # rather than surfacing a hard error during routine edit detection.
-    if scope != "project":
-        return None
     from vardoger.writers.cline import read_cline_rules
 
     return read_cline_rules(scope=scope, project_path=project_path)
+
+
+def _devin_reader(scope: str, project_path: Path | None) -> str | None:
+    from vardoger.writers.devin import read_devin_rules
+
+    return read_devin_rules(scope=scope, project_path=project_path)
 
 
 _READ_RULES_DISPATCH = {
@@ -98,6 +101,7 @@ _READ_RULES_DISPATCH = {
     "copilot": _copilot_reader,
     "windsurf": _windsurf_reader,
     "cline": _cline_reader,
+    "devin": _devin_reader,
 }
 
 

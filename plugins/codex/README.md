@@ -38,10 +38,18 @@ The repository marketplace is live and the `0.3.2` Git-source install has been
 verified from a clean Codex home. Vardoger is not yet in OpenAI's universal
 Plugin Directory; that separate submission is tracked in
 [`MARKETPLACE_STATUS.md`](../../MARKETPLACE_STATUS.md) and follows OpenAI's
-[plugin submission process](https://developers.openai.com/codex/submit-plugins).
+[plugin submission process](https://developers.openai.com/plugins/deploy/submission).
 The reviewer-ready listing copy, production logo, release notes, synthetic
 fixture, and exactly five positive plus three negative tests live in
 [`submission/`](./submission/README.md).
+
+The repository package now includes both the portable Agent Plugins 1.0 root
+[`plugin.json`](./plugin.json) and the accepted
+`.codex-plugin/plugin.json` compatibility manifest. Codex discovers the
+`skills/` directory through the portable convention, while existing custom
+marketplace and local installations can continue to use the compatibility
+overlay. Re-running the reviewer tests remains a prerequisite for official
+directory submission.
 
 ### Option B — Local marketplace (`pipx` + `vardoger setup codex`, always works)
 
@@ -51,6 +59,10 @@ vardoger setup codex
 ```
 
 This creates the plugin directory at `~/.codex/plugins/vardoger/` and registers it in `~/.agents/plugins/marketplace.json`.
+
+The generated local package intentionally retains the compatibility layout;
+Codex continues to support that fallback. Use Option A or copy this repository's
+`plugins/codex/` directory when testing the portable root manifest itself.
 
 Then:
 
@@ -104,6 +116,17 @@ Make sure you have run `uv sync` ([install uv](https://docs.astral.sh/uv/getting
 ## Usage
 
 Once installed, ask Codex to "analyze my conversation history" or use `@vardoger`.
+
+### Relationship to Codex Memories
+
+[Codex Memories](https://learn.chatgpt.com/docs/customization/memories) carry
+useful context forward between chats. Vardoger does not read or write that
+generated memory store. It promotes only stable, cross-project working
+preferences into a reviewable fenced section of `AGENTS.md`, while its
+platform-aware synthesis prompt drops episodic context, task status, and
+repository facts that belong in Memories or project documentation. This keeps
+the two layers complementary: Memories recall context; `AGENTS.md` supplies
+durable instructions.
 
 ### Where the personalization lands
 

@@ -19,8 +19,22 @@ def summarize_prompt() -> str:
     return load_prompt("summarize")
 
 
-def synthesize_prompt() -> str:
-    return load_prompt("synthesize")
+def synthesize_prompt(platform: str | None = None) -> str:
+    """Return the synthesis prompt with host-specific memory boundaries.
+
+    Claude Code and Codex both have host-managed memory. Their additions make
+    Vardoger generate durable behavioral instructions instead of competing
+    episodic context. Other hosts retain the shared synthesis prompt.
+    """
+    base = load_prompt("synthesize")
+    guidance_by_platform = {
+        "claude-code": "claude_code_native_memory_guidance",
+        "codex": "codex_native_memory_guidance",
+    }
+    guidance_name = guidance_by_platform.get(platform or "")
+    if guidance_name is None:
+        return base
+    return f"{load_prompt(guidance_name)}\n\n---\n\n{base}"
 
 
 def analyze_skill_body(platform_slug: str, platform_name: str) -> str:
@@ -31,9 +45,16 @@ def analyze_skill_body(platform_slug: str, platform_name: str) -> str:
     `metadata.openclaw.requires.bins`).
     """
     template = load_prompt("analyze_skill_body")
-    return template.replace("{PLATFORM_NAME}", platform_name).replace(
+    body = template.replace("{PLATFORM_NAME}", platform_name).replace(
         "{PLATFORM_SLUG}", platform_slug
     )
+    if platform_slug == "openclaw":
+        compatibility = load_prompt("openclaw_history_compatibility")
+        return f"{compatibility}\n\n{body}"
+    if platform_slug == "devin":
+        export_note = load_prompt("devin_history_export")
+        return f"{export_note}\n\n{body}"
+    return body
 
 
 def feedback_context_prompt(

@@ -185,6 +185,56 @@ def test_check_staleness_covers_every_platform():
             assert "never generated" in report.reason
 
 
+def test_openclaw_sqlite_backend_is_reported_before_first_generation(tmp_path, monkeypatch):
+    from vardoger.history.openclaw import UnsupportedOpenClawHistoryError
+
+    store = CheckpointStore(state_dir=tmp_path / "state")
+    message = "OpenClaw 2.0 SQLite history detected; use the supported accessor."
+
+    def _unsupported(_platform: str) -> list[tuple]:
+        raise UnsupportedOpenClawHistoryError(message)
+
+    monkeypatch.setattr("vardoger.staleness._discover_files", _unsupported)
+
+    report = check_staleness("openclaw", checkpoint=store)
+
+    assert report == StalenessReport(
+        platform="openclaw",
+        is_stale=True,
+        days_since_generation=None,
+        new_conversations=0,
+        changed_conversations=0,
+        reason=f"unsupported history backend: {message}",
+    )
+
+
+def test_openclaw_gateway_status_uses_full_read_semantics(tmp_path, monkeypatch):
+    monkeypatch.setenv("VARDOGER_OPENCLAW_GATEWAY", "1")
+    store = CheckpointStore(state_dir=tmp_path / "state")
+
+    with patch("vardoger.staleness._discover_files") as discover:
+        first_report = check_staleness("openclaw", checkpoint=store)
+
+    discover.assert_not_called()
+    assert first_report.reason == (
+        "never generated — run vardoger with --full to personalize through Gateway"
+    )
+
+    store.record_generation("openclaw", conversations_analyzed=3, output_path="/out")
+
+    with patch("vardoger.staleness._discover_files") as discover:
+        generated_report = check_staleness("openclaw", checkpoint=store)
+
+    discover.assert_not_called()
+    assert not generated_report.is_stale
+    assert generated_report.new_conversations == 0
+    assert generated_report.changed_conversations == 0
+    assert generated_report.reason == (
+        "fresh (last updated 0 days ago); Gateway conversation deltas unavailable "
+        "— use --full to refresh"
+    )
+
+
 def test_discover_files_dispatches_for_new_platforms(monkeypatch):
     """``_discover_files`` must route Copilot/Windsurf/Cline to their adapters."""
     from vardoger.staleness import _discover_files
@@ -214,6 +264,19 @@ def test_discover_files_dispatches_for_new_platforms(monkeypatch):
     for platform in ("copilot", "windsurf", "cline"):
         assert _discover_files(platform) == []
     assert called == {"copilot": True, "windsurf": True, "cline": True}
+
+
+def test_copilot_staleness_discovers_current_nested_event_log(tmp_path, monkeypatch):
+    """Copilot staleness must count the current per-session event log."""
+    from vardoger.staleness import _discover_files
+
+    copilot_home = tmp_path / "custom-copilot"
+    base = copilot_home / "session-state"
+    event_log = base / "session-id" / "events.jsonl"
+    _write_file(event_log, '{"type":"user.message","data":{"content":"Hi"}}\n')
+    monkeypatch.setenv("COPILOT_HOME", str(copilot_home))
+
+    assert _discover_files("copilot") == [(event_log, "session-id/events.jsonl")]
 
 
 def test_report_dataclass_fields():

@@ -25,6 +25,7 @@ PLATFORM_KEY = {
     "copilot": "copilot",
     "windsurf": "windsurf",
     "cline": "cline",
+    "devin": "devin",
 }
 
 DEFAULT_NEW_CONVERSATION_THRESHOLD = 5
@@ -38,6 +39,7 @@ def _discover_files(platform: str) -> list[tuple]:
     from vardoger.history.codex import discover_codex_files
     from vardoger.history.copilot import discover_copilot_files
     from vardoger.history.cursor import discover_cursor_files
+    from vardoger.history.devin import discover_devin_files
     from vardoger.history.openclaw import discover_openclaw_files
     from vardoger.history.windsurf import discover_windsurf_files
 
@@ -49,6 +51,7 @@ def _discover_files(platform: str) -> list[tuple]:
         "copilot": discover_copilot_files,
         "windsurf": discover_windsurf_files,
         "cline": discover_cline_files,
+        "devin": discover_devin_files,
     }
     discover = dispatch.get(platform)
     return discover() if discover is not None else []
@@ -104,25 +107,64 @@ def check_staleness(
     store = checkpoint or CheckpointStore()
     platform_key = PLATFORM_KEY.get(platform, platform)
     generation = store.get_generation(platform_key)
+    gateway_full_read = False
+
+    # OpenClaw 2.0 replaced the legacy JSONL transcript layout with a
+    # canonical SQLite store. Detect that incompatibility even before a first
+    # generation so ``vardoger status`` does not misleadingly suggest that a
+    # normal refresh can proceed.
+    discovered_files: list[tuple] | None = None
+    if platform == "openclaw":
+        from vardoger.config import OpenClawConfig
+        from vardoger.history.openclaw import UnsupportedOpenClawHistoryError
+
+        gateway_full_read = OpenClawConfig.from_env().gateway_enabled
+        if gateway_full_read:
+            discovered_files = []
+        else:
+            try:
+                discovered_files = _discover_files(platform)
+            except UnsupportedOpenClawHistoryError as exc:
+                days_since_generation: int | None = None
+                if generation is not None:
+                    generated_at = datetime.fromisoformat(generation.generated_at)
+                    days_since_generation = (datetime.now(UTC) - generated_at).days
+                return StalenessReport(
+                    platform=platform,
+                    is_stale=True,
+                    days_since_generation=days_since_generation,
+                    new_conversations=0,
+                    changed_conversations=0,
+                    reason=f"unsupported history backend: {exc}",
+                )
 
     if generation is None:
+        reason = "never generated — run vardoger to personalize"
+        if gateway_full_read:
+            reason = "never generated — run vardoger with --full to personalize through Gateway"
         return StalenessReport(
             platform=platform,
             is_stale=True,
             days_since_generation=None,
             new_conversations=0,
             changed_conversations=0,
-            reason="never generated — run vardoger to personalize",
+            reason=reason,
         )
 
     generated_at = datetime.fromisoformat(generation.generated_at)
     days_since = (datetime.now(UTC) - generated_at).days
 
     new_count, changed_count = _count_new_and_changed(
-        store, platform_key, _discover_files(platform)
+        store,
+        platform_key,
+        discovered_files if discovered_files is not None else _discover_files(platform),
     )
     total_new = new_count + changed_count
     is_stale = total_new >= new_threshold or days_since >= days_threshold
+
+    reason = _describe(is_stale, total_new, days_since, new_threshold)
+    if gateway_full_read:
+        reason += "; Gateway conversation deltas unavailable — use --full to refresh"
 
     return StalenessReport(
         platform=platform,
@@ -130,5 +172,5 @@ def check_staleness(
         days_since_generation=days_since,
         new_conversations=new_count,
         changed_conversations=changed_count,
-        reason=_describe(is_stale, total_new, days_since, new_threshold),
+        reason=reason,
     )

@@ -4,7 +4,7 @@
 
 Exposes vardoger's analysis pipeline as MCP tools that operate on any
 supported platform (Cursor, Claude Code, Codex, OpenClaw, Copilot CLI,
-Windsurf, or Cline). Each tool takes an optional ``platform`` argument; if
+Windsurf, Cline, or Devin). Each tool takes an optional ``platform`` argument; if
 omitted, the server resolves the default platform in this order:
 
 1. the ``VARDOGER_MCP_PLATFORM`` environment variable, or
@@ -68,6 +68,7 @@ PLATFORM_CHOICES: tuple[str, ...] = (
     "copilot",
     "windsurf",
     "cline",
+    "devin",
 )
 
 PLATFORM_LABELS: dict[str, str] = {
@@ -78,6 +79,7 @@ PLATFORM_LABELS: dict[str, str] = {
     "copilot": "GitHub Copilot CLI",
     "windsurf": "Windsurf",
     "cline": "Cline",
+    "devin": "Devin Local",
 }
 
 # ``CheckpointStore`` keys its platform dicts on the underscore variant so
@@ -92,11 +94,9 @@ _STATE_KEY: dict[str, str] = {
     "copilot": "copilot",
     "windsurf": "windsurf",
     "cline": "cline",
+    "devin": "devin",
 }
 
-# Cline has no user-global rules location; default to project scope so that
-# ``vardoger_write(platform="cline")`` writes somewhere sensible without
-# forcing every caller to pass ``scope``.
 _DEFAULT_SCOPE: dict[str, str] = {
     "cursor": "global",
     "claude-code": "global",
@@ -104,7 +104,8 @@ _DEFAULT_SCOPE: dict[str, str] = {
     "openclaw": "global",
     "copilot": "global",
     "windsurf": "global",
-    "cline": "project",
+    "cline": "global",
+    "devin": "global",
 }
 
 _DEFAULT_PLATFORM_ENV = "VARDOGER_MCP_PLATFORM"
@@ -165,6 +166,7 @@ _HISTORY_READER_QUALNAMES: dict[str, str] = {
     "copilot": "vardoger.history.copilot:read_copilot_history",
     "windsurf": "vardoger.history.windsurf:read_windsurf_history",
     "cline": "vardoger.history.cline:read_cline_history",
+    "devin": "vardoger.history.devin:read_devin_history",
 }
 
 
@@ -189,7 +191,7 @@ _CLEARER_QUALNAMES: dict[str, str] = _qualnames("clear", "rules")
 # Cursor's writer predates the shared ``scope`` argument and doesn't accept
 # it; these platforms need the scope keyword forwarded.
 _WRITERS_TAKING_SCOPE: frozenset[str] = frozenset(
-    {"claude-code", "codex", "openclaw", "copilot", "windsurf", "cline"}
+    {"claude-code", "codex", "openclaw", "copilot", "windsurf", "cline", "devin"}
 )
 
 
@@ -292,13 +294,14 @@ If stale or never generated, continue.
 The personalization vardoger produces is derived from the user's *global* \
 conversation history, not from the current project. A user who has already \
 run vardoger in a different workspace may have a ready-made \
-`.cursor/rules/vardoger.md` you can reuse instead of regenerating from \
+`.cursor/rules/vardoger.mdc` you can reuse instead of regenerating from \
 scratch.
 
 If the platform is Cursor and you know (from your session context, open \
 editors, recent files, etc.) of other workspaces the user has, call \
 `vardoger_import(paths=["/path/a", "/path/b", ...])` with them. The tool \
-returns the content of any `vardoger.md` it finds. If it finds one, offer \
+returns the content of any current `vardoger.mdc` or legacy `vardoger.md` it \
+finds. If it finds one, offer \
 the user:
   (a) reuse that content as-is,
   (b) regenerate and merge with the existing content, or
@@ -361,7 +364,22 @@ they can ask you to re-run vardoger any time to update the personalization.
 
 
 def _orchestration_instructions(platform: str) -> str:
-    return _ORCHESTRATION_TEMPLATE.format(platform=platform, label=_label(platform))
+    rendered = _ORCHESTRATION_TEMPLATE.format(platform=platform, label=_label(platform))
+    if platform == "cursor":
+        return rendered
+
+    start = rendered.index("## Step 7: Deliver the result")
+    end = rendered.index("## Step 8: Report to the user")
+    delivery = f"""## Step 7: Deliver the result
+
+Call `vardoger_write(platform="{platform}", scope="global", \
+content="YOUR_PERSONALIZATION_HERE")`. This writes the platform's documented \
+user-global rules surface. Use `scope="project"` and \
+`project_path="<workspace root>"` only when the user explicitly wants a \
+project-specific personalization.
+
+"""
+    return rendered[:start] + delivery + rendered[end:]
 
 
 # Sentinel we stash in ``CheckpointStore.output_path`` when we generated a
@@ -393,7 +411,7 @@ unpersonalize Cursor. Running ``vardoger_write`` again overwrites it with \
 the latest generation.
 
 If you'd rather also drop a project-scoped copy into a specific workspace's \
-.cursor/rules/vardoger.md, re-run ``vardoger_write`` with \
+.cursor/rules/vardoger.mdc, re-run ``vardoger_write`` with \
 ``project_path="<your workspace root>"``. vardoger refuses to write into \
 directories that don't look like projects (no .git, manifest, AGENTS.md, \
 or .cursor/).
@@ -518,9 +536,7 @@ def _user_rules_preview_response(content: str, copy_path: Path) -> str:
 # like to the user, so we render a tailored hint rather than bubble the
 # raw exception text up through the MCP response.
 
-# Cline has no user-global scope, so "switch to global" is never valid
-# advice for it. For Cursor we prefer the User Rules copy-paste block
-# over writing a file.
+# For Cursor we prefer the User Rules copy-paste block over writing a file.
 _NOT_A_PROJECT_HINTS: dict[str, str] = {
     "cursor": (
         "Omit project_path to get the User Rules copy-paste block instead, "
@@ -538,15 +554,20 @@ _NOT_A_PROJECT_HINTS: dict[str, str] = {
     ),
     "copilot": (
         "Pass project_path=<workspace root>, or use scope=global to write "
-        "into ~/.copilot/copilot-instructions.md."
+        "into $COPILOT_HOME/copilot-instructions.md (or ~/.copilot when unset)."
     ),
     "windsurf": (
         "Pass project_path=<workspace root>, or use scope=global to write "
         "into ~/.codeium/windsurf/memories/."
     ),
-    # Cline has no documented user-level rules path, so "switch to global"
-    # is not available; the only remedy is to supply a real project_path.
-    "cline": "Pass project_path=<workspace root> — Cline has no global scope.",
+    "cline": (
+        "Pass project_path=<workspace root>, or use scope=global to write "
+        "into ~/Documents/Cline/Rules/."
+    ),
+    "devin": (
+        "Pass project_path=<workspace root>, or use scope=global to write "
+        "into ~/.config/devin/AGENTS.md."
+    ),
 }
 
 
@@ -567,7 +588,7 @@ def vardoger_status(platform: str = "") -> str:
 
     Args:
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default (env var
+            windsurf, cline, devin. Empty uses the server default (env var
             ``VARDOGER_MCP_PLATFORM`` or ``cursor``).
 
     Returns:
@@ -593,7 +614,7 @@ def vardoger_personalize(platform: str = "") -> str:
 
     Args:
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default (env var
+            windsurf, cline, devin. Empty uses the server default (env var
             ``VARDOGER_MCP_PLATFORM`` or ``cursor``).
 
     Returns:
@@ -637,7 +658,7 @@ def vardoger_prepare(batch: int = 0, platform: str = "") -> str:
     Args:
         batch: Batch number (1-based). 0 or omitted returns metadata only.
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default.
+            windsurf, cline, devin. Empty uses the server default.
 
     Returns:
         JSON metadata for ``batch=0``, otherwise the summarize prompt
@@ -649,7 +670,12 @@ def vardoger_prepare(batch: int = 0, platform: str = "") -> str:
     if resolved is None or err is not None:
         return err or "vardoger: unknown platform."
 
-    batches = _get_batches(resolved)
+    from vardoger.history.openclaw import UnsupportedOpenClawHistoryError
+
+    try:
+        batches = _get_batches(resolved)
+    except UnsupportedOpenClawHistoryError as exc:
+        return f"vardoger: {exc}"
     total_convos = sum(len(b) for b in batches)
 
     if batch == 0:
@@ -681,7 +707,7 @@ def vardoger_synthesize_prompt(platform: str = "") -> str:
 
     Args:
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default.
+            windsurf, cline, devin. Empty uses the server default.
 
     Returns:
         The synthesis prompt text (optionally prefixed with feedback
@@ -696,7 +722,7 @@ def vardoger_synthesize_prompt(platform: str = "") -> str:
     store = CheckpointStore()
     record = store.get_feedback(_STATE_KEY[resolved])
     context = feedback_context_prompt(record.kept_rules, record.removed_rules, record.added_rules)
-    prompt = synthesize_prompt()
+    prompt = synthesize_prompt(resolved)
     if context is None:
         return prompt
     return f"{context}\n\n---\n\n{prompt}"
@@ -722,7 +748,7 @@ def vardoger_write(
         is derived from global conversation history, not from any one
         project.
       - ``project_path`` set → project-scoped write to
-        ``<project>/.cursor/rules/vardoger.md``. The target is validated
+        ``<project>/.cursor/rules/vardoger.mdc``. The target is validated
         to actually be a project (``.git``, language manifest,
         ``AGENTS.md``, or ``.cursor/`` in the directory or an ancestor).
         Non-project paths are refused rather than written silently. Fixes
@@ -737,9 +763,9 @@ def vardoger_write(
         content: The personalization markdown to write (with optional YAML
             frontmatter).
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default.
+            windsurf, cline, devin. Empty uses the server default.
         scope: "global" or "project". Empty selects the platform's default
-            (project for cline, global otherwise). Ignored for Cursor.
+            (global for every platform). Ignored for Cursor.
         project_path: Optional project directory. For Cursor, leaving this
             empty switches delivery to the User Rules copy-paste block.
             For other platforms, it's passed through to their writer.
@@ -815,7 +841,7 @@ def vardoger_preview(
     Args:
         content: The proposed personalization (with optional YAML frontmatter).
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default.
+            windsurf, cline, devin. Empty uses the server default.
         scope: "global" or "project". Empty selects the platform's default.
         project_path: Optional project directory. Empty uses the current
             working directory.
@@ -875,7 +901,7 @@ def vardoger_feedback(
     Args:
         kind: "accept" or "reject".
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default.
+            windsurf, cline, devin. Empty uses the server default.
         reason: Optional free-text reason recorded on the feedback event.
         scope: "global" or "project". Empty selects the platform's default.
         project_path: Optional project directory. Empty uses the current
@@ -988,12 +1014,14 @@ def _apply_reject(
 
 @mcp.tool()
 def vardoger_import(paths: list[str]) -> str:
-    """Look for existing ``.cursor/rules/vardoger.md`` files in given workspaces.
+    """Look for existing Cursor vardoger rule files in given workspaces.
 
     vardoger's output is derived from *global* conversation history, so a
     user with multiple Cursor projects may already have a curated
-    ``vardoger.md`` in one of them that's worth reusing (perhaps with
-    edits) instead of regenerating from scratch. This tool gives the
+    ``vardoger.mdc`` in one of them that's worth reusing (perhaps with
+    edits) instead of regenerating from scratch. The pre-0.4.0
+    ``vardoger.md`` filename is accepted as a read-only fallback. This tool
+    gives the
     orchestrating model a way to look one up without blindly scanning the
     filesystem.
 
@@ -1010,8 +1038,9 @@ def vardoger_import(paths: list[str]) -> str:
 
     Returns:
         JSON list of ``{"path": "<file>", "content": "<text>"}`` for each
-        workspace where ``<root>/.cursor/rules/vardoger.md`` exists and
-        was readable. Unreadable or missing entries are omitted silently.
+        workspace where ``<root>/.cursor/rules/vardoger.mdc`` (or the legacy
+        ``vardoger.md`` fallback) exists and was readable. Unreadable or
+        missing entries are omitted silently.
         Empty list (``"[]"``) if nothing was found.
     """
     import json
@@ -1024,7 +1053,10 @@ def vardoger_import(paths: list[str]) -> str:
             root = Path(entry).expanduser()
         except (OSError, RuntimeError):
             continue
-        candidate = root / ".cursor" / "rules" / "vardoger.md"
+        rules_dir = root / ".cursor" / "rules"
+        candidate = rules_dir / "vardoger.mdc"
+        if not candidate.is_file():
+            candidate = rules_dir / "vardoger.md"
         if not candidate.is_file():
             continue
         try:
@@ -1055,7 +1087,7 @@ def vardoger_compare(window_days: int = 0, platform: str = "") -> str:
         window_days: Optional symmetric window in days around the cutoff.
             Use 0 (default) to include all history.
         platform: One of cursor, claude-code, codex, openclaw, copilot,
-            windsurf, cline. Empty uses the server default.
+            windsurf, cline, devin. Empty uses the server default.
 
     Returns:
         ``QualityComparison.model_dump_json()`` — a JSON object with
@@ -1068,7 +1100,12 @@ def vardoger_compare(window_days: int = 0, platform: str = "") -> str:
         return err or "vardoger: unknown platform."
 
     window: int | None = window_days if window_days and window_days > 0 else None
-    comp = compare_quality(resolved, window_days=window)
+    from vardoger.history.openclaw import UnsupportedOpenClawHistoryError
+
+    try:
+        comp = compare_quality(resolved, window_days=window)
+    except UnsupportedOpenClawHistoryError as exc:
+        return f"vardoger: {exc}"
     return comp.model_dump_json(indent=2)
 
 

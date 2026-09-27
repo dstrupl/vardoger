@@ -6,7 +6,10 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from vardoger.history.copilot import discover_copilot_files, read_copilot_history
+from vardoger.history.models import Conversation, Message
 
 
 def _write_session(base: Path, name: str, lines: list[dict]) -> None:
@@ -144,6 +147,92 @@ def test_discover_files():
         files = discover_copilot_files(copilot_dir=base)
         rel_paths = [f[1] for f in files]
         assert sorted(rel_paths) == ["a.jsonl", "b.jsonl"]
+
+
+def test_discovery_honors_copilot_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    configured_home = tmp_path / "custom-copilot"
+    _write_session(
+        configured_home / "session-state",
+        "session/events.jsonl",
+        [{"type": "user.message", "data": {"content": "Custom root"}}],
+    )
+    monkeypatch.setenv("COPILOT_HOME", str(configured_home))
+
+    files = discover_copilot_files()
+
+    assert files == [
+        (
+            configured_home / "session-state" / "session" / "events.jsonl",
+            "session/events.jsonl",
+        )
+    ]
+
+
+def test_reads_current_nested_session_layout():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        _write_session(
+            base,
+            "current-session/events.jsonl",
+            [
+                {
+                    "type": "user.message",
+                    "data": {"content": "Use the current layout."},
+                    "id": "u",
+                    "timestamp": "2026-09-27T00:00:00Z",
+                },
+                {
+                    "type": "assistant.message",
+                    "data": {"content": "Done."},
+                    "id": "a",
+                    "timestamp": "2026-09-27T00:00:01Z",
+                },
+            ],
+        )
+
+        assert read_copilot_history(copilot_dir=base) == [
+            Conversation(
+                messages=[
+                    Message(role="user", content="Use the current layout."),
+                    Message(role="assistant", content="Done."),
+                ],
+                platform="copilot",
+                project=None,
+                session_id="current-session",
+                source_path="current-session/events.jsonl",
+            )
+        ]
+
+
+def test_current_layout_wins_over_duplicate_legacy_session():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        _write_session(
+            base,
+            "same-session.jsonl",
+            [{"type": "user.message", "data": {"content": "Legacy duplicate"}}],
+        )
+        _write_session(
+            base,
+            "same-session/events.jsonl",
+            [{"type": "user.message", "data": {"content": "Current session"}}],
+        )
+
+        files = discover_copilot_files(copilot_dir=base)
+        conversations = read_copilot_history(copilot_dir=base)
+
+        assert [(path.relative_to(base).as_posix(), rel) for path, rel in files] == [
+            ("same-session/events.jsonl", "same-session/events.jsonl")
+        ]
+        assert conversations == [
+            Conversation(
+                messages=[Message(role="user", content="Current session")],
+                platform="copilot",
+                project=None,
+                session_id="same-session",
+                source_path="same-session/events.jsonl",
+            )
+        ]
 
 
 def test_file_filter_skips():
