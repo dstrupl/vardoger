@@ -204,17 +204,25 @@ def test_detect_edits_covers_cline(tmp_path):
     assert "cline extra rule" in record.added_rules
 
 
-def test_detect_edits_cline_skips_global_scope(tmp_path):
+def test_detect_edits_cline_covers_global_scope(fake_home, tmp_path):
+    from vardoger.writers.cline import write_cline_rules
+
     store = CheckpointStore(state_dir=tmp_path / "state")
+    output = write_cline_rules(GENERATED, scope="global")
     store.record_generation(
         "cline",
         conversations_analyzed=0,
-        output_path="/tmp/ignored",
+        output_path=str(output),
         content=GENERATED,
         output_hash=content_hash(GENERATED),
     )
-    # Global scope is not supported for Cline: detect_edits returns None instead of raising.
     assert detect_edits("cline", store, scope="global") is None
+
+    write_cline_rules(GENERATED + "\n- global cline rule", scope="global")
+
+    event = detect_edits("cline", store, scope="global")
+    assert event is not None
+    assert "global cline rule" in store.get_feedback("cline").added_rules
 
 
 def test_detect_edits_is_idempotent_after_reverting(tmp_path):

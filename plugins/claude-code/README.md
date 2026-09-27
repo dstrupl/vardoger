@@ -53,9 +53,9 @@ Make sure you have run `uv sync` ([install uv](https://docs.astral.sh/uv/getting
 Claude Code now writes per-project memory files to `~/.claude/projects/<encoded-path>/memory/` during a session. vardoger is complementary to that feature, not a replacement:
 
 - **Memory** is captured live, in one session at a time — it reflects whatever Claude noticed in the moment.
-- **vardoger** reads your full on-disk session history in batches and extracts cross-session patterns (tech-stack habits, recurring workflows, stylistic preferences) that are hard to see from any single conversation.
+- **vardoger** reads your full on-disk session history in batches and extracts durable, cross-project behavioral preferences that are hard to see from any single conversation.
 
-The two stay out of each other's way: vardoger discovers sessions via a non-recursive `*.jsonl` glob on each project directory and writes its output to `~/.claude/rules/vardoger.md` (or `<project>/.claude/rules/vardoger.md`), so it never reads from or writes to the `memory/` tree. Both files are loaded into the prompt side-by-side.
+The two stay out of each other's way: vardoger discovers sessions via a non-recursive `*.jsonl` glob on each project directory and writes its output to `~/.claude/rules/vardoger.md` (or `<project>/.claude/rules/vardoger.md`), so it never reads from or writes to the `memory/` tree. Its synthesis prompt also drops repository facts, task state, and other episodic context that belongs in auto memory. Both layers are loaded side-by-side.
 
 Typical reasons to keep running vardoger alongside memory:
 

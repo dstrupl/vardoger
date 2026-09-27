@@ -3,9 +3,9 @@
 """Write vardoger output to Cursor's rules directory.
 
 Cursor reads project rules from:
-  <project>/.cursor/rules/*.md
+  <project>/.cursor/rules/*.mdc
 
-Files support YAML frontmatter with description, globs, and alwaysApply.
+Files require YAML frontmatter with description, globs, and alwaysApply.
 
 The writer here is intentionally strict about what counts as a "project":
 if the resolved target directory is not itself a project root and has no
@@ -14,7 +14,8 @@ refused with a :class:`NotAProjectError`. This prevents the silent
 failure mode documented in
 https://github.com/dstrupl/vardoger/issues/18, where an MCP server
 launched from ``$HOME`` would happily drop a file at
-``~/.cursor/rules/vardoger.md`` — a location Cursor never loads.
+``~/.cursor/rules/vardoger.mdc`` — a location Cursor never loads as a
+project rule.
 
 The shared helper module now drives the same check in every other
 writer (https://github.com/dstrupl/vardoger/issues/21); the
@@ -44,6 +45,9 @@ alwaysApply: true
 ---
 """
 
+_RULES_FILENAME = "vardoger.mdc"
+_LEGACY_RULES_FILENAME = "vardoger.md"
+
 # Re-exported so ``from vardoger.writers.cursor import NotAProjectError``
 # (and the previously-private ``_find_project_root`` / ``_ensure_project``
 # used by the tests) keep working after the move to the shared module.
@@ -62,7 +66,12 @@ __all__ = [
 
 def _rules_path(project_path: Path | None) -> Path:
     base = project_path or Path.cwd()
-    return base / ".cursor" / "rules" / "vardoger.md"
+    return base / ".cursor" / "rules" / _RULES_FILENAME
+
+
+def _legacy_rules_path(project_path: Path | None) -> Path:
+    base = project_path or Path.cwd()
+    return base / ".cursor" / "rules" / _LEGACY_RULES_FILENAME
 
 
 def write_cursor_rules(content: str, project_path: Path | None = None) -> Path:
@@ -87,11 +96,16 @@ def read_cursor_rules(project_path: Path | None = None) -> str | None:
     """Return the current body of the vardoger rules file, or None if absent.
 
     Strips the known vardoger frontmatter prefix so the returned text matches
-    what was originally passed to ``write_cursor_rules``.
+    what was originally passed to ``write_cursor_rules``. A legacy
+    ``vardoger.md`` is read only when the canonical ``vardoger.mdc`` does not
+    exist, so upgrades retain access to prior generated content without
+    modifying or deleting the old file.
     """
     output_path = _rules_path(project_path)
     if not output_path.is_file():
-        return None
+        output_path = _legacy_rules_path(project_path)
+        if not output_path.is_file():
+            return None
     text = output_path.read_text(encoding="utf-8")
     if text.startswith(FRONTMATTER):
         return text[len(FRONTMATTER) :].lstrip("\n")
@@ -99,7 +113,11 @@ def read_cursor_rules(project_path: Path | None = None) -> str | None:
 
 
 def clear_cursor_rules(project_path: Path | None = None) -> bool:
-    """Delete the vardoger rules file if it exists. Returns True if removed."""
+    """Delete the canonical vardoger rule file if it exists.
+
+    The legacy ``vardoger.md`` file is deliberately preserved to keep the
+    filename transition non-destructive.
+    """
     output_path = _rules_path(project_path)
     if output_path.is_file():
         output_path.unlink()

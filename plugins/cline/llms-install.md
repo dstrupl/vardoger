@@ -1,7 +1,7 @@
 # Install vardoger for Cline
 
 This file is written for an AI assistant (e.g. Cline itself) running through
-the [Cline MCP marketplace](https://github.com/cline/mcp-marketplace) install
+the current [Cline marketplace](https://github.com/cline/marketplace) install
 flow. Follow these steps exactly.
 
 ## What vardoger is
@@ -10,7 +10,10 @@ vardoger is a **local-first** personalization tool. It reads local AI
 assistant conversation histories (Cline, Cursor, Claude Code, Codex, Copilot
 CLI, Windsurf, OpenClaw), extracts conventions and preferences, and writes a
 personalization file that the assistant auto-loads. Nothing leaves the user's
-machine: no telemetry, no uploads, no network calls.
+machine through a Vardoger backend: Vardoger has no hosted service or
+telemetry. History parsing, checkpoint state, and rule-file writes are local.
+Excerpts analyzed by the active Cline model follow that model provider's data
+policy.
 
 ## Prerequisites
 
@@ -37,7 +40,10 @@ Verify:
 vardoger --version
 ```
 
-The output should be `0.3.2` or newer.
+The output should be `0.4.0` or newer.
+
+If this server was installed from the current Cline marketplace, its generated
+configuration runs `uvx vardoger mcp`; a separate `pipx` install is not needed.
 
 ## Step 2 — Prepare Cline rules
 
@@ -47,9 +53,10 @@ Run:
 vardoger setup cline
 ```
 
-This prints guidance only; no files are written yet. The writer creates
-`.clinerules/vardoger.md` inside the user's current project when the user
-actually runs `vardoger analyze --platform cline --scope project`.
+This prepares Cline's documented user-global rules directory. The writer
+creates `~/Documents/Cline/Rules/vardoger.md` when the user runs
+`vardoger analyze --platform cline`. An explicit `--scope project --project
+<workspace>` instead writes `.clinerules/vardoger.md` in that project.
 
 ## Step 3 — Register the MCP server with Cline
 
@@ -75,8 +82,9 @@ merge) the following server entry:
 
 The `VARDOGER_MCP_PLATFORM=cline` environment variable is required — it
 tells the vardoger MCP server to analyze Cline conversation history and
-write personalization to `.clinerules/vardoger.md` rather than Cursor's
-`.cursor/rules/vardoger.md`.
+default to Cline's user-global rules rather than Cursor's rules. An MCP write
+with `scope="project"` and `project_path="<workspace>"` selects project-only
+`.clinerules` delivery.
 
 Use Cline's built-in MCP editor if available; do not hand-edit the JSON
 file if Cline exposes an "Add server" UI that accepts the snippet above.
@@ -86,8 +94,9 @@ file if Cline exposes an "Add server" UI that accepts the snippet above.
 After Cline reloads its MCP servers, ask the user:
 
 > I've installed vardoger. Try saying "analyze my Cline history" to generate
-> a personalization file at `.clinerules/vardoger.md` in your current project,
-> or ask me to call the vardoger MCP tools directly.
+> a user-global personalization file at
+> `~/Documents/Cline/Rules/vardoger.md`, or ask for an explicit project-scoped
+> rule instead.
 
 ## Uninstall
 
@@ -98,4 +107,6 @@ pipx uninstall vardoger
 ```
 
 Also remove the `"vardoger"` entry from `cline_mcp_settings.json` and delete
-`.clinerules/vardoger.md` from any projects where it was written.
+`~/Documents/Cline/Rules/vardoger.md`. Delete `.clinerules/vardoger.md` only
+from projects where Vardoger was explicitly asked to write project-scoped
+personalization.

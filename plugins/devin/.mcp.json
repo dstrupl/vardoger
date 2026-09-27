@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vardoger": {
+      "command": "vardoger",
+      "args": [
+        "mcp"
+      ],
+      "env": {
+        "VARDOGER_MCP_PLATFORM": "devin"
+      }
+    }
+  }
+}

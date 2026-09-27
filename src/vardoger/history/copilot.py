@@ -2,8 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 """Read GitHub Copilot CLI session-state JSONL files.
 
-Copilot stores one JSONL file per session at:
-  ~/.copilot/session-state/<session-uuid>.jsonl
+Current Copilot CLI releases store one event log per session at:
+  <copilot-home>/session-state/<session-uuid>/events.jsonl
+
+The Copilot home defaults to ``~/.copilot`` and is replaced completely when
+``COPILOT_HOME`` is set.
+
+Older releases stored the event log directly under ``session-state`` as
+``<session-uuid>.jsonl``.  Both layouts are read so upgrading Copilot does not
+make existing sessions disappear from vardoger.
 
 Each line is a JSON object of the form::
 
@@ -28,12 +35,11 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from vardoger.config import CopilotConfig
 from vardoger.history.models import Conversation, Message
 from vardoger.models import CopilotEntry
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_COPILOT_DIR = Path.home() / ".copilot" / "session-state"
 
 _ROLE_BY_TYPE = {
     "user.message": "user",
@@ -44,16 +50,64 @@ _ROLE_BY_TYPE = {
 def discover_copilot_files(
     copilot_dir: Path | None = None,
 ) -> list[tuple[Path, str]]:
-    """Return (absolute_path, relative_path) pairs for every session JSONL."""
-    base = copilot_dir or DEFAULT_COPILOT_DIR
+    """Return ``(absolute_path, relative_path)`` pairs for Copilot event logs.
+
+    The current nested layout is preferred over a legacy flat file with the
+    same session ID.  Copilot may leave both representations present while a
+    session is migrated, and analyzing both would double-count one session.
+    """
+    base = copilot_dir or CopilotConfig.from_env().session_state_dir
     if not base.is_dir():
         return []
 
-    results: list[tuple[Path, str]] = []
-    for jsonl_file in sorted(base.glob("*.jsonl")):
-        rel = str(jsonl_file.relative_to(base))
-        results.append((jsonl_file, rel))
-    return results
+    current_files = {
+        path.parent.name: path for path in base.glob("*/events.jsonl") if path.is_file()
+    }
+    legacy_files = {
+        path.stem: path
+        for path in base.glob("*.jsonl")
+        if path.is_file() and path.stem not in current_files
+    }
+
+    return sorted(
+        (
+            (path, str(path.relative_to(base)))
+            for path in (*current_files.values(), *legacy_files.values())
+        ),
+        key=lambda item: item[1],
+    )
+
+
+def read_copilot_history(
+    copilot_dir: Path | None = None,
+    file_filter: Callable[[Path, str], bool] | None = None,
+) -> list[Conversation]:
+    """Discover and parse Copilot CLI session transcripts.
+
+    If ``file_filter`` is provided, it is called with ``(abs_path, rel_path)``
+    for each discovered file. Only files where the filter returns True are
+    parsed.
+    """
+    all_files = discover_copilot_files(copilot_dir)
+
+    conversations: list[Conversation] = []
+    skipped = 0
+
+    for abs_path, rel_path in all_files:
+        if file_filter and not file_filter(abs_path, rel_path):
+            skipped += 1
+            continue
+
+        conv = _parse_session(abs_path, rel_path)
+        if conv is not None:
+            conversations.append(conv)
+
+    logger.info(
+        "Copilot: found %d conversations (%d skipped)",
+        len(conversations),
+        skipped,
+    )
+    return conversations
 
 
 def _parse_session(path: Path, rel_path: str) -> Conversation | None:
@@ -90,38 +144,13 @@ def _parse_session(path: Path, rel_path: str) -> Conversation | None:
         messages=messages,
         platform="copilot",
         project=None,
-        session_id=path.stem,
+        session_id=_session_id(path),
         source_path=rel_path,
     )
 
 
-def read_copilot_history(
-    copilot_dir: Path | None = None,
-    file_filter: Callable[[Path, str], bool] | None = None,
-) -> list[Conversation]:
-    """Discover and parse Copilot CLI session transcripts.
-
-    If ``file_filter`` is provided, it is called with ``(abs_path, rel_path)``
-    for each discovered file. Only files where the filter returns True are
-    parsed.
-    """
-    all_files = discover_copilot_files(copilot_dir)
-
-    conversations: list[Conversation] = []
-    skipped = 0
-
-    for abs_path, rel_path in all_files:
-        if file_filter and not file_filter(abs_path, rel_path):
-            skipped += 1
-            continue
-
-        conv = _parse_session(abs_path, rel_path)
-        if conv is not None:
-            conversations.append(conv)
-
-    logger.info(
-        "Copilot: found %d conversations (%d skipped)",
-        len(conversations),
-        skipped,
-    )
-    return conversations
+def _session_id(path: Path) -> str:
+    """Return the session ID for current nested or legacy flat event logs."""
+    if path.name == "events.jsonl":
+        return path.parent.name
+    return path.stem

@@ -14,8 +14,10 @@ from pathlib import Path
 
 import pytest
 
+from vardoger import __version__
 from vardoger.checkpoint import CheckpointStore, content_hash
-from vardoger.cli import main
+from vardoger.cli import _save_checkpoint, main
+from vardoger.history.models import Conversation, Message
 from vardoger.models import (
     CodexMarketplace,
     CodexPluginManifest,
@@ -48,7 +50,9 @@ def test_setup_cursor_writes_mcp_config(
     assert mcp_config.is_file()
     config = json.loads(mcp_config.read_text())
     assert "vardoger" in config["mcpServers"]
-    assert "Registered vardoger" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "Registered vardoger" in output
+    assert ".cursor/rules/vardoger.mdc" in output
 
 
 def test_setup_claude_code_creates_plugin_dir(
@@ -159,6 +163,21 @@ def test_setup_copilot_preserves_existing_instructions(
     assert "Keep." in instructions.read_text()
 
 
+def test_setup_copilot_honors_copilot_home(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    configured_home = tmp_path / "custom-copilot"
+    monkeypatch.setenv("COPILOT_HOME", str(configured_home))
+
+    main(["setup", "copilot"])
+
+    instructions = configured_home / "copilot-instructions.md"
+    assert instructions.is_file()
+    assert str(instructions) in capsys.readouterr().out
+
+
 def test_setup_windsurf_prepares_rules(
     fake_home: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -173,11 +192,27 @@ def test_setup_windsurf_prepares_rules(
     assert "Installed Windsurf skill" in out
 
 
-def test_setup_cline_prints_guidance(fake_home: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_setup_cline_prepares_global_rules(
+    fake_home: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     main(["setup", "cline"])
+    assert (fake_home / "Documents" / "Cline" / "Rules").is_dir()
     out = capsys.readouterr().out
-    assert "project-local" in out
+    assert "Prepared Cline global rules" in out
     assert ".clinerules" in out
+
+
+def test_setup_devin_prepares_supported_surfaces(
+    fake_home: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["setup", "devin"])
+
+    assert (fake_home / ".vardoger" / "imports" / "devin").is_dir()
+    assert (fake_home / ".config" / "devin" / "AGENTS.md").is_file()
+    skill = fake_home / ".config" / "devin" / "skills" / "analyze" / "SKILL.md"
+    assert skill.is_file()
+    assert "--export ~/.vardoger/imports/devin/" in skill.read_text(encoding="utf-8")
+    assert "devin --export" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(
@@ -199,6 +234,7 @@ def test_setup_cline_prints_guidance(fake_home: Path, capsys: pytest.CaptureFixt
                 "SKILL.md",
             ),
         ),
+        ("devin", (".config", "devin", "skills", "analyze", "SKILL.md")),
     ],
 )
 def test_setup_skill_has_valid_frontmatter(
@@ -223,6 +259,11 @@ def test_setup_skill_has_valid_frontmatter(
     assert "description:" in frontmatter
     assert "personalize" in frontmatter
     assert "vardoger" in frontmatter
+    if platform == "openclaw":
+        assert f'version: "{__version__}"' in frontmatter
+        assert "license: Apache-2.0" in frontmatter
+        assert "openclaw:" in frontmatter
+        assert "- vardoger" in frontmatter
 
     # The "vardoger CLI not installed" guard must give the user actionable
     # install instructions, not just "install with pipx install vardoger".
@@ -259,9 +300,10 @@ def test_status_default_covers_all_platforms(
         "copilot",
         "windsurf",
         "cline",
+        "devin",
     ):
         assert platform in out
-    assert out.count("never generated") >= 7
+    assert out.count("never generated") >= 8
 
 
 def test_status_single_platform_json(fake_home: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -307,7 +349,7 @@ def test_analyze_writes_personalization(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     main(["analyze", "--platform", "cursor", "--full"])
-    rules = project_cwd / ".cursor" / "rules" / "vardoger.md"
+    rules = project_cwd / ".cursor" / "rules" / "vardoger.mdc"
     assert rules.is_file()
     out = capsys.readouterr().out
     assert "wrote personalization" in out
@@ -330,6 +372,27 @@ def test_analyze_writes_copilot_personalization(
     assert rules.is_file()
     assert "<!-- vardoger:start -->" in rules.read_text()
     assert "wrote personalization" in capsys.readouterr().out
+
+
+def test_copilot_checkpoint_uses_copilot_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    configured_home = tmp_path / "custom-copilot"
+    event_log = configured_home / "session-state" / "session" / "events.jsonl"
+    event_log.parent.mkdir(parents=True)
+    event_log.write_text('{"type":"user.message","data":{"content":"Hi"}}\n')
+    monkeypatch.setenv("COPILOT_HOME", str(configured_home))
+    store = CheckpointStore(state_dir=tmp_path / "state")
+    conversation = Conversation(
+        messages=[Message(role="user", content="Hi")],
+        platform="copilot",
+        session_id="session",
+        source_path="session/events.jsonl",
+    )
+
+    _save_checkpoint(store, [conversation], "copilot")
+
+    assert store.get_checkpoint("copilot", "session/events.jsonl") is not None
 
 
 def test_analyze_writes_windsurf_personalization(
@@ -365,6 +428,22 @@ def test_analyze_writes_cline_personalization(
     assert "<!-- vardoger:start -->" in rules.read_text()
 
 
+def test_analyze_writes_global_cline_personalization_by_default(
+    fake_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    make_conversations,
+) -> None:
+    monkeypatch.setattr(
+        "vardoger.history.cline.read_cline_history",
+        lambda **_: make_conversations(),
+    )
+
+    main(["analyze", "--platform", "cline", "--full"])
+
+    rules = fake_home / "Documents" / "Cline" / "Rules" / "vardoger.md"
+    assert rules.is_file()
+
+
 def test_analyze_no_conversations(
     fake_home: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -373,6 +452,26 @@ def test_analyze_no_conversations(
     monkeypatch.setattr("vardoger.cli.read_cursor_history", lambda **_: [])
     main(["analyze", "--platform", "cursor", "--full"])
     assert "No conversation history" in capsys.readouterr().out
+
+
+def test_prepare_openclaw_sqlite_backend_exits_cleanly(
+    fake_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from vardoger.history.openclaw import UnsupportedOpenClawHistoryError
+
+    def _unsupported(**_kwargs: object) -> list:
+        message = "OpenClaw 2.0 SQLite history detected."
+        raise UnsupportedOpenClawHistoryError(message)
+
+    monkeypatch.setattr("vardoger.history.openclaw.read_openclaw_history", _unsupported)
+
+    with pytest.raises(SystemExit) as exc:
+        main(["prepare", "--platform", "openclaw", "--full"])
+
+    assert exc.value.code == 2
+    assert capsys.readouterr().err == ("vardoger: OpenClaw 2.0 SQLite history detected.\n")
 
 
 # ---------------------------------------------------------------------------
@@ -504,7 +603,7 @@ def test_write_persists_stdin_content(
 ) -> None:
     stdin_feeder("# Personalization\n\n- do things well\n")
     main(["write", "--platform", "cursor"])
-    rules = project_cwd / ".cursor" / "rules" / "vardoger.md"
+    rules = project_cwd / ".cursor" / "rules" / "vardoger.mdc"
     assert rules.is_file()
     assert "- do things well" in rules.read_text()
     assert "wrote personalization" in capsys.readouterr().out
@@ -558,13 +657,13 @@ def test_feedback_reject_reverts_to_previous(
     store.record_generation(
         "cursor",
         conversations_analyzed=1,
-        output_path=str(project_cwd / ".cursor" / "rules" / "vardoger.md"),
+        output_path=str(project_cwd / ".cursor" / "rules" / "vardoger.mdc"),
         content=first_body,
     )
     store.record_generation(
         "cursor",
         conversations_analyzed=1,
-        output_path=str(project_cwd / ".cursor" / "rules" / "vardoger.md"),
+        output_path=str(project_cwd / ".cursor" / "rules" / "vardoger.mdc"),
         content=second_body,
     )
     store.save()
@@ -573,7 +672,7 @@ def test_feedback_reject_reverts_to_previous(
     out = capsys.readouterr().out
     assert "reverted cursor" in out
 
-    rules = (project_cwd / ".cursor" / "rules" / "vardoger.md").read_text()
+    rules = (project_cwd / ".cursor" / "rules" / "vardoger.mdc").read_text()
     assert "prior rule" in rules
     assert "later rule" not in rules
 
@@ -590,7 +689,7 @@ def test_feedback_reject_clears_when_no_prior_generation(
     store.record_generation(
         "cursor",
         conversations_analyzed=1,
-        output_path=str(project_cwd / ".cursor" / "rules" / "vardoger.md"),
+        output_path=str(project_cwd / ".cursor" / "rules" / "vardoger.mdc"),
         content="- only rule\n",
     )
     store.save()
@@ -598,7 +697,7 @@ def test_feedback_reject_clears_when_no_prior_generation(
     main(["feedback", "reject", "--platform", "cursor", "--project", str(project_cwd)])
     out = capsys.readouterr().out
     assert "cleared cursor personalization" in out
-    assert not (project_cwd / ".cursor" / "rules" / "vardoger.md").is_file()
+    assert not (project_cwd / ".cursor" / "rules" / "vardoger.mdc").is_file()
 
 
 def test_feedback_reject_without_any_history(
@@ -640,6 +739,7 @@ def test_compare_all_json_lists_every_platform(
         "copilot",
         "windsurf",
         "cline",
+        "devin",
     }
 
 
@@ -671,3 +771,128 @@ def test_compare_emits_metric_rows_when_personalized(
     # With no messages in the before bucket we expect a caveat but the
     # comparison itself should still print platform + cutoff lines.
     assert "platform: cursor" in out
+
+
+# ---------------------------------------------------------------------------
+# profile
+# ---------------------------------------------------------------------------
+
+
+def test_profile_sources_lists_stable_generation_ids(
+    fake_home: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    store = CheckpointStore()
+    store.record_generation(
+        "codex",
+        conversations_analyzed=3,
+        output_path="/tmp/generated",
+        content="- Use pytest\n",
+    )
+    store.save()
+
+    main(["profile", "sources", "--platform", "codex", "--json"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["platform"] == "codex"
+    assert payload[0]["generation"] == 1
+    assert payload[0]["conversations_analyzed"] == 3
+
+
+def test_profile_preview_is_read_only_and_shows_diff(
+    fake_home: Path,
+    project_cwd: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    store = CheckpointStore()
+    store.record_generation(
+        "codex",
+        conversations_analyzed=1,
+        output_path="/tmp/generated",
+        content="## Testing\n- Use pytest\n",
+    )
+    store.save()
+    target = project_cwd / "AGENTS.md"
+    target.write_text("# Existing\n\nKeep this.\n")
+
+    main(
+        [
+            "profile",
+            "preview",
+            "--source",
+            "codex:latest",
+            "--target",
+            str(target),
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert "- Use pytest" in output
+    assert "Proposed diff" in output
+    assert target.read_text() == "# Existing\n\nKeep this.\n"
+
+
+def test_profile_write_requires_apply_and_preserves_existing_content(
+    fake_home: Path,
+    project_cwd: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    store = CheckpointStore()
+    store.record_generation(
+        "claude_code",
+        conversations_analyzed=1,
+        output_path="/tmp/generated",
+        content="## Workflow\n- Keep commits focused\n",
+    )
+    store.save()
+    target = project_cwd / "AGENTS.md"
+    target.write_text("# Repository rules\n\nPreserve me.\n")
+    base_args = [
+        "profile",
+        "write",
+        "--source",
+        "claude-code:1",
+        "--target",
+        str(target),
+    ]
+
+    main(base_args)
+    captured = capsys.readouterr()
+    assert "preview only" in captured.err
+    assert "Keep commits focused" not in target.read_text()
+
+    main([*base_args, "--apply"])
+    assert "Preserve me." in target.read_text()
+    assert "Keep commits focused" in target.read_text()
+    assert "vardoger-profile:start" in target.read_text()
+
+
+def test_profile_preview_json_includes_provenance(
+    fake_home: Path,
+    project_cwd: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    store = CheckpointStore()
+    store.record_generation(
+        "cursor",
+        conversations_analyzed=1,
+        output_path="/tmp/generated",
+        content="- Prefer concise answers\n",
+    )
+    store.save()
+
+    main(
+        [
+            "profile",
+            "preview",
+            "--source",
+            "cursor:1",
+            "--target",
+            str(project_cwd / "AGENTS.md"),
+            "--json",
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["sources"] == [{"platform": "cursor", "generation": 1}]
+    assert payload["preferences"][0]["evidence"][0]["platform"] == "cursor"

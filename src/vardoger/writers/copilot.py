@@ -3,8 +3,10 @@
 """Write vardoger output to GitHub Copilot's instructions files.
 
 Copilot CLI reads instructions from two user-shared markdown files:
-  ~/.copilot/copilot-instructions.md              (global)
+  <copilot-home>/copilot-instructions.md           (global)
   <project>/.github/copilot-instructions.md       (project)
+
+The Copilot home defaults to ``~/.copilot`` and honors ``COPILOT_HOME``.
 
 Both files are typically authored by the user or their team, so vardoger
 manages a fenced section delimited by HTML comments
@@ -18,6 +20,7 @@ import logging
 import re
 from pathlib import Path
 
+from vardoger.config import CopilotConfig
 from vardoger.writers._projects import ensure_project
 
 logger = logging.getLogger(__name__)
@@ -39,7 +42,7 @@ def _instructions_path(scope: str, project_path: Path | None) -> Path:
     if scope == "project":
         base = project_path or Path.cwd()
         return base / ".github" / "copilot-instructions.md"
-    return Path.home() / ".copilot" / "copilot-instructions.md"
+    return CopilotConfig.from_env().instructions_path
 
 
 def write_copilot_rules(
@@ -49,7 +52,7 @@ def write_copilot_rules(
 ) -> Path:
     """Write the vardoger section into a Copilot instructions file.
 
-    scope="global": writes to ``~/.copilot/copilot-instructions.md``
+    scope="global": writes to ``<copilot-home>/copilot-instructions.md``
     scope="project": writes to ``<project>/.github/copilot-instructions.md``.
     The base directory (or an ancestor) must contain a project marker,
     otherwise :class:`vardoger.writers._projects.NotAProjectError` is

@@ -1,0 +1,1 @@
+- **[Vardoger](https://github.com/dstrupl/vardoger)** — Build reviewable, durable instructions from local Copilot CLI history using the active host model.

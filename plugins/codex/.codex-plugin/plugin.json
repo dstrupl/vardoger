@@ -1,7 +1,7 @@
 {
   "name": "vardoger",
-  "version": "0.3.2",
-  "description": "Personalizes your AI assistant by analyzing conversation history and generating tailored instructions. Runs entirely on your machine.",
+  "version": "0.4.0",
+  "description": "Personalizes your AI assistant from local conversation history using the active host model.",
   "author": {
     "name": "David Strupl"
   },
@@ -17,15 +17,16 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Vardoger",
-    "shortDescription": "Personalize your assistant from your own conversation history",
-    "longDescription": "Vardoger reads your Codex conversation history locally, extracts behavioral patterns, and generates a personalized AGENTS.md addition so the assistant adapts to how you actually work. All processing happens on your machine — no data leaves it.",
-    "developerName": "dstrupl",
+    "shortDescription": "Personalize from your history",
+    "longDescription": "Vardoger reads your Codex conversation history locally, extracts behavioral patterns, and generates a personalized AGENTS.md addition so the assistant adapts to how you actually work. Local history handling stays on your machine; model-side analysis follows your host assistant's data policy.",
+    "developerName": "David Strupl",
     "category": "Productivity",
     "capabilities": [
       "Read",
       "Write"
     ],
     "websiteURL": "https://github.com/dstrupl/vardoger",
+    "supportURL": "https://github.com/dstrupl/vardoger/issues",
     "privacyPolicyURL": "https://github.com/dstrupl/vardoger/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/dstrupl/vardoger/blob/main/TERMS.md",
     "composerIcon": "./assets/logo.png",

@@ -8,7 +8,7 @@ cases. These cases use only synthetic data and public Vardoger behavior.
 Use a disposable OS account or back up the reviewer's existing Codex files.
 Copy `fixtures/codex/rollout-review.jsonl` into
 `~/.codex/sessions/2026/07/09/rollout-review.jsonl`. Install
-`vardoger==0.3.2` with `pipx`, and ensure the executable is on `PATH`.
+`vardoger==0.4.0` with `pipx`, and ensure the executable is on `PATH`.
 
 For tests that inspect writing behavior, seed `~/.codex/AGENTS.md` with:
 
@@ -75,16 +75,18 @@ fresh-run condition is required.
 - **Fixture data:** Complete Positive 1, then add a second synthetic rollout
   after the checkpoint has been written.
 
-### Positive 5 — missing CLI dependency
+### Positive 5 — project-scoped personalization
 
-- **User prompt:** “Use Vardoger to personalize Codex for me.”
-- **Expected behavior:** Detect that `vardoger` is not on `PATH`, do not invent
-  results or attempt to read history directly, and provide the documented
-  `pipx install vardoger` and `uvx vardoger --help` options.
-- **Expected result shape:** A brief dependency explanation, install commands,
-  and an invitation to retry after installation. No files are changed.
-- **Fixture data:** Run in an environment where `vardoger` is intentionally
-  absent from `PATH`; no account or credentials.
+- **User prompt:** “Use this history to personalize Codex for only the current
+  repository, preserving its existing AGENTS.md instructions.”
+- **Expected behavior:** Prepare and synthesize the fixture history, identify
+  the current repository as the explicit project target, and write through
+  Vardoger with project scope. Do not modify the user-global `AGENTS.md`.
+- **Expected result shape:** The project `AGENTS.md` retains its reviewer-owned
+  text and contains exactly one Vardoger fenced block; the completion message
+  names the project file and states that global instructions were unchanged.
+- **Fixture data:** Synthetic rollout fixture plus a disposable Git repository
+  containing a seeded `AGENTS.md`. No account or credentials.
 
 ## Negative test cases
 

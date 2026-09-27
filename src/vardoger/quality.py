@@ -231,6 +231,12 @@ def _cline_history() -> list[Conversation]:
     return read_cline_history()
 
 
+def _devin_history() -> list[Conversation]:
+    from vardoger.history.devin import read_devin_history
+
+    return read_devin_history()
+
+
 _HISTORY_DISPATCH = {
     "cursor": _cursor_history,
     "claude-code": _claude_code_history,
@@ -239,6 +245,7 @@ _HISTORY_DISPATCH = {
     "copilot": _copilot_history,
     "windsurf": _windsurf_history,
     "cline": _cline_history,
+    "devin": _devin_history,
 }
 
 
@@ -258,6 +265,7 @@ _PLATFORM_STATE_KEY = {
     "copilot": "copilot",
     "windsurf": "windsurf",
     "cline": "cline",
+    "devin": "devin",
 }
 
 

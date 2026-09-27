@@ -100,24 +100,32 @@ def test_dedicated_file_when_directory_exists():
         assert not path.is_file()
 
 
-def test_global_scope_raises():
-    with tempfile.TemporaryDirectory() as tmp:
-        project = Path(tmp)
-        with pytest.raises(ValueError, match="global"):
-            write_cline_rules("body", scope="global", project_path=project)
-        with pytest.raises(ValueError, match="global"):
-            read_cline_rules(scope="global", project_path=project)
-        with pytest.raises(ValueError, match="global"):
-            clear_cline_rules(scope="global", project_path=project)
+def test_global_scope_uses_documented_user_rules_directory(fake_home: Path) -> None:
+    path = write_cline_rules("body", scope="global")
+
+    assert path == fake_home / "Documents" / "Cline" / "Rules" / "vardoger.md"
+    assert path.read_text(encoding="utf-8") == "body"
+    assert read_cline_rules(scope="global") == "body"
+
+    write_cline_rules("replacement", scope="global")
+    assert path.read_text(encoding="utf-8") == "replacement"
+
+    assert clear_cline_rules(scope="global") is True
+    assert not path.exists()
+
+
+def test_global_scope_is_default(fake_home: Path) -> None:
+    path = write_cline_rules("body")
+
+    assert path == fake_home / "Documents" / "Cline" / "Rules" / "vardoger.md"
+    assert read_cline_rules() == "body"
 
 
 # ---------------------------------------------------------------------------
 # Project-marker validation — regression for
 # https://github.com/dstrupl/vardoger/issues/21
 #
-# Cline is the most exposed platform: its *only* scope is project, so the
-# check fires on every call — including the default-scope, no-project_path
-# case an MCP server launched with cwd=$HOME routinely produces.
+# Project writes remain guarded even though Cline now has a safe global default.
 # ---------------------------------------------------------------------------
 
 
@@ -129,18 +137,15 @@ def test_refuses_non_project_dir(tmp_path: Path) -> None:
         write_cline_rules("content", scope="project", project_path=bare)
 
 
-def test_refuses_cwd_when_cwd_is_bare(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """With project_path omitted, cwd is the fallback — and cwd=$HOME must refuse.
-
-    This is the out-of-the-box cline-from-MCP bug: scope defaults to
-    ``project`` and cwd defaults to ``$HOME``, so vardoger would land
-    ``~/.clinerules`` at a path Cline never reads.
-    """
+def test_refuses_project_scope_from_bare_cwd(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Explicit project scope still refuses an unmarked cwd."""
     bare = tmp_path / "nothome"
     bare.mkdir()
     monkeypatch.chdir(bare)
     with pytest.raises(NotAProjectError):
-        write_cline_rules("content")
+        write_cline_rules("content", scope="project")
 
 
 def test_accepts_nested_subdir_of_project(tmp_path: Path) -> None:

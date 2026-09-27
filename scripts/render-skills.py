@@ -4,7 +4,7 @@
 """Render the per-platform analyze skills from the shared template.
 
 The skill body is identical across Claude Code, Codex, GitHub Copilot CLI,
-OpenClaw, and Windsurf except for the platform name shown in prose and the
+OpenClaw, Windsurf, and Devin except for the platform name shown in prose and the
 `--platform` slug used in example CLI invocations. OpenClaw additionally needs
 extra YAML frontmatter to satisfy ClawHub's schema (see `openclaw/clawhub`
 docs/skill-format.md).
@@ -29,6 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from vardoger import __version__  # noqa: E402
 from vardoger.prompts import analyze_skill_body  # noqa: E402
 
 TEMPLATE_PATH = REPO_ROOT / "src" / "vardoger" / "prompts" / "analyze_skill_body.md"
@@ -82,7 +83,7 @@ _TARGETS: tuple[PluginTarget, ...] = (
         # ClawHub requires version + metadata.openclaw.requires.* (see
         # openclaw/clawhub docs/skill-format.md).
         frontmatter=(
-            'version: "0.3.2"',
+            f'version: "{__version__}"',
             "license: Apache-2.0",
             'homepage: "https://github.com/dstrupl/vardoger"',
             "metadata:",
@@ -91,6 +92,11 @@ _TARGETS: tuple[PluginTarget, ...] = (
             "      bins:",
             "        - vardoger",
         ),
+    ),
+    PluginTarget(
+        platform_slug="devin",
+        platform_name="Devin Local",
+        output=REPO_ROOT / "plugins" / "devin" / "skills" / "analyze" / "SKILL.md",
     ),
 )
 

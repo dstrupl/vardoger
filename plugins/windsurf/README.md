@@ -1,11 +1,11 @@
-# vardoger — Windsurf Integration
+# vardoger — Devin Desktop / legacy Windsurf integration
 
-This directory is the install reference for using [vardoger](../../README.md)
-with the [Windsurf](https://windsurf.com/) editor. Windsurf does not have a
-public plugin submission form today — the in-product "MCP Store" curates
-third-party servers but there is no self-serve submission endpoint. Vardoger's
-current `main` branch carries the three direct integration surfaces Windsurf
-supports:
+This directory documents the integration originally built for
+[Windsurf](https://windsurf.com/), now named **Devin Desktop**. Vardoger 0.3.2
+supports the legacy Cascade surfaces listed below. New Devin Desktop tabs
+default to Devin Local, whose preferred `.devin/*` and `~/.config/devin/*`
+paths are handled by the separate [first-class Devin integration](../devin/README.md);
+`windsurf` remains the legacy compatibility name.
 
 1. **Native skill** — `vardoger setup windsurf` installs
    `~/.codeium/windsurf/skills/vardoger-analyze/SKILL.md`, which Cascade can
@@ -25,7 +25,8 @@ team prefers to vendor it into a repository.
 
 - **Python 3.11+** and **pipx** — see the main
   [installation instructions](../../README.md#prerequisites).
-- **Windsurf Editor** — [windsurf.com/download](https://windsurf.com/download).
+- **Devin Desktop** — [windsurf.com/editor](https://windsurf.com/editor), using
+  legacy Cascade mode for the steps below.
 
 ## Install
 
@@ -43,15 +44,14 @@ the personalization inside a `<!-- vardoger:start --> ... <!-- vardoger:end -->`
 fenced section so existing rules you maintain by hand are preserved. Restart
 Windsurf or start a new Cascade conversation after the first setup.
 
-The native installer was added after the `0.3.2` release and will be included
-in the next PyPI version. Until then, the Git install above provides the
-current `main` implementation; `pipx install vardoger` remains sufficient for
-the released CLI writer and MCP server.
+These paths apply to legacy Cascade. For Devin Local, use
+`vardoger setup devin` and the explicit ATIF export flow documented in
+[`plugins/devin/`](../devin/README.md).
 
 ### 2. (Optional) Register vardoger as a Windsurf MCP server
 
-If you want Windsurf to call into vardoger from Cascade, add it to your
-Windsurf MCP configuration:
+If you want legacy Cascade to call into vardoger, add it to the legacy MCP
+configuration:
 
 **macOS / Linux:** `~/.codeium/windsurf/mcp_config.json`
 **Windows:** `%USERPROFILE%\.codeium\windsurf\mcp_config.json`
@@ -77,6 +77,9 @@ than Cursor's.
 If the file already exists, merge the `"vardoger"` entry into the existing
 `"mcpServers"` object rather than overwriting the file. Restart Windsurf;
 Cascade > **MCPs** should then list `vardoger`.
+
+Devin Local instead uses `~/.config/devin/mcp_config.json` and its own
+`vardoger setup devin` flow.
 
 ## Usage
 

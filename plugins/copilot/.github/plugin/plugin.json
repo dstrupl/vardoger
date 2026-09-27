@@ -1,7 +1,7 @@
 {
   "name": "vardoger",
-  "version": "0.3.2",
-  "description": "Personalizes your AI assistant by analyzing conversation history and generating tailored instructions. Runs entirely on your machine.",
+  "version": "0.4.0",
+  "description": "Personalizes your AI assistant from local conversation history using the active host model.",
   "author": {
     "name": "David Strupl"
   },

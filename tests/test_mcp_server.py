@@ -86,6 +86,24 @@ def test_vardoger_prepare_batch_out_of_range(
     assert "out of range" in text
 
 
+def test_vardoger_prepare_reports_unsupported_openclaw_backend(
+    fake_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    reset_mcp_cache: None,
+) -> None:
+    from vardoger.history.openclaw import UnsupportedOpenClawHistoryError
+
+    def _unsupported(**_kwargs: object) -> list:
+        message = "OpenClaw 2.0 SQLite history detected."
+        raise UnsupportedOpenClawHistoryError(message)
+
+    monkeypatch.setattr("vardoger.history.openclaw.read_openclaw_history", _unsupported)
+
+    assert mcp_server.vardoger_prepare(platform="openclaw") == (
+        "vardoger: OpenClaw 2.0 SQLite history detected."
+    )
+
+
 def test_vardoger_prepare_reuses_cache(
     fake_home: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -134,6 +152,21 @@ def test_vardoger_synthesize_prompt_prepends_feedback_context(fake_home: Path) -
     assert "---" in text
 
 
+@pytest.mark.parametrize(
+    ("platform", "expected"),
+    [
+        ("claude-code", "Claude Code memory boundary"),
+        ("codex", "Codex memory boundary"),
+    ],
+)
+def test_vardoger_synthesize_prompt_adds_native_memory_boundary(
+    fake_home: Path, platform: str, expected: str
+) -> None:
+    text = mcp_server.vardoger_synthesize_prompt(platform=platform)
+
+    assert expected in text
+
+
 # ---------------------------------------------------------------------------
 # write / preview
 # ---------------------------------------------------------------------------
@@ -147,7 +180,7 @@ def test_vardoger_write_records_generation(
     result = mcp_server.vardoger_write(content, project_path=str(project_cwd))
     assert "wrote personalization" in result
 
-    rules = project_cwd / ".cursor" / "rules" / "vardoger.md"
+    rules = project_cwd / ".cursor" / "rules" / "vardoger.mdc"
     assert rules.is_file()
     assert "- keep it simple" in rules.read_text()
 
@@ -172,7 +205,7 @@ def test_vardoger_write_no_project_path_returns_user_rules_block(
     assert "User Rules" in result
     assert "- stay concise" in result
     # No .cursor/rules landed in the cwd (the $HOME-equivalent case).
-    assert not (bare_cwd / ".cursor" / "rules" / "vardoger.md").exists()
+    assert not (bare_cwd / ".cursor" / "rules" / "vardoger.mdc").exists()
 
     # The convenience copy-source file lives under the fake ~/.vardoger/ so
     # users get a clickable path in the response instead of hunting through a
@@ -233,7 +266,7 @@ def test_vardoger_write_refuses_non_project_path(
         project_path=str(bogus),
     )
     assert "refused to write" in result
-    assert not (bogus / ".cursor" / "rules" / "vardoger.md").exists()
+    assert not (bogus / ".cursor" / "rules" / "vardoger.mdc").exists()
 
     # Nothing was recorded either.
     store = CheckpointStore()
@@ -241,9 +274,8 @@ def test_vardoger_write_refuses_non_project_path(
 
 
 # Regression for https://github.com/dstrupl/vardoger/issues/21: the
-# refusal must fire for every writer, not just Cursor, and the hint must
-# be platform-appropriate — in particular, Cline must never be told to
-# "use scope=global" because it has no global scope.
+# refusal must fire for every project-scope writer, not just Cursor, and the
+# hint must name the platform's safe global alternative.
 @pytest.mark.parametrize(
     ("platform", "scope", "expected_hint_snippet"),
     [
@@ -252,10 +284,7 @@ def test_vardoger_write_refuses_non_project_path(
         ("openclaw", "project", "scope=global"),
         ("copilot", "project", "scope=global"),
         ("windsurf", "project", "scope=global"),
-        # Cline: default scope is already project, and Cline has no
-        # global scope at all — so the hint must NOT suggest switching
-        # to global.
-        ("cline", "", "no global scope"),
+        ("cline", "project", "scope=global"),
     ],
 )
 def test_vardoger_write_refuses_non_project_path_for_every_platform(
@@ -280,6 +309,7 @@ def test_vardoger_write_refuses_non_project_path_for_every_platform(
 
     # No file landed anywhere under the bogus directory.
     assert not any(bogus.rglob("vardoger.md"))
+    assert not any(bogus.rglob("vardoger.mdc"))
     assert not any(bogus.rglob(".clinerules"))
 
     # And no generation was recorded for the refused platform.
@@ -287,28 +317,23 @@ def test_vardoger_write_refuses_non_project_path_for_every_platform(
     assert store.get_generation(mcp_server._STATE_KEY[platform]) is None
 
 
-def test_vardoger_write_cline_refuses_default_scope_no_project_path(
+def test_vardoger_write_cline_defaults_to_global_scope(
     fake_home: Path,
     bare_cwd: Path,
 ) -> None:
-    """Cline's default scope is project — so a $HOME-like cwd must still refuse.
-
-    This is the worst-case footgun in #21: cline has no global scope,
-    default scope is project, and an MCP server launched from $HOME
-    with no ``project_path`` would otherwise land ``~/.clinerules`` at
-    a path Cline never reads.
-    """
+    """Omitted scope writes to Cline's documented user-global directory."""
     result = mcp_server.vardoger_write(
         "# p\n\n- rule\n",
         platform="cline",
     )
-    assert "refused to write" in result
-    assert "no global scope" in result
+    assert "wrote personalization" in result
     assert not (bare_cwd / ".clinerules").exists()
-    assert not (bare_cwd / ".clinerules" / "vardoger.md").exists()
+    output = fake_home / "Documents" / "Cline" / "Rules" / "vardoger.md"
+    assert output.is_file()
+    assert "rule" in output.read_text(encoding="utf-8")
 
     store = CheckpointStore()
-    assert store.get_generation("cline") is None
+    assert store.get_generation("cline") is not None
 
 
 def test_vardoger_preview_no_project_path_shows_user_rules_block(
@@ -345,7 +370,7 @@ def test_vardoger_feedback_reject_user_rules_generation(
     restored = copy_path.read_text(encoding="utf-8")
     assert "- keep one" in restored
     assert "- replace with this" not in restored
-    assert not (bare_cwd / ".cursor" / "rules" / "vardoger.md").exists()
+    assert not (bare_cwd / ".cursor" / "rules" / "vardoger.mdc").exists()
 
 
 def test_vardoger_feedback_reject_only_user_rules_generation(
@@ -364,7 +389,7 @@ def test_vardoger_feedback_reject_only_user_rules_generation(
 
 
 # ---------------------------------------------------------------------------
-# vardoger_import: deliberate discovery of existing vardoger.md files.
+# vardoger_import: deliberate discovery of current and legacy rule files.
 # ---------------------------------------------------------------------------
 
 
@@ -376,20 +401,35 @@ def test_vardoger_import_returns_contents_for_found_paths(tmp_path: Path) -> Non
         p.mkdir()
 
     (proj_a / ".cursor" / "rules").mkdir(parents=True)
-    (proj_a / ".cursor" / "rules" / "vardoger.md").write_text("A rules\n", encoding="utf-8")
+    (proj_a / ".cursor" / "rules" / "vardoger.mdc").write_text("A rules\n", encoding="utf-8")
     (proj_c / ".cursor" / "rules").mkdir(parents=True)
+    # Pre-0.4.0 files remain importable as a read-only fallback.
     (proj_c / ".cursor" / "rules" / "vardoger.md").write_text("C rules\n", encoding="utf-8")
 
     payload = json.loads(mcp_server.vardoger_import([str(proj_a), str(proj_b), str(proj_c)]))
 
     paths = {entry["path"] for entry in payload}
-    assert str(proj_a / ".cursor" / "rules" / "vardoger.md") in paths
+    assert str(proj_a / ".cursor" / "rules" / "vardoger.mdc") in paths
     assert str(proj_c / ".cursor" / "rules" / "vardoger.md") in paths
-    # proj_b has no vardoger.md — should be silently skipped, not errored.
+    # proj_b has no vardoger rule — should be silently skipped, not errored.
     assert len(payload) == 2
 
     by_path = {entry["path"]: entry["content"] for entry in payload}
-    assert by_path[str(proj_a / ".cursor" / "rules" / "vardoger.md")] == "A rules\n"
+    assert by_path[str(proj_a / ".cursor" / "rules" / "vardoger.mdc")] == "A rules\n"
+
+
+def test_vardoger_import_prefers_mdc_over_legacy_md(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    rules = project / ".cursor" / "rules"
+    rules.mkdir(parents=True)
+    current = rules / "vardoger.mdc"
+    legacy = rules / "vardoger.md"
+    current.write_text("current\n", encoding="utf-8")
+    legacy.write_text("legacy\n", encoding="utf-8")
+
+    payload = json.loads(mcp_server.vardoger_import([str(project)]))
+
+    assert payload == [{"path": str(current), "content": "current\n"}]
 
 
 def test_vardoger_import_empty_list_returns_empty_json() -> None:
@@ -444,7 +484,7 @@ def test_vardoger_feedback_reject_reverts_to_previous(fake_home: Path, project_c
 
     result = mcp_server.vardoger_feedback("reject", project_path=str(project_cwd))
     assert "reverted cursor" in result
-    rules = (project_cwd / ".cursor" / "rules" / "vardoger.md").read_text()
+    rules = (project_cwd / ".cursor" / "rules" / "vardoger.mdc").read_text()
     assert "one" in rules
     assert "two" not in rules
 
@@ -453,7 +493,7 @@ def test_vardoger_feedback_reject_clears_when_no_prior(fake_home: Path, project_
     mcp_server.vardoger_write("# Only\n\n- single\n", project_path=str(project_cwd))
     result = mcp_server.vardoger_feedback("reject", project_path=str(project_cwd))
     assert "cleared cursor personalization" in result
-    assert not (project_cwd / ".cursor" / "rules" / "vardoger.md").is_file()
+    assert not (project_cwd / ".cursor" / "rules" / "vardoger.mdc").is_file()
 
 
 def test_vardoger_feedback_reject_without_history(fake_home: Path) -> None:
@@ -525,6 +565,15 @@ def test_vardoger_personalize_threads_platform_through_instructions(
     assert 'platform="windsurf"' in text
 
 
+def test_devin_personalize_uses_native_global_rules_not_cursor_user_rules(
+    fake_home: Path,
+) -> None:
+    text = mcp_server.vardoger_personalize(platform="devin")
+
+    assert 'vardoger_write(platform="devin", scope="global"' in text
+    assert "Cursor's **User Rules**" not in text
+
+
 def test_vardoger_prepare_reads_selected_platform_history(
     fake_home: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -565,7 +614,7 @@ def test_vardoger_write_routes_to_selected_platform_writer(
     project_cwd: Path,
 ) -> None:
     """Writing with platform=claude-code must land in Claude Code's rules
-    directory, not .cursor/rules/vardoger.md."""
+    directory, not .cursor/rules/vardoger.mdc."""
     result = mcp_server.vardoger_write(
         "# Personalization\n\n- stay focused\n",
         platform="claude-code",
@@ -574,7 +623,7 @@ def test_vardoger_write_routes_to_selected_platform_writer(
     )
     assert "wrote personalization" in result
 
-    cursor_out = project_cwd / ".cursor" / "rules" / "vardoger.md"
+    cursor_out = project_cwd / ".cursor" / "rules" / "vardoger.mdc"
     claude_out = project_cwd / ".claude" / "rules" / "vardoger.md"
     assert not cursor_out.is_file()
     assert claude_out.is_file()
@@ -585,14 +634,15 @@ def test_vardoger_write_routes_to_selected_platform_writer(
     assert store.get_generation("cursor") is None
 
 
-def test_vardoger_write_cline_defaults_to_project_scope(
+def test_vardoger_write_cline_supports_project_scope(
     fake_home: Path,
     project_cwd: Path,
 ) -> None:
-    """Cline has no global scope; omitting scope must not explode."""
+    """Explicit project scope preserves Cline's existing .clinerules behavior."""
     result = mcp_server.vardoger_write(
         "# Personalization\n\n- keep things local\n",
         platform="cline",
+        scope="project",
         project_path=str(project_cwd),
     )
     assert "wrote personalization" in result

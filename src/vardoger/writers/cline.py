@@ -1,6 +1,9 @@
 # Copyright 2026 David Strupl
 # SPDX-License-Identifier: Apache-2.0
-"""Write vardoger output to a project's Cline rules.
+"""Write vardoger output to Cline's user-global or project rules.
+
+Cline reads user-global rules from ``~/Documents/Cline/Rules``. vardoger
+owns a dedicated ``vardoger.md`` file in that directory.
 
 Cline reads project rules from either:
 
@@ -9,9 +12,6 @@ Cline reads project rules from either:
   to avoid clobbering hand-authored content.
 * ``<project>/.clinerules/`` — a directory of rules files. When a directory
   exists, vardoger owns a dedicated file inside it: ``vardoger.md``.
-
-Cline has no documented user-level (global) rules path, so requesting
-``scope="global"`` raises ``ValueError``.
 """
 
 from __future__ import annotations
@@ -33,58 +33,30 @@ _SECTION_RE = re.compile(
 )
 
 
-def _wrap(content: str) -> str:
-    return f"{START_MARKER}\n{content}\n{END_MARKER}"
-
-
-def _resolve_target(project_path: Path | None) -> tuple[Path, bool]:
-    """Return (path, uses_dedicated_file).
-
-    If ``.clinerules`` exists as a directory, target ``.clinerules/vardoger.md``
-    as a dedicated file. Otherwise target the ``.clinerules`` file itself with
-    a fenced section.
-    """
-    base = project_path or Path.cwd()
-    candidate = base / ".clinerules"
-    if candidate.is_dir():
-        return candidate / "vardoger.md", True
-    return candidate, False
-
-
-class ClineGlobalScopeError(ValueError):
-    """Cline has no documented user-level rules path."""
-
-    def __init__(self) -> None:
-        super().__init__("Cline does not support global scope; use --scope project")
-
-
-def _require_project_scope(scope: str) -> None:
-    if scope != "project":
-        raise ClineGlobalScopeError
+def cline_global_rules_dir() -> Path:
+    """Return Cline's documented default user-global rules directory."""
+    return Path.home() / "Documents" / "Cline" / "Rules"
 
 
 def write_cline_rules(
     content: str,
-    scope: str = "project",
+    scope: str = "global",
     project_path: Path | None = None,
 ) -> Path:
-    """Write vardoger rules for a Cline project and return the path written.
+    """Write vardoger rules for Cline and return the path written.
 
-    Cline's only scope is project-level, so unlike the other platforms
-    this check fires on every call — not just when ``scope="project"``
-    is explicit. An MCP server launched from ``$HOME`` with no
-    ``project_path`` would otherwise drop a ``.clinerules`` file in a
-    location Cline never reads (see
-    https://github.com/dstrupl/vardoger/issues/21).
+    Global rules use Cline's documented user rules directory. Project rules
+    retain the existing ``.clinerules`` file-or-directory behavior and require
+    a real project marker (see https://github.com/dstrupl/vardoger/issues/21).
     """
-    _require_project_scope(scope)
-    ensure_project(project_path or Path.cwd(), platform="Cline")
-    output_path, dedicated = _resolve_target(project_path)
+    if scope == "project":
+        ensure_project(project_path or Path.cwd(), platform="Cline")
+    output_path, dedicated = _resolve_target(scope, project_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if dedicated:
         output_path.write_text(content, encoding="utf-8")
-        logger.info("Wrote Cline rules to %s (dedicated file)", output_path)
+        logger.info("Wrote Cline %s rules to %s (dedicated file)", scope, output_path)
         return output_path
 
     section = _wrap(content)
@@ -103,12 +75,11 @@ def write_cline_rules(
 
 
 def read_cline_rules(
-    scope: str = "project",
+    scope: str = "global",
     project_path: Path | None = None,
 ) -> str | None:
     """Return the vardoger-managed rule body, or ``None`` if absent."""
-    _require_project_scope(scope)
-    output_path, dedicated = _resolve_target(project_path)
+    output_path, dedicated = _resolve_target(scope, project_path)
     if not output_path.is_file():
         return None
 
@@ -125,18 +96,17 @@ def read_cline_rules(
 
 
 def clear_cline_rules(
-    scope: str = "project",
+    scope: str = "global",
     project_path: Path | None = None,
 ) -> bool:
-    """Remove vardoger's contribution from the Cline project rules."""
-    _require_project_scope(scope)
-    output_path, dedicated = _resolve_target(project_path)
+    """Remove vardoger's contribution from the selected Cline rules scope."""
+    output_path, dedicated = _resolve_target(scope, project_path)
     if not output_path.is_file():
         return False
 
     if dedicated:
         output_path.unlink()
-        logger.info("Removed Cline vardoger.md at %s", output_path)
+        logger.info("Removed Cline %s vardoger.md at %s", scope, output_path)
         return True
 
     existing = output_path.read_text(encoding="utf-8")
@@ -149,3 +119,28 @@ def clear_cline_rules(
         output_path.unlink()
     logger.info("Removed Cline vardoger section from %s", output_path)
     return True
+
+
+def _wrap(content: str) -> str:
+    return f"{START_MARKER}\n{content}\n{END_MARKER}"
+
+
+def _resolve_project_target(project_path: Path | None) -> tuple[Path, bool]:
+    """Return (path, uses_dedicated_file).
+
+    If ``.clinerules`` exists as a directory, target ``.clinerules/vardoger.md``
+    as a dedicated file. Otherwise target the ``.clinerules`` file itself with
+    a fenced section.
+    """
+    base = project_path or Path.cwd()
+    candidate = base / ".clinerules"
+    if candidate.is_dir():
+        return candidate / "vardoger.md", True
+    return candidate, False
+
+
+def _resolve_target(scope: str, project_path: Path | None) -> tuple[Path, bool]:
+    """Return the rules path and whether vardoger owns the whole file."""
+    if scope == "global":
+        return cline_global_rules_dir() / "vardoger.md", True
+    return _resolve_project_target(project_path)

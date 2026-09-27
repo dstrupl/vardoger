@@ -64,6 +64,16 @@ def test_global_scope_uses_home():
         assert "body" in path.read_text()
 
 
+def test_global_scope_honors_copilot_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    configured_home = tmp_path / "custom-copilot"
+    monkeypatch.setenv("COPILOT_HOME", str(configured_home))
+
+    path = write_copilot_rules("body", scope="global")
+
+    assert path == configured_home / "copilot-instructions.md"
+    assert "body" in path.read_text()
+
+
 def test_read_extracts_only_fenced_block():
     with tempfile.TemporaryDirectory() as tmp:
         project = _as_project(Path(tmp))

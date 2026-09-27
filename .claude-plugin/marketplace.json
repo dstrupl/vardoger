@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Self-hosted Claude Code marketplace for the vardoger plugin.",
-    "version": "0.3.1"
+    "version": "0.4.0"
   },
   "plugins": [
     {
       "name": "vardoger",
-      "description": "Personalizes Claude Code by analyzing your local conversation history and generating tailored rules. Runs entirely on your machine.",
-      "version": "0.3.1",
+      "description": "Personalizes Claude Code from local conversation history using your active host assistant to generate tailored rules.",
+      "version": "0.4.0",
       "author": {
         "name": "David Strupl"
       },

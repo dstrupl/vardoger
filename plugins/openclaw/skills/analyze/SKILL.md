@@ -1,7 +1,7 @@
 ---
 name: analyze
 description: "Use when the user asks to personalize their assistant, to use vardoger, or to analyze their OpenClaw conversation history. Runs the vardoger CLI to read past conversations and generate tailored instructions."
-version: "0.3.2"
+version: "0.4.0"
 license: Apache-2.0
 homepage: "https://github.com/dstrupl/vardoger"
 metadata:
@@ -10,6 +10,18 @@ metadata:
       bins:
         - vardoger
 ---
+## OpenClaw history compatibility
+
+Vardoger reads legacy, pre-2.0 OpenClaw JSONL transcripts by default. OpenClaw
+2.0 stores canonical history in per-agent SQLite databases; Vardoger never
+queries those private tables. Current history can be read through the official
+Gateway CLI only after the user explicitly opts in. Ask the user before setting
+`VARDOGER_OPENCLAW_GATEWAY=1`, then run every prepare command with `--full`.
+Vardoger invokes only the read-only `sessions.list` and `chat.history` methods
+and does not accept a Gateway URL, token, or password. Without that approval,
+stop the workflow and suggest OpenClaw's native `USER.md` and memory features.
+
+
 # Analyze conversation history and generate personalized instructions
 
 Use this skill to read your OpenClaw conversation history, extract behavioral patterns, and generate personalized instructions that help the assistant better understand your preferences and working style.
@@ -22,9 +34,9 @@ vardoger prepares your conversation history in batches. You (the assistant) summ
 
 vardoger reads and writes files **outside** the current workspace:
 
-- Reads conversation history from the platform's session directory (e.g. `~/.codex/sessions/`, `~/.claude/projects/`, `~/.cursor/projects/`, `~/.openclaw/agents/`).
+- Reads conversation history from the platform's supported session or export directory (e.g. `~/.codex/sessions/`, `~/.claude/projects/`, `~/.cursor/projects/`, `~/.vardoger/imports/devin/`).
 - Writes a checkpoint state file to `~/.vardoger/state.json` (created on first run).
-- Writes the final personalization to the platform's rules file (e.g. `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`, `.cursor/rules/vardoger.md`, `~/.openclaw/skills/vardoger-personalization/SKILL.md`).
+- Writes the final personalization to the platform's rules file (e.g. `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`, `.cursor/rules/vardoger.mdc`, `~/.openclaw/skills/vardoger-personalization/SKILL.md`).
 
 When the host asks to approve a `vardoger` command, approve it with write access beyond the workspace. Otherwise the first `vardoger prepare` call will fail with `PermissionError: ... ~/.vardoger/state.tmp` because the sandbox blocks writes outside the current working directory.
 

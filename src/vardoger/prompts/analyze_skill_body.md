@@ -10,9 +10,9 @@ vardoger prepares your conversation history in batches. You (the assistant) summ
 
 vardoger reads and writes files **outside** the current workspace:
 
-- Reads conversation history from the platform's session directory (e.g. `~/.codex/sessions/`, `~/.claude/projects/`, `~/.cursor/projects/`, `~/.openclaw/agents/`).
+- Reads conversation history from the platform's supported session or export directory (e.g. `~/.codex/sessions/`, `~/.claude/projects/`, `~/.cursor/projects/`, `~/.vardoger/imports/devin/`).
 - Writes a checkpoint state file to `~/.vardoger/state.json` (created on first run).
-- Writes the final personalization to the platform's rules file (e.g. `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`, `.cursor/rules/vardoger.md`, `~/.openclaw/skills/vardoger-personalization/SKILL.md`).
+- Writes the final personalization to the platform's rules file (e.g. `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`, `.cursor/rules/vardoger.mdc`, `~/.openclaw/skills/vardoger-personalization/SKILL.md`).
 
 When the host asks to approve a `vardoger` command, approve it with write access beyond the workspace. Otherwise the first `vardoger prepare` call will fail with `PermissionError: ... ~/.vardoger/state.tmp` because the sandbox blocks writes outside the current working directory.
 

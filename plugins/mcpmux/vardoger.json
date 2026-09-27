@@ -3,7 +3,7 @@
   "id": "io.github-dstrupl-vardoger",
   "name": "vardoger",
   "alias": "vardoger",
-  "description": "Personalize AI coding assistants by analyzing local conversation history. Reads JSONL session logs from Cursor, Claude Code, Codex, Copilot CLI, Windsurf, Cline, and OpenClaw, extracts behavioral signals, and writes tailored rules files. Runs entirely on your machine.",
+  "description": "Personalize AI coding assistants from local conversation history. Reads supported local session stores, prepares reviewable analysis batches for the active host model, and writes tailored rules files without a Vardoger-operated backend.",
   "logo": "https://avatars.githubusercontent.com/u/4134230?v=4",
   "schema_version": "2.1",
   "categories": [
@@ -66,6 +66,10 @@
             {
               "value": "windsurf",
               "label": "Windsurf"
+            },
+            {
+              "value": "devin",
+              "label": "Devin Local"
             },
             {
               "value": "cline",
