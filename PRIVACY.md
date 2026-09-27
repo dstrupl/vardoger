@@ -1,40 +1,47 @@
 # Privacy Policy
 
-**Last updated:** 2026-04-20
+**Last updated:** 2026-09-27
 
 This document describes how the vardoger project handles data. vardoger is a
 free, open-source, Apache-2.0–licensed plugin for AI coding assistants
-(Cursor, Claude Code, OpenAI Codex, OpenClaw, GitHub Copilot CLI, Windsurf,
-Cline). This policy applies to the
+(Cursor, Claude Code, OpenAI Codex, OpenClaw, GitHub Copilot CLI, Devin,
+Windsurf, Cline). This policy applies to the
 vardoger CLI and every plugin published under
 [github.com/dstrupl/vardoger](https://github.com/dstrupl/vardoger).
 
 ## TL;DR
 
-vardoger runs entirely on your machine. It does **not** collect, transmit, or
-store any of your conversation history or personal data on servers operated
-by the project. There is no account, no telemetry, and no analytics.
+The vardoger CLI reads and stores its state on your machine. The project does
+**not** operate a backend, collect telemetry, or store your conversation
+history on project servers. Analysis is performed by the host assistant you
+invoke, however, so the conversation excerpts shown to that assistant are
+processed under its model provider's data policy.
 
 ## What vardoger reads
 
 When you run `vardoger prepare`, `vardoger analyze`, `vardoger status`, or
-related commands, the CLI reads the local session files that your AI
-assistant already stores on your own disk:
+related commands, the CLI normally reads the local session files that your AI
+assistant already stores on your own disk. OpenClaw 2.0 is the explicit
+exception described below:
 
 | Platform     | Path read                                                             |
 | ------------ | --------------------------------------------------------------------- |
 | Cursor          | `~/.cursor/projects/<project>/agent-transcripts/*.jsonl`           |
 | Claude Code     | `~/.claude/projects/<project>/*.jsonl`                             |
 | Codex           | `~/.codex/sessions/**/*.jsonl`                                     |
-| OpenClaw        | `~/.openclaw/agents/<agent>/sessions/*.jsonl`                      |
-| GitHub Copilot  | `~/.copilot/session-state/*.jsonl`                                 |
+| OpenClaw        | Legacy `~/.openclaw/agents/<agent>/sessions/*.jsonl`; current SQLite is never queried, and opt-in current history is delegated to official CLI read RPCs |
+| GitHub Copilot  | `~/.copilot/session-state/*/events.jsonl` and legacy `*.jsonl`     |
+| Devin Local     | Explicit ATIF exports under `~/.vardoger/imports/devin/*.json`    |
 | Windsurf        | `~/.codeium/windsurf/**/*.jsonl`                                   |
 | Cline           | VS Code `globalStorage/.../tasks/*/api_conversation_history.json`  |
 
-These files are produced by the AI assistant itself; vardoger only reads
-them. vardoger never reaches into other directories, the system password
-store, browser state, SSH keys, or any location that does not explicitly
-belong to the assistant being personalized.
+These files are produced by the AI assistant itself; the Devin files require
+the user to opt in with Devin CLI's `--export` flag. vardoger only reads them
+and does not inspect Devin's private session store. OpenClaw current-history
+access separately requires `VARDOGER_OPENCLAW_GATEWAY=1`; vardoger then invokes
+the installed `openclaw` CLI for `sessions.list` and `chat.history` without
+passing a URL, token, or password. vardoger never reaches into the system
+password store, browser state, SSH keys, or unrelated directories.
 
 ## What vardoger writes
 
@@ -45,10 +52,12 @@ vardoger writes to two locations on your machine:
    copy it, or delete it at any time.
 2. **The platform's personalization file**, e.g.
    `~/.codex/AGENTS.md`, `~/.claude/rules/vardoger.md`,
-   `.cursor/rules/vardoger.md`,
+   `.cursor/rules/vardoger.mdc`,
    `~/.openclaw/skills/vardoger-personalization/SKILL.md`,
    `~/.copilot/copilot-instructions.md` (or the project-scoped
    `<project>/.github/copilot-instructions.md`),
+   `~/.config/devin/AGENTS.md` (or the project-scoped
+   `<project>/.devin/rules/vardoger.md`),
    `~/.codeium/windsurf/memories/global_rules.md` (or the project-scoped
    `<project>/.windsurf/rules/vardoger.md`), or
    `<project>/.clinerules` / `<project>/.clinerules/vardoger.md`. For
@@ -65,9 +74,9 @@ to the previous version with `vardoger feedback reject`.
 
 ## What vardoger does **not** do
 
-- vardoger does not open network sockets. `grep -rn` the source tree for
-  `urllib`, `http.client`, `requests`, or `socket` — you will find none of
-  them in the analysis path.
+- vardoger's filesystem readers do not open network sockets. The explicitly
+  enabled OpenClaw reader launches the official CLI, which connects to the
+  user's configured Gateway and owns its authentication and transport.
 - vardoger does not ship telemetry, usage analytics, crash reporting, or
   remote configuration fetchers.
 - vardoger has no account system, no login, no license check, no "phone
@@ -75,11 +84,13 @@ to the previous version with `vardoger feedback reject`.
 - vardoger does not copy your conversation history into the repository, the
   CLI cache, or any other location outside the two paths listed above.
 
-The only network traffic caused by vardoger in normal operation is the
-initial `pipx install vardoger` / `uvx vardoger` call made by your package
-manager, which contacts [PyPI](https://pypi.org/project/vardoger/) to fetch
-the wheel. That traffic is governed by the
+Normal installation traffic comes from `pipx install vardoger` / `uvx
+vardoger`, which contacts [PyPI](https://pypi.org/project/vardoger/) to fetch
+the wheel and is governed by the
 [PyPI privacy policy](https://policies.python.org/pypi.org/Privacy-Notice/).
+If the OpenClaw Gateway integration is explicitly enabled, the official
+OpenClaw CLI also connects to its configured Gateway and returns visible
+conversation history under OpenClaw's authentication and privacy boundary.
 
 ## How analysis actually happens
 
@@ -87,7 +98,7 @@ vardoger implements the "summarize each batch, then synthesize" workflow by
 calling back into the **host AI assistant** (the one the user is already
 chatting with). When you run `vardoger prepare --batch 1`, vardoger prints a
 batch of your own conversation excerpts to stdout and the host assistant —
-Claude Code, Cursor, Codex, OpenClaw, GitHub Copilot CLI, Windsurf, or
+Claude Code, Cursor, Codex, OpenClaw, GitHub Copilot CLI, Devin, Windsurf, or
 Cline — reads them in order to produce a summary.
 
 That means any model-side processing of your conversation data happens
@@ -105,6 +116,8 @@ policies:
 - **OpenClaw:** refer to the OpenClaw project's published policy.
 - **GitHub Copilot CLI:**
   [docs.github.com/site-policy/privacy-policies/github-general-privacy-statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)
+- **Devin:**
+  [cognition.ai/privacy-policy](https://cognition.ai/privacy-policy)
 - **Windsurf (Codeium):**
   [codeium.com/privacy-policy](https://codeium.com/privacy-policy)
 - **Cline:** refer to the Cline project's published policy.

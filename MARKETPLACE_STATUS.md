@@ -13,9 +13,66 @@ Status vocabulary:
   marketplace reviewer.
 - **Changes requested** — reviewer has responded with feedback we need to
   address.
+- **Unavailable** — a previously published route is no longer installable.
+- **Superseded** — the submission still exists, but the vendor replaced its
+  intake path.
 - **Live** — listing is public and installable.
 
-Last refreshed: **2026-07-10** (UTC).
+Last refreshed: **2026-09-27** (UTC).
+
+2026-09-27: Full marketplace and host-product refresh. The distribution
+picture changed materially while the repository was idle.
+
+1. **Cursor regressed.** `https://cursor.com/marketplace/vardoger` now serves
+   Cursor's explicit **Marketplace Plugin Not Found** page. The plugin is no
+   longer publicly installable from the registry, even though the route still
+   returns HTTP 200. Direct `pipx` setup remains available. Both supported
+   manifests now pass their current official schemas, and an owner-facing
+   [recovery package](plugins/cursor/submission/README.md) is ready. Clean
+   Cursor acceptance and form submission remain owner gates.
+2. **Claude Code caught up automatically.** The community catalog now pins
+   Vardoger to current repository commit `f813e9c` (the 0.3.2 plugin), so the
+   expired fallback refresh action is closed. The repo-root custom-marketplace
+   manifest has also been synchronized to 0.3.2 in this refresh.
+3. **Copilot needs branch maintenance.** Default-marketplace PR #56 remains an
+   untouched draft, but it is now `CONFLICTING` / `DIRTY` against upstream.
+   A [focused refresh kit](plugins/copilot/submission/README.md) now captures
+   the exact marketplace object, README line, PR body, current commit evidence,
+   and safe conflict-resolution plan. Rebase it only after the compatibility
+   release and a current-CLI clean install. The `awesome-copilot` skill remains
+   live.
+4. **Cline replaced the submission path.** Legacy issue #1394 is still open
+   with no comments, but `cline/marketplace` is now the active PR-based catalog
+   for plugins, skills, and MCP servers. A focused MCP entry and PR copy are
+   now prepared under `plugins/cline/submission/`; upstream validation passes.
+   Keep the old issue only as historical evidence.
+5. **Windsurf became Devin Desktop.** Legacy Cascade paths remain readable.
+   Vardoger now also has a separate first-class Devin Local target using only
+   its documented, user-enabled ATIF exports plus documented global/project
+   rules, skill, and MCP paths. It never inspects private Devin session state;
+   clean-profile host acceptance remains an owner gate.
+6. **ClawHub regressed.** The public owner-qualified listing currently reports
+   version 0.3.1, security status `Review`, and the mandatory MIT-0 license.
+   ClawHub's current skill format explicitly disallows per-skill license
+   overrides, so the source artifact's Apache-2.0 frontmatter must be resolved
+   before publishing 0.4.0.
+7. **The shared registries remain healthy.** PyPI is still at 0.3.2; the
+   official MCP Registry reports 0.3.2 active/latest at its current
+   `registry.modelcontextprotocol.io` endpoint; McpMux still carries the
+   Vardoger entry. Docker PR #2949 remains open, mergeable, review-required,
+   and untouched by reviewers.
+8. **Runtime compatibility was re-audited separately from publication.** The
+   current working tree fixes Cursor `.mdc` rule delivery, nested Copilot
+   `events.jsonl` discovery, and Cline global rules. OpenClaw 2.0 canonical
+   SQLite is never queried; an explicit full-read adapter now delegates only
+   `sessions.list` and `chat.history` to the official Gateway CLI. Live
+   clean-profile acceptance is still pending.
+9. **A 0.4.0 release candidate is locally validated.** The SemVer minor bump
+   reflects new public profile-compiler commands and host integrations without
+   removing existing contracts. Package/manifests, generated skills, wheel,
+   sdist, and Codex archive agree on 0.4.0; all eight setup targets pass from
+   the built wheel. Commit, CI, tag, GitHub release, PyPI publication, public
+   registry updates, and host-UI acceptance remain distinct owner gates.
 
 2026-07-10: Added the owner-facing
 [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md) with exact
@@ -41,7 +98,7 @@ project had been idle.
    remains a second supported install path.
 3. **Codex changed materially.** Current Codex expects the repository catalog
    at `.agents/plugins/marketplace.json`, uses `codex plugin marketplace ...`,
-   and now has an [official directory submission process](https://developers.openai.com/codex/submit-plugins).
+   and now has an [official directory submission process](https://developers.openai.com/plugins/deploy/submission).
    The repository marketplace repair shipped in `0.3.2` and was verified by a
    clean Git-source install. The official submission package is now complete;
    verified identity and owner portal submission remain outstanding.
@@ -371,21 +428,22 @@ history, surface details, and "last checked" context.
 | Marketplace | Plugin root | Status | Submitted | Live on | Link |
 | --- | --- | --- | --- | --- | --- |
 | [**PyPI**](#pypi) | (repo root) | Live | 2026-04-20 | 2026-04-24 | [pypi.org/project/vardoger](https://pypi.org/project/vardoger/) |
-| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Live | 2026-04-20 (orig); 2026-05-16 (re-submit) | By 2026-07-09 (first verified) | [public listing](https://cursor.com/marketplace/vardoger) |
-| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Live (0.3.1 pin) | 2026-04-20 (orig); 2026-05-16 (re-submit) | Re-add verified 2026-07-09 | [catalog](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
+| [**Cursor Plugin Registry**](#cursor-plugin-registry) | `plugins/cursor/` | Unavailable — re-submit required | 2026-04-20 (orig); 2026-05-16 (re-submit) | Formerly live by 2026-07-09; missing 2026-09-27 | [public route](https://cursor.com/marketplace/vardoger) |
+| [**Claude Code — community catalog**](#claude-code--community-catalog) | `plugins/claude-code/` | Live (0.3.2/current pin) | 2026-04-20 (orig); 2026-05-16 (re-submit) | Re-add verified 2026-07-09 | [catalog](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json) |
 | [**Claude Code — curated directory**](#claude-code--curated-directory) | `plugins/claude-code/` | Not started (watch-only) | — | — | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
-| [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
+| [**Claude Code — custom**](#claude-code--custom) | `plugins/claude-code/` | Live (self-served; 0.3.2) | 2026-04-27 | 2026-04-27 | `/plugin marketplace add dstrupl/vardoger` |
 | [**Codex — custom**](#codex--custom) | `.agents/plugins/` + `plugins/codex/` | Live (self-served) | 2026-07-09 | 2026-07-09 | `codex plugin marketplace add …` |
-| [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Draft — owner submission ready | — | — | [submission package](plugins/codex/submission/README.md) |
+| [**Codex — official directory**](#codex--official-directory) | `plugins/codex/` | Draft — validation and owner submission required | — | — | [submission package](plugins/codex/submission/README.md) |
 | [**GitHub Copilot CLI — custom**](#github-copilot-cli--custom) | `plugins/copilot/` | Live (self-served) | 2026-04-20 | 2026-04-20 | `copilot plugin marketplace add …` |
 | [**GitHub Copilot CLI — `awesome-copilot`**](#github-copilot-cli--awesome-copilot) | `plugins/copilot/` | Live | 2026-04-21 | 2026-04-28 | [PR #1461](https://github.com/github/awesome-copilot/pull/1461) |
-| [**GitHub Copilot CLI — default marketplace**](#github-copilot-cli--default-marketplace) | `plugins/copilot/` | Draft PR | 2026-07-09 | — | [PR #56](https://github.com/github/copilot-plugins/pull/56) |
-| [**Windsurf direct skill + MCP**](#windsurf-mcp-store) | `plugins/windsurf/` | Ready on `main` | — | — | [install guide](plugins/windsurf/README.md) |
-| [**Official MCP Registry**](#official-mcp-registry) | `plugins/mcp-registry/` | Live | 2026-04-24 | 2026-04-24 | [registry feed](https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10) |
+| [**GitHub Copilot CLI — default marketplace**](#github-copilot-cli--default-marketplace) | `plugins/copilot/` | Draft PR — conflicting | 2026-07-09 | — | [PR #56](https://github.com/github/copilot-plugins/pull/56) |
+| [**Devin Local / legacy Windsurf**](#windsurf-mcp-store) | `plugins/devin/` + `plugins/windsurf/` | Devin ATIF integration prepared; legacy Cascade supported | — | — | [Devin guide](plugins/devin/README.md) / [legacy guide](plugins/windsurf/README.md) |
+| [**Official MCP Registry**](#official-mcp-registry) | `plugins/mcp-registry/` | Live (0.3.2 latest) | 2026-04-24 | 2026-04-24 | [registry feed](https://registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10) |
 | [**McpMux community registry**](#mcpmux-community-registry) | `plugins/mcpmux/` | Live | 2026-04-22 | 2026-04-24 | [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) |
 | [**Docker MCP Registry**](#docker-mcp-registry) | `plugins/docker-mcp/` | Submitted | 2026-04-24 | — | [PR #2949](https://github.com/docker/mcp-registry/pull/2949) |
-| [**Cline MCP Marketplace**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted | 2026-04-20 | — | [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) |
-| [**OpenClaw ClawHub**](#openclaw-clawhub) | `plugins/openclaw/skills/analyze/` | Live (self-served) | 2026-04-22 | 2026-07-09 (0.3.2) | [public listing](https://clawhub.ai/skills/vardoger-analyze) |
+| [**Cline legacy MCP queue**](#cline-mcp-marketplace) | `plugins/cline/` | Submitted — superseded path | 2026-04-20 | — | [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) |
+| [**Cline current marketplace**](#cline-mcp-marketplace) | `plugins/cline/` | Draft — local entry validated, PR not opened | — | — | [submission package](plugins/cline/submission/README.md) |
+| [**OpenClaw ClawHub**](#openclaw-clawhub) | `plugins/openclaw/skills/analyze/` | Live at 0.3.1, legacy only — 2.0 history unsupported | 2026-04-22 | Current listing verified 2026-09-27 | [public listing](https://clawhub.ai/dstrupl/vardoger-analyze) |
 | [**claudemarketplaces.com / CrossAI Tools**](#claudemarketplacescom) | `.claude-plugin/marketplace.json` | Unavailable (redirect + 404) | 2026-04-27 (manifest); 2026-05-16 (/feedback) | — | [crossaitools.com](https://crossaitools.com) |
 
 ## Per-marketplace details
@@ -410,14 +468,31 @@ Listing at [pypi.org/project/vardoger](https://pypi.org/project/vardoger/).
 - **Surface:** [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish)
 - **Plugin root:** `plugins/cursor/`
 
-Manifest at `plugins/cursor/.cursor-plugin/plugin.json`; `mcp.json` boots via
-`uvx vardoger mcp`. Logotype URL in the form:
+Portable manifest at `plugins/cursor/plugin.json`, with
+`plugins/cursor/.cursor-plugin/plugin.json` retained for compatibility;
+`mcp.json` boots via `uvx vardoger mcp`. Logotype URL in the form:
 `https://raw.githubusercontent.com/dstrupl/vardoger/main/assets/logo.svg`.
-Submitted via the form on 2026-04-20.
+Submitted via the form on 2026-04-20. Current listing copy, recovery context,
+and owner gates are collected in the
+[Cursor recovery package](plugins/cursor/submission/README.md).
 
-**Current status (verified 2026-07-09): Live.** The public listing now
-resolves at [`cursor.com/marketplace/vardoger`](https://cursor.com/marketplace/vardoger).
-The historical submission investigation below is retained for provenance.
+**Current status (verified 2026-09-27): unavailable; re-submission required.**
+The former public URL now renders Cursor's explicit **Marketplace Plugin Not
+Found** page. This is a real regression rather than an HTTP-only false alarm:
+the route returns HTTP 200 but its title and rendered body both identify the
+missing listing. Cursor's current documentation still accepts public Git
+repositories through `cursor.com/marketplace/publish` and supports both the
+Cursor-specific manifest and the Agent Plugins 1.0 root manifest. The portable
+manifest consolidation is complete in this working tree; revalidate it against
+the current schema, then submit it again. The historical submission
+investigation below is retained for provenance.
+
+**Local readiness evidence (2026-09-27):** the compatibility manifest passed
+Cursor's official Draft 7 schema at `cursor/plugins` commit
+`ecc249f1e306fc64ddf83c7bed16cacf7c2239db`; the root `plugin.json` and
+`mcp.json` passed the Agent Plugins 1.0 schemas; and both relative paths in the
+compatibility manifest resolve inside the package. This is schema evidence,
+not clean-profile runtime or marketplace acceptance evidence.
 
 **2026-04-28 dashboard finding:** the publisher page at
 `cursor.com/marketplace/publish` is **submit-only** — it serves a form for
@@ -473,17 +548,14 @@ escalation channel exists.
 - **Surface:** [clau.de/plugin-directory-submission](https://clau.de/plugin-directory-submission) (submission) → [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community) (read-only mirror)
 - **Plugin root:** `plugins/claude-code/`
 
-**Current status (verified 2026-07-10): Live, pinned to 0.3.1 while the
-automatic refresh is pending.** The
-current community catalog contains a `vardoger` entry whose Git source is
-pinned to commit `4831c7a419cf254cbd78690d8f0c52ed6f3def89`. That commit's
-Claude plugin manifest and package version are both 0.3.1. Anthropic's current
-plugin documentation says approved community entries are automatically
-re-pinned after repository pushes and the public catalog syncs nightly. The
-catalog's 2026-07-09 bump run preceded Vardoger's latest push, so wait through
-2026-07-12 before using the fallback owner form. Custom and direct install
-routes already resolve current `main`. The removal and re-submission timeline
-below explains the temporary 2026-05 regression.
+**Current status (verified 2026-09-27): Live, pinned to current 0.3.2
+commit.** The community catalog contains a `vardoger` entry pointing at
+`plugins/claude-code/` on commit
+`f813e9ca00a39371d55994dcfdc75ae6172f26c6`, the current repository head. The
+automatic updater therefore worked and the July fallback refresh action is
+closed. This refresh also synchronizes `.claude-plugin/marketplace.json` to
+0.3.2, matching the plugin manifest and package. The removal and re-submission
+timeline below explains the temporary 2026-05 regression.
 
 Submitted 2026-04-20 via the `claude.ai/settings/plugins/submit` form (personal-
 account path; `platform.claude.com` is the org-account alternative and feeds
@@ -674,18 +746,28 @@ installed plugin version `0.3.2`. Status is **Live (self-served)**.
 
 ### Codex — official directory
 
-- **Surface:** [OpenAI plugin submission](https://developers.openai.com/codex/submit-plugins)
+- **Surface:** [OpenAI plugin submission](https://developers.openai.com/plugins/deploy/submission)
 - **Plugin root:** `plugins/codex/`
 
-The former upstream block is gone. OpenAI now documents official directory
-submission for verified developers and businesses. The reviewer-ready package
+The former upstream block is gone. OpenAI now documents submission to the
+universal Plugins Directory for verified developers and businesses. The
+current process requires Apps Management write access, a verified identity,
+five positive tests, and three negative tests. The reviewer-ready package
 under `plugins/codex/submission/` now includes final listing copy, the 400×400
 production logo, public privacy and terms URLs, three starter prompts, release
 notes, a synthetic fixture, and exactly five positive plus three negative test
-cases. The plugin manifest references the packaged logo and terms URL and
-passes the current plugin validator. Remaining owner actions are selecting a
-verified developer identity, creating the portal draft, reviewing availability
-and attestations, and submitting it.
+cases. The plugin manifest references the packaged logo, support, privacy, and
+terms URLs and passes the local final-directory limits. The previous
+57-character short description exceeded OpenAI's 30-character final-submission
+limit; it is now corrected. `scripts/build-codex-submission.py` validates the
+portable root plus OpenAI overlay and creates a deterministic four-file upload.
+A clean `CODEX_HOME` install accepted that package as Vardoger 0.3.2, and
+rebuilding the archive produced the same SHA-256. The owner must still run the
+eight reviewer cases in a clean current environment and confirm that the
+portal accepts the declared external `vardoger` CLI dependency before
+attesting, selecting a verified identity, and submitting. Approval does not
+publish automatically; the owner must publish the approved version from the
+portal.
 
 ### GitHub Copilot CLI — custom
 
@@ -794,35 +876,41 @@ was opened from `dstrupl:add-vardoger` on 2026-07-09. It adds an externally
 hosted Vardoger 0.3.2 entry to `.github/plugin/marketplace.json` and one README
 discovery link; the compatibility `.claude-plugin/marketplace.json` path is a
 symlink to that manifest. JSON parsing, source path/version checks, and
-`git diff --check` pass. The PR remains a draft for owner review before it is
-marked ready.
+`git diff --check` passed when it was opened. As of 2026-09-27 the PR remains
+open and draft, has no reviews, comments, or checks, and GitHub reports it as
+`CONFLICTING` / `DIRTY`. The read-only refresh found PR head `cb52ab8a8b9f`
+and upstream `main` `fbf7c536a5c7`; both touched files changed upstream after
+the original base. The [prepared refresh kit](plugins/copilot/submission/README.md)
+therefore requires restoring both files from fresh upstream and then applying
+only the Vardoger object and discovery line. It also supplies corrected privacy
+copy and current validation commands. This machine's Copilot CLI 0.0.343
+predates plugin-management commands, so a current-CLI clean install remains an
+owner gate before a lease-protected push or marking the PR ready.
 
 ### Windsurf MCP Store
 
 - **Surface:** (no public submission form)
 - **Plugin root:** `plugins/windsurf/`
 
-**Current status (verified 2026-07-09): direct distribution remains the
-actionable path.** Windsurf now supports skills under `.windsurf/skills/` and
-`~/.codeium/windsurf/skills/`, but no public third-party MCP Store submission
-flow was found. Current `main` now carries
-`plugins/windsurf/skills/vardoger-analyze/SKILL.md`, generated from the shared
-skill body, and `vardoger setup windsurf` installs it under the user-global
-skill directory while preparing the existing rules path. This is available by
-installing current `main` and will reach PyPI in the next release after 0.3.2.
+**Current status (verified 2026-09-27): the product is now Devin Desktop, and
+Vardoger 0.3.2 covers its legacy Cascade mode only.** The compatibility worktree
+now also contains a first-class `devin` target for the documented Devin CLI
+ATIF `--export` contract, pending release. Legacy `.windsurf/skills`
+and `~/.codeium/windsurf/skills` paths remain readable, so the existing
+`vardoger setup windsurf` flow still works for Cascade. New tabs default to
+Devin Local, however, which prefers workspace `.devin/skills` and
+`.devin/rules` plus shared `~/.config/devin/skills`; its MCP configuration is
+`~/.config/devin/mcp_config.json`. The new setup installs a native skill,
+prepares explicit ATIF imports and global rules, and retains `windsurf` as the
+legacy compatibility alias. It deliberately does not inspect private session
+storage or retroactively import unexported sessions.
 
-Re-verified 2026-04-22 against the
-[Windsurf MCP docs](https://docs.windsurf.com/windsurf/cascade/mcp)
-(`llms-full.txt`): the in-product MCP marketplace is still curated ("Official
-MCPs show up with a blue checkmark, indicating that they are made by the
-parent service company"), there is no public submission endpoint or PR repo,
-and the third-party install paths are (a) native user/workspace skills, now
-packaged directly, (b) a manual `~/.codeium/windsurf/mcp_config.json` edit,
-documented in `plugins/windsurf/README.md`, and (c) the Enterprise "Internal
-MCP Registry" feature, which consumes schemas conforming to
-[`modelcontextprotocol.io`](https://modelcontextprotocol.io/) (covered by the
-Official MCP Registry row below). Revisit if Windsurf publishes a self-serve
-submission flow.
+The [current MCP documentation](https://docs.devin.ai/desktop/cascade/mcp)
+describes the legacy Cascade surface and still provides no public third-party
+submission flow. Devin Local has an in-product marketplace, but no external
+catalog submission contract suitable for this repository was identified.
+Direct setup and the Official MCP Registry therefore remain the supported
+distribution paths while the host migration is implemented.
 
 ### Official MCP Registry
 
@@ -837,8 +925,8 @@ Ownership is established by the
 `<!-- mcp-name: io.github.dstrupl/vardoger -->` marker in the repo-root
 `README.md`, which the PyPI package description carries.
 
-Re-verified 2026-07-09 via
-`https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10`:
+Re-verified 2026-09-27 via
+`https://registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10`:
 the historical 0.3.1 row has `isLatest=false`, while 0.3.2 reports
 `status=active`, `isLatest=true`, and package `vardoger@0.3.2`; stdio transport
 and the lone `VARDOGER_MCP_PLATFORM` env var are surfaced. The
@@ -960,8 +1048,24 @@ without #2949 merging.
 - **Surface:** [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394)
 - **Plugin root:** `plugins/cline/`
 
-**Current status (verified 2026-07-09): still open with no comments or
-reviewer movement.** Keep this on low-frequency monitoring.
+**Current status (verified 2026-09-27): the legacy issue remains open with no
+comments, but its intake path has been superseded.** The active
+[`cline/marketplace`](https://github.com/cline/marketplace) catalog accepts
+validated pull requests for plugins, skills, and MCP servers. The current
+[submission package](plugins/cline/submission/README.md) contains a focused
+`registry/mcps/vardoger/entry.json` and owner-review PR copy. In a clean
+snapshot of `cline/marketplace` commit
+`6969aa8505f2be81bb3627e47ab0037d234aeaf7`, upstream `npm run validate`
+passed all 204 entries. Do not refile or ping legacy issue #1394; retain it as
+historical evidence.
+
+Current Cline also has user-global rules (`~/Documents/Cline/Rules`, with
+`~/.cline/rules` and `~/Cline/Rules` compatibility paths) and reads
+`~/.agents/AGENTS.md`. The current working tree now writes a dedicated
+`~/Documents/Cline/Rules/vardoger.md` by default while retaining explicit
+project-scoped `.clinerules` delivery. Remaining gates are publishing that
+compatibility release, verifying a clean-profile install including
+`VARDOGER_MCP_PLATFORM=cline`, owner approval, and the upstream PR.
 
 Server submission issue
 `[Server Submission]: vardoger — personalize AI assistants from local history`
@@ -995,12 +1099,27 @@ vardoger by following the `llms-install.md` guidance manually.
 - **Surface:** `clawhub skill publish …` (after `clawhub login` — GitHub browser OAuth)
 - **Plugin root:** `plugins/openclaw/skills/analyze/`
 
-**Current status (verified 2026-07-09): Live at 0.3.2.** The release was
-published as `vardoger-analyze@0.3.2`, version id
-`k97bmm4d6dknnpcndy92csz3198a6ktj`, with `latest=0.3.2`. Immediate inspection
-reported moderation `clean`, engine `v2.4.26`, and no suspicious or
-malware-blocked flags. The listing license remains ClawHub-assigned `MIT-0`
-even though the uploaded `SKILL.md` declares Apache-2.0.
+**Current status (verified 2026-09-27): the public owner-qualified listing is
+live, but currently exposes 0.3.1 with security status `Review` and license
+MIT-0.** The previously observed 0.3.2 publication is no longer the public
+latest version, so it must not be treated as current distribution evidence.
+The current ClawHub skill-format contract says every published skill is MIT-0
+and explicitly prohibits conflicting per-skill license terms. Because the
+source `SKILL.md` declares Apache-2.0, obtain an owner decision on accepting
+MIT-0 distribution before preparing another publish. If accepted, generate a
+ClawHub-specific artifact without contradictory license metadata and publish
+0.3.2 or its successor; otherwise retire this distribution surface.
+
+The working tree now has a supported-protocol compatibility path for current
+OpenClaw history: after explicit `VARDOGER_OPENCLAW_GATEWAY=1` enablement, a
+`--full` analysis delegates only `sessions.list` and `chat.history` to the
+official OpenClaw CLI and never queries SQLite. Fixture-backed tests pass, but
+no `openclaw` executable or disposable Gateway is available in this checkout,
+so clean-profile runtime acceptance remains required before republishing.
+
+The public route is
+[`clawhub.ai/dstrupl/vardoger-analyze`](https://clawhub.ai/dstrupl/vardoger-analyze),
+not the older unqualified `/skills/vardoger-analyze` form.
 
 ClawHub's current command is `clawhub skill publish`; the older flat
 `clawhub publish` form below is historical. During this release, npm packages
@@ -1163,17 +1282,25 @@ on behalf of the project owner.
 For owner-only click-through instructions and post-submission verification,
 see [`MANUAL_SUBMISSION_RUNBOOK.md`](./MANUAL_SUBMISSION_RUNBOOK.md).
 
-1. Owner-submit the prepared [Codex official directory](#codex--official-directory)
-   package after confirming Apps Management write access and a verified
-   developer identity in the OpenAI Platform organization.
-2. Review draft [`github/copilot-plugins#56`](https://github.com/github/copilot-plugins/pull/56)
-   and mark it ready when satisfied with the two-file marketplace contribution.
-3. Allow Anthropic's automatic Claude Code pin updater two nightly cycles,
-   then use the documented fallback refresh submission only if the catalog is
-   still pinned to 0.3.1 commit `4831c7a` after 2026-07-12.
-4. Keep Cline issue #1394 and Docker PR #2949 on low-frequency monitoring;
-   both were still unchanged on 2026-07-10. Recheck ClawHub's packaged CLI
-   before the next release for resolution of the missing-module regression.
+1. Review, commit, and publish the locally validated 0.4.0 release candidate;
+   then wait for CI and verify the GitHub/PyPI artifacts before updating public
+   registry records.
+2. Clean-profile test the new Devin Local ATIF export, skill, and rules
+   flow. Devin has no persistent memories; keep private storage out of scope.
+3. After the release, clean-profile test the prepared `cline/marketplace`
+   entry, obtain owner approval, and open the focused upstream PR. Leave legacy
+   issue #1394 untouched.
+4. Clean-profile test the schema-valid Cursor recovery package, then re-submit
+   the missing listing through the owner form.
+5. Treat Copilot PR #56 and the Codex universal directory as lower-priority
+   distribution work: both hosts now overlap heavily through native memory.
+   If pursued, rebase/refresh Copilot first and rerun the Codex reviewer tests.
+6. Do not republish ClawHub until the opt-in OpenClaw Gateway reader passes a
+   disposable clean-profile acceptance test and the owner explicitly decides
+   whether mandatory MIT-0 distribution is acceptable.
+7. Continue low-frequency monitoring of Docker PR #2949. Claude community and
+   custom routes, Official MCP Registry, McpMux, PyPI, and the Copilot skill
+   need no action.
 
 ## Superseded 2026-05 pickup plan
 

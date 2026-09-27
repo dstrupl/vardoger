@@ -1,8 +1,8 @@
 # vardoger — Product Requirements Document
 
-> **Version:** 0.3.2
-> **Date:** 2026-07-09
-> **Status:** Public beta (Phases 1–3 and 5 shipped; Phase 4 in progress)
+> **Version:** 0.4.0 release candidate
+> **Date:** 2026-09-27
+> **Status:** Public beta (Phases 1–3 and 5 shipped; marketplace and host refresh in progress)
 >
 > **Implementation status legend:**
 > - [x] Implemented
@@ -16,7 +16,11 @@
 
 The name references the Scandinavian folklore concept of a *vardøger*: a spirit that arrives before you, preparing the way. In the same sense, vardoger prepares the AI assistant to anticipate how you work before you even start your next session.
 
-The plugin reads conversation history that already exists on the user's machine, analyzes it locally (no data ever leaves the device), and produces configuration that each supported platform natively understands — making the assistant progressively more attuned to its user.
+The plugin reads conversation history that already exists on the user's
+machine, asks the selected host assistant to analyze reviewable batches, and
+produces configuration that each supported platform natively understands.
+Vardoger operates no hosted backend; model-side processing follows the host
+assistant's data policy.
 
 ---
 
@@ -41,10 +45,28 @@ vardoger targets the leading AI coding environments:
 | **OpenAI Codex** | OpenAI | Codex plugin directory + custom marketplaces |
 | **OpenClaw** | OpenClaw (open-source) | ClawHub skill registry + local skill directories |
 | **GitHub Copilot CLI** | GitHub / Microsoft | Copilot CLI plugin marketplace (custom sources) + `pipx install` direct-install fallback |
-| **Windsurf** | Codeium / Cognition | Windsurf MCP Store (editorial) + per-user `mcp_config.json` install snippet |
-| **Cline** | Cline (open-source VS Code extension) | Cline MCP Marketplace (issue submission) + `pipx install` direct-install fallback |
+| **Devin Local / legacy Windsurf** | Cognition | Direct skill + CLI/MCP setup; supported ATIF exports for Devin, legacy Cascade paths for Windsurf |
+| **Cline** | Cline (open-source VS Code extension) | `cline/marketplace` pull request + `pipx install` direct-install fallback |
 
 Each platform has its own conversation storage format, system prompt contribution mechanism, and plugin distribution channel. vardoger must integrate natively with all of them.
+
+### 3.1 Current usefulness audit (2026-09-27)
+
+Host-native memory has changed the product landscape. Vardoger should no
+longer be positioned as seven independent replacements for native memory.
+
+| Platform | Current value | Direction |
+|---|---|---|
+| Cursor | Useful with adaptation | Cross-project, user-owned rules remain differentiated; use current `.mdc` delivery and broaden history coverage. |
+| Claude Code | Useful | Native memory is repository-scoped; keep global backfill and make output memory-aware. |
+| Codex | Low incremental value | Keep a low-maintenance, explicit promote-to-`AGENTS.md` workflow; native Memories cover much of the loop. |
+| OpenClaw | Low incremental value | Native memory overlaps strongly; keep the opt-in read-only Gateway path mainly for cross-host compilation and legacy JSONL migration. |
+| GitHub Copilot CLI | Low incremental value | Native Memory and Chronicle overlap strongly; retain durable/cross-host export value after fixing current event discovery. |
+| Devin Local | High value | Devin does not persist memories; use its documented opt-in ATIF export plus native AGENTS/rules/skills surfaces without inspecting private state. |
+| Cline | Useful | Persistent rules and task history exist, but automatic cross-task preference learning does not; global delivery is now implemented. |
+
+The strategic follow-on is Phase 7: compile an auditable profile across host
+silos, then project it into portable and host-specific instruction surfaces.
 
 ---
 
@@ -52,7 +74,7 @@ Each platform has its own conversation storage format, system prompt contributio
 
 ### 4.1 Read Conversation History [x]
 
-vardoger must be able to discover and parse all locally stored conversation history for the active user across supported platforms (Cursor, Claude Code, OpenAI Codex, OpenClaw, GitHub Copilot CLI, Windsurf, Cline). This is read-only access to files already on disk — no network calls, no API integrations, no platform authentication required.
+vardoger must discover and parse conversation history only where the platform exposes a documented or safely supported format. Current direct readers cover Cursor, Claude Code, OpenAI Codex, GitHub Copilot CLI, Devin CLI's user-enabled ATIF exports, legacy OpenClaw JSONL, legacy Windsurf/Cascade, and Cline. Current OpenClaw history is available through an explicit, full-read invocation of the official Gateway CLI; Vardoger never queries its private SQLite tables or accepts Gateway credentials. History access is read-only. Filesystem readers make no network calls; the opt-in OpenClaw reader delegates transport and authentication to the installed OpenClaw CLI.
 
 ### 4.2 Analyze Patterns Locally [x]
 
@@ -103,19 +125,20 @@ The checkpoint store must:
 
 | Mechanism | Scope | Path |
 |---|---|---|
-| Project rules | Per-project | `.cursor/rules/*.md` (supports YAML frontmatter: `description`, `globs`, `alwaysApply`) |
+| Project rules | Per-project | `.cursor/rules/*.mdc` (requires YAML frontmatter: `description`, `globs`, `alwaysApply`) |
 | AGENTS.md | Per-project | `AGENTS.md` at project root or nested directories |
 | User rules | Global (all projects) | Cursor Settings UI |
 
-**vardoger target:** Write a `.cursor/rules/vardoger.md` file with `alwaysApply: true` in each project, or contribute a global user-level rule. The project-level approach is preferred because it is file-based and scriptable.
+**vardoger target:** Write a `.cursor/rules/vardoger.mdc` file with `alwaysApply: true` in each project, or contribute a global user-level rule. The project-level approach is preferred because it is file-based and scriptable.
 
-> **Status:** Implemented — writes `.cursor/rules/vardoger.md` with `alwaysApply: true` frontmatter.
+> **Status:** Implemented — writes `.cursor/rules/vardoger.mdc` with valid `description` and `alwaysApply: true` frontmatter. Pre-0.3.3 `vardoger.md` files remain readable for import and feedback continuity, but are never overwritten or deleted during the filename transition.
 
 #### Distribution
 
-Cursor is VS Code-based. Extensions are published to the **Visual Studio Marketplace** as standard VSIX packages. There is no separate Cursor-specific marketplace.
-
-Additionally, Cursor supports **MCP servers** configured via `~/.cursor/mcp.json`. vardoger can expose analysis capabilities as MCP tools alongside or instead of a VS Code extension.
+Cursor has a first-party plugin marketplace and accepts repository plugins
+using either its host-specific manifest or the portable Agent Plugins 1.0 root
+manifest. It also supports **MCP servers** configured via `~/.cursor/mcp.json`,
+which is Vardoger's direct-install fallback.
 
 **Recommended approach:** Ship as an MCP server (configured in `mcp.json`) that exposes vardoger commands as tools the agent can invoke. This aligns with Cursor's AI-native plugin model better than a traditional VS Code extension. Install via `pipx install vardoger && vardoger setup cursor`.
 
@@ -207,15 +230,17 @@ Plugins are git repositories. Installation clones into `~/.claude/plugins/cache/
 
 #### Distribution
 
-Codex has a plugin system similar in structure to Claude Code:
+Codex supports Agent Plugins plus its legacy-compatible package shape:
 
-- **Manifest:** `.codex-plugin/plugin.json`
-- **Marketplace:** Official curated directory + custom marketplace JSON
+- **Manifest:** Agent Plugins 1.0 root `plugin.json`; Vardoger 0.3.2 currently
+  uses the `.codex-plugin/plugin.json` compatibility fallback
+- **Marketplace:** Universal Plugins Directory + custom marketplace JSON
 - **CLI:** `/plugins` in TUI, `@` to target skills
 - **Bundled capabilities:** skills, MCP servers, app integrations
 - **Local marketplaces:** `$REPO_ROOT/.agents/plugins/marketplace.json` or `~/.agents/plugins/marketplace.json`
 
-Self-serve publishing to the official directory is listed as "coming soon."
+Verified developers can submit through the OpenAI Platform. Review approval
+is followed by an explicit publisher action before the plugin becomes public.
 
 **Recommended approach:** Ship vardoger as a Codex plugin with:
 - A **skill** for on-demand analysis
@@ -231,11 +256,19 @@ Self-serve publishing to the official directory is listed as "coming soon."
 
 | Source | Location | Format |
 |---|---|---|
-| Session transcripts | `~/.openclaw/agents/<agentId>/sessions/<channel>_<id>.jsonl` | JSONL — one message per line; fields include `id`, `parentId`, `role` (`user` / `assistant` / `system` / `tool`), `content`, `timestamp` (Unix seconds), `metadata` (userId, platform, model, token counts) |
+| Current canonical store | `~/.openclaw/agents/<agentId>/agent/openclaw-agent.sqlite` | Versioned SQLite; consumers must use OpenClaw's transcript accessor or supported export |
+| Legacy transcripts | `~/.openclaw/agents/<agentId>/sessions/<channel>_<id>.jsonl` | Pre-2.0 JSONL retained as a legacy/archive format |
 
-**Primary source:** Per-agent session JSONL files under `~/.openclaw/agents/`. The format is flat (no nested content blocks), making it the simplest of all supported platforms.
+**Current status:** Vardoger detects canonical SQLite history and stops with an
+actionable compatibility error rather than querying private, versioned tables
+or analyzing stale archive JSONL. With explicit
+`VARDOGER_OPENCLAW_GATEWAY=1` enablement and `--full`, it delegates
+`sessions.list` and paginated `chat.history` calls to the official OpenClaw
+CLI. Incremental checkpoints remain gated on stable message-anchor support.
+Pre-2.0 JSONL remains supported.
 
-**Discovery:** Walk `~/.openclaw/agents/` to find agent IDs, then enumerate `sessions/*.jsonl` within each.
+**Discovery:** Detect `*/agent/openclaw-agent.sqlite` first. Only when no
+canonical store exists, enumerate legacy `sessions/*.jsonl`.
 
 #### System Prompt Contribution
 
@@ -272,11 +305,12 @@ Install via `pipx install vardoger && vardoger setup openclaw`. ClawHub publishi
 
 | Source | Location | Format |
 |---|---|---|
-| CLI session state | `~/.copilot/session-state/*.jsonl` | JSONL — one event per line capturing user turns, assistant turns, and tool invocations from `copilot` CLI sessions |
+| CLI session state | `~/.copilot/session-state/<session-id>/events.jsonl` | JSONL — one event per line capturing user turns, assistant turns, and tool invocations from `copilot` CLI sessions |
 
 **Primary source for Phase 5:** Copilot CLI session-state JSONL files. VS Code Copilot Chat history is stored in opaque workspace storage and is excluded from Phase 5.
 
-**Discovery:** Enumerate `~/.copilot/session-state/*.jsonl`.
+**Discovery:** Enumerate current nested `*/events.jsonl` sessions and retain
+legacy flat `*.jsonl` discovery without double-counting migrated sessions.
 
 #### System Prompt Contribution [x]
 
@@ -303,7 +337,7 @@ Copilot CLI supports registering third-party plugin marketplaces via `copilot pl
 
 ---
 
-### 5.6 Windsurf [x]
+### 5.6 Devin Desktop / legacy Windsurf [x]
 
 #### Conversation History Storage [x]
 
@@ -330,7 +364,24 @@ Windsurf's in-product MCP Store is currently editorial with no public submission
 
 **Recommended approach:** Ship a native skill for Windsurf's user skill directory, an install snippet for `mcp_config.json` that wires vardoger as an MCP server (`VARDOGER_MCP_PLATFORM=windsurf`), and a `vardoger setup windsurf` helper that installs the skill and prepares the rules path. Revisit marketplace submission if Windsurf opens a self-serve flow.
 
-> **Status:** [x] `plugins/windsurf/skills/vardoger-analyze/SKILL.md` is generated from the shared skill body, `plugins/windsurf/README.md` contains the MCP snippet, and the current `main` implementation of `vardoger setup windsurf` installs the native user skill and prepares global rules. The installer will reach PyPI in the next release after 0.3.2.
+> **Status:** [x] Vardoger 0.3.2 supports the legacy Cascade product surface:
+> the shared native skill, MCP snippet, user skill installer, history reader,
+> and rules writer. Windsurf has since become Devin Desktop and new tabs
+> default to Devin Local. Phase 6 adds a separate `devin` target for documented
+> ATIF exports, native `.devin/*` rules, and `~/.config/devin/*` skills/rules;
+> `windsurf` remains the legacy Cascade compatibility name.
+
+#### Devin Local supported surface [x]
+
+Devin CLI documents `--export [PATH]`, which refreshes a conversation export
+in ATIF format after each turn. `vardoger setup devin` prepares
+`~/.vardoger/imports/devin/` and installs a native skill under
+`~/.config/devin/skills/analyze/`; Vardoger reads only exports the user places
+in that import directory. It does not inspect Devin's private session store.
+
+Global personalization is delivered to a fenced section in
+`~/.config/devin/AGENTS.md`. Project personalization uses the dedicated
+`.devin/rules/vardoger.md` rule with `trigger: always_on`.
 
 ---
 
@@ -351,13 +402,19 @@ Windsurf's in-product MCP Store is currently editorial with no public submission
 | Project `.clinerules/` directory | Per-project | `<project>/.clinerules/vardoger.md` (dedicated file) |
 | Project `.clinerules` file | Per-project | `<project>/.clinerules` (fenced `<!-- vardoger:start/end -->` section) |
 
-**vardoger target:** Project scope only — Cline does not currently expose a stable global-rules mechanism that is safe to write to. The writer detects whether `.clinerules` is a directory or a file and chooses the corresponding delivery automatically.
+**vardoger target:** Default to Cline's user-global rules directory at
+`~/Documents/Cline/Rules/vardoger.md`. For project scope, detect whether
+`.clinerules` is a directory or a file and choose the corresponding delivery
+automatically.
 
-> **Status:** Implemented — `src/vardoger/writers/cline.py` with tests covering both layouts.
+> **Status:** Implemented — `src/vardoger/writers/cline.py` covers global
+> delivery plus both legacy project layouts with focused tests.
 
 #### Distribution
 
-Cline publishes third-party servers through the Cline MCP Marketplace (GitHub-issue submission). Submissions require a brief server description, a link to an `llms-install.md` install guide, and a logo.
+Cline now publishes third-party plugins, skills, and MCP servers through the
+PR-based [`cline/marketplace`](https://github.com/cline/marketplace) catalog.
+The prior GitHub-issue queue is retained only as submission history.
 
 **Recommended approach:** Ship an `llms-install.md` that an LLM-driven install flow can follow, plus a user-facing README.
 
@@ -370,9 +427,17 @@ Cline publishes third-party servers through the Cline MCP Marketplace (GitHub-is
 
 ## 6. Architecture Constraints
 
-### 6.1 Local-Only Processing [x]
+### 6.1 Local Data Handling [x]
 
-All conversation history reading and analysis happens exclusively on the user's machine. No data is transmitted to any external service. This is a non-negotiable architectural constraint, not a preference.
+Conversation discovery, parsing, checkpointing, and rule writes happen on the
+user's machine. Vardoger operates no hosted service. Filesystem readers open no
+network connection; the explicitly enabled OpenClaw reader delegates read-only
+Gateway transport and authentication to the installed OpenClaw CLI without
+accepting credentials itself. The selected host assistant performs
+summarization and synthesis; if that assistant uses a cloud model, the excerpts
+supplied to it are processed under the host/provider's data policy. These
+boundaries must be disclosed before analysis rather than described as fully
+local.
 
 **Rationale:** Conversation history contains proprietary code, internal discussions, credentials that were accidentally pasted, and other sensitive material. Users must be able to trust that vardoger never exfiltrates this data.
 
@@ -458,15 +523,15 @@ The core analysis logic must be shared across all platform integrations. Platfor
 
 **Deliverables:**
 - [x] PyPI publishing for `pip install vardoger` / `pipx install vardoger` (current release: 0.3.2)
-- [x] Cursor Plugin Registry — **Live**, verified 2026-07-09 at [`cursor.com/marketplace/vardoger`](https://cursor.com/marketplace/vardoger) (`plugins/cursor/`).
+- [ ] Cursor Plugin Registry — **previously live, unavailable as of 2026-09-27**; the public route now displays "Marketplace Plugin Not Found." Revalidate the portable manifest and re-submit after the compatibility release.
 - [x] Claude Code community catalog + custom marketplace — **Live**, re-add verified 2026-07-09 in [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community); the self-served `.claude-plugin/marketplace.json` path remains available through `/plugin marketplace add dstrupl/vardoger`.
-- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json` and its `0.3.2` remote install has been verified with the current CLI. The universal-directory package is now reviewer-ready under `plugins/codex/submission/`, including public terms, production artwork, listing copy, a synthetic fixture, and exactly five positive plus three negative tests; verified developer identity and owner portal submission remain outstanding.
-- [x] Skill publishing to ClawHub for OpenClaw — **live (self-served)** as [`vardoger-analyze@0.3.2`](https://clawhub.ai/skills/vardoger-analyze), published 2026-07-09 with version id `k97bmm4d6dknnpcndy92csz3198a6ktj`; the current moderation verdict is clean and the platform-assigned listing license remains MIT-0 despite the skill's Apache-2.0 frontmatter.
+- [ ] Codex custom marketplace + official directory — the self-served catalog is **Live** at `.agents/plugins/marketplace.json`. The portable root manifest, final-directory text limits, deterministic four-file archive, and a clean `CODEX_HOME` install are validated locally. The eight portal reviewer cases, acceptance of the external CLI dependency, verified identity, submission, and publication remain human gates.
+- [x] Skill publishing to ClawHub for OpenClaw — publishing was achieved, but the [current public listing](https://clawhub.ai/dstrupl/vardoger-analyze) has regressed to 0.3.1 with security status `Review` and mandatory MIT-0 terms. An explicit distribution-license decision is required before another release.
 - [x] Plugin packaging and marketplace submission for GitHub Copilot CLI — **custom marketplace live (self-served)** via `plugins/copilot/marketplace.json` (Copilot CLI has no central registry for custom marketplaces — users install directly via `copilot plugin marketplace add dstrupl/vardoger:plugins/copilot`); **`awesome-copilot` live** as [`vardoger-analyze`](https://github.com/github/awesome-copilot/blob/main/skills/vardoger-analyze/SKILL.md) ([PR #1461](https://github.com/github/awesome-copilot/pull/1461) merged 2026-04-28 by [`aaronpowell`](https://github.com/aaronpowell) into `staged` as [`2f4f41b8`](https://github.com/github/awesome-copilot/commit/2f4f41b8bdeae0a96a4370f9d77358eafec4fe8f); auto-published to `main`, installable today via `gh skills install github/awesome-copilot vardoger-analyze`)
-- [ ] GitHub Copilot CLI default marketplace — focused draft [PR #56](https://github.com/github/copilot-plugins/pull/56) adds the externally hosted Vardoger 0.3.2 plugin and README discovery entry; mark it ready for review after owner review.
-- [x] Windsurf direct distribution — current `main` carries the native `vardoger-analyze` user skill and installer plus the existing MCP setup; source installation works now and the installer will reach PyPI in the next release after 0.3.2. The Enterprise Internal MCP Registry path is covered by the official MCP Registry row below. No public third-party MCP Store submission flow was found.
-- [ ] Cline MCP Marketplace submission — **submitted, awaiting review** ([issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) opened 2026-04-20)
-- [x] Official MCP Registry submission — **Live** as [`io.github.dstrupl/vardoger@0.3.2`](https://prod.registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10), published and verified active/latest on 2026-07-09. Tracked at `plugins/mcp-registry/server.json`.
+- [ ] GitHub Copilot CLI default marketplace — draft [PR #56](https://github.com/github/copilot-plugins/pull/56) remains open but is `CONFLICTING` / `DIRTY`; an exact [refresh kit](plugins/copilot/submission/README.md) is ready, but rebase/push and current-CLI clean acceptance remain owner gates.
+- [x] Windsurf direct distribution — 0.3.2 supports legacy Cascade skill, rules, history, and MCP paths. The compatibility worktree now also includes first-class Devin ATIF imports, `.devin/*` rules, and `~/.config/devin/*` setup, pending release.
+- [ ] Cline Marketplace submission — legacy [issue #1394](https://github.com/cline/mcp-marketplace/issues/1394) is still open but superseded. Prepare a validated entry for the current PR-based [`cline/marketplace`](https://github.com/cline/marketplace) after the Cline global-rule update.
+- [x] Official MCP Registry submission — **Live** as [`io.github.dstrupl/vardoger@0.3.2`](https://registry.modelcontextprotocol.io/v0.1/servers?search=vardoger&limit=10), verified active/latest on 2026-09-27. Tracked at `plugins/mcp-registry/server.json`.
 - [x] McpMux community registry submission ([`mcpmux/mcp-servers`](https://github.com/mcpmux/mcp-servers)) — **Live** (2026-04-24). [PR #113](https://github.com/mcpmux/mcp-servers/pull/113) merged as [`495adbc`](https://github.com/mcpmux/mcp-servers/commit/495adbc131a7ea2acd8df29869b391cc2cb05cbe) after addressing reviewer feedback (switched `VARDOGER_MCP_PLATFORM` from `text` to `select` input). Tracked server definition at `plugins/mcpmux/vardoger.json`; McpMux bundles `main` roughly hourly, so Cursor, Claude Desktop, VS Code, and Windsurf desktop clients on the McpMux gateway now pick up vardoger automatically.
 - [ ] Docker MCP Registry submission ([`docker/mcp-registry`](https://github.com/docker/mcp-registry)) — **submitted, awaiting review** ([PR #2949](https://github.com/docker/mcp-registry/pull/2949)); `source.commit` is correctly pinned to the peeled `v0.3.1` commit `98c9006f87880d907944557d343028f2b53cf635`.
 
@@ -513,6 +578,90 @@ A user on any Tier 1 platform can run `pipx install vardoger && vardoger setup <
 
 ---
 
+### Phase 6 — Host Evolution and Distribution Recovery [ ]
+
+**Goal:** Bring the shipped integrations and marketplace artifacts up to the
+current host contracts without breaking the existing 0.3.2 direct-install
+paths. The combined work is versioned as 0.4.0 because it adds public CLI and
+host-integration capabilities without breaking existing contracts.
+
+- [x] Apply one shared Agent Plugins 1.0 format and metadata pattern across the
+  Codex, Cursor, and Copilot packages, retaining thin host-specific
+  compatibility overlays and their existing marketplace paths.
+- [x] Add Cline global-scope delivery using its current user rules contract,
+  preserve `.clinerules` project compatibility, and add focused writer/setup
+  tests.
+- [x] Correct Cursor rule delivery to the required `.mdc` format while keeping
+  legacy `.md` files as a non-destructive read fallback.
+- [x] Discover current nested Copilot `events.jsonl` sessions while preserving
+  and deduplicating legacy flat JSONL history.
+- [x] Centralize host path configuration and honor `COPILOT_HOME` consistently
+  across Copilot history, writer, setup, and status code.
+- [x] Detect OpenClaw 2.0 canonical SQLite safely, preserve legacy JSONL, emit
+  valid skill frontmatter, and provide an explicit full-read adapter through
+  the official Gateway CLI's `sessions.list` and `chat.history`. Incremental
+  checkpoints and clean-profile live acceptance remain open.
+- [x] Add a first-class `devin` adapter around Devin CLI's documented,
+  user-enabled ATIF `--export` contract; deliver global/project rules and a
+  native skill through documented paths while retaining `windsurf` as the
+  legacy Cascade alias. Private session storage remains out of scope.
+- [x] Synchronize the Claude custom-marketplace metadata with the shipped
+  plugin version.
+- [x] Make Claude and Codex synthesis aware of native host memory so generated
+  instructions retain durable cross-project preferences instead of duplicating
+  episodic or repository-scoped host-managed context.
+- [ ] Recover marketplace reach only after runtime fixes: re-submit Cursor,
+  apply the prepared Copilot PR #56 refresh, submit the prepared Cline catalog
+  PR, and complete the remaining clean-environment Codex reviewer cases.
+- [ ] Resolve whether ClawHub's mandatory MIT-0 distribution is acceptable;
+  republish only if the owner accepts it and the OpenClaw integration remains
+  supported after the native-memory review.
+- [ ] Publish the prepared and locally validated 0.4.0 compatibility release,
+  then update public registry records that carry explicit versions. Packaging,
+  version metadata, generated artifacts, and local acceptance are complete;
+  commit, CI, tag, GitHub release, and PyPI publication remain owner gates.
+
+**Success criteria:** Current product defaults work without relying on legacy
+paths, direct installs remain backward-compatible, and every public status row
+has live installation evidence or an explicit, owned blocker.
+
+---
+
+### Phase 7 — Cross-Host Profile Compiler [in progress]
+
+**Goal:** Reposition Vardoger around the durable value native memories do not
+provide: a user-owned, reviewable profile that can combine evidence across
+assistant silos and emit portable instructions.
+
+- [x] Define a normalized preference/evidence model with source host,
+  provenance, recency, confidence, and conflict state.
+- [x] Deterministically aggregate explicitly selected, existing Vardoger
+  generations across supported hosts without silently re-reading unreviewed
+  raw transcripts.
+- [x] Add a review-first CLI that renders the profile and exact `AGENTS.md`
+  diff; require a separate `profile write --apply` invocation for mutation.
+- [ ] Add editing, accept/reject history, and rollback for the shared profile.
+- [x] Emit a portable, fenced `AGENTS.md` block while preserving all content
+  outside Vardoger's markers.
+- [ ] Add thin host-specific projections that avoid duplicating native memory.
+- [x] Add confidence, deterministic recency retention, and regex-based
+  drop/mask redaction controls before cross-host compilation.
+
+**MVP boundary:** Conflict detection is deliberately deterministic and narrow:
+it catches directly opposed directive prefixes over the same normalized text
+(for example, “Prefer tabs” versus “Avoid tabs”), withholds both from active
+instructions, and exposes the decision in the JSON audit. Semantic conflict
+resolution, profile editing/history, native-memory deduplication, and automatic
+host projection remain follow-on work.
+
+**Rationale:** Cursor, Codex, Copilot, and OpenClaw now provide substantial
+native memory or history-learning features. Their memories remain vendor
+silos, while Claude's auto-memory is repository-scoped and Devin Local does
+not persist memories. Cross-host ownership, provenance, and portability are
+therefore the defensible product advantage.
+
+---
+
 ## 8. Non-Goals and Out of Scope
 
 The following are explicitly deferred or excluded:
@@ -520,9 +669,8 @@ The following are explicitly deferred or excluded:
 | Item | Reason |
 |---|---|
 | **Analysis algorithm design** | Phase 2 (complete). Phase 1 proved the plumbing; Phase 2 added the intelligence. |
-| **Cloud processing service** | Architectural constraint. All processing is local. |
+| **Vardoger-operated cloud service** | Architectural constraint. Vardoger has no backend; host-model processing may still be remote under the selected provider's policy. |
 | **Real-time conversation monitoring** | vardoger operates on historical data, not live streams. It runs on-demand or on session start, not continuously. |
-| **Cross-platform history merging** | If a user uses both Cursor and Claude Code, each platform's history is analyzed independently. Merging signals across tools is a future consideration. |
 | **Prompt effectiveness measurement** | Measuring whether the generated prompts actually improve outcomes requires instrumentation that is out of scope for the initial phases. |
 | **Team/org-level personalization** | vardoger is for individual users. Team-wide prompt tuning is a different product. |
 
@@ -548,7 +696,7 @@ These decisions are intentionally left open and will be resolved during implemen
 
 ### 9.4 Analysis Trigger — RESOLVED
 
-> **Decision:** On-demand by default. Users invoke the `vardoger_personalize` MCP tool or the `vardoger` CLI when they want a refresh. Claude Code additionally ships a `SessionStart` hook that surfaces a staleness reminder without auto-running analysis. A scheduled / background refresh path remains out of scope for Phase 5; it would conflict with the local-only, review-first model above.
+> **Decision:** On-demand by default. Users invoke the `vardoger_personalize` MCP tool or the `vardoger` CLI when they want a refresh. Claude Code additionally ships a `SessionStart` hook that surfaces a staleness reminder without auto-running analysis. A scheduled / background refresh path remains out of scope for Phase 5; it would conflict with the explicit, review-first model above.
 
 ### 9.5 History Scope Defaults — RESOLVED
 
@@ -566,19 +714,20 @@ These decisions are intentionally left open and will be resolved during implemen
 | **History adapter** | A vardoger component that reads and normalizes conversation history from a specific platform's storage format. |
 | **Prompt writer** | A vardoger component that formats and delivers the generated prompt addition to a specific platform's configuration mechanism. |
 | **Checkpoint store** | A local record of which conversations have already been processed, enabling incremental analysis without reprocessing old data. |
-| **JSONL** | JSON Lines format — one complete JSON object per line, used by every currently supported platform for conversation storage. |
+| **JSONL** | JSON Lines format — one complete JSON object per line, used by several supported platforms for conversation storage. |
+| **ATIF** | Agent Trajectory Interchange Format — the documented JSON export emitted by Devin CLI's `--export` flag. |
 
 ## Appendix B: Platform File Paths Summary
 
 ```
 vardoger state:
   Checkpoints: ~/.vardoger/state.json (per-platform processing watermarks)
-  Plugin dirs:  ~/.vardoger/plugins/{cursor,claude-code,codex,openclaw,copilot,windsurf,cline}/ (created by vardoger setup)
+  Import dirs:  ~/.vardoger/imports/devin/ (created by vardoger setup devin)
 
 Cursor:
   History:  ~/.cursor/projects/<slug>/agent-transcripts/<uuid>/<uuid>.jsonl
   History:  ~/.cursor/chats/<hash>/<uuid>/store.db
-  Output:   <project>/.cursor/rules/vardoger.md
+  Output:   <project>/.cursor/rules/vardoger.mdc
   Plugin:   Cursor Plugin Registry or ~/.cursor/mcp.json (MCP server)
 
 Claude Code:
@@ -594,16 +743,26 @@ OpenAI Codex:
   Plugin:   /plugins in TUI (official directory or custom marketplace)
 
 OpenClaw:
-  History:  ~/.openclaw/agents/<agentId>/sessions/<channel>_<id>.jsonl
+  History:  ~/.openclaw/agents/<agentId>/agent/openclaw-agent.sqlite
+            (never queried directly; opt-in full read via official Gateway CLI)
+            ~/.openclaw/agents/<agentId>/sessions/<channel>_<id>.jsonl (legacy)
   Output:   ~/.openclaw/skills/vardoger-personalization/SKILL.md (global)
             ./skills/vardoger-personalization/SKILL.md (project)
   Skill:    clawhub install (ClawHub registry) or ~/.openclaw/skills/ (local)
 
 GitHub Copilot CLI:
-  History:  ~/.copilot/session-state/*.jsonl
+  History:  ~/.copilot/session-state/<session-id>/events.jsonl
+            ~/.copilot/session-state/*.jsonl (legacy fallback)
   Output:   ~/.copilot/copilot-instructions.md (global, fenced section)
             <project>/.github/copilot-instructions.md (project, fenced section)
   Plugin:   copilot plugin marketplace add dstrupl/vardoger:plugins/copilot
+
+Devin Local:
+  History:  ~/.vardoger/imports/devin/*.json (user-enabled `devin --export` ATIF)
+  Output:   ~/.config/devin/AGENTS.md (global, fenced section)
+            <project>/.devin/rules/vardoger.md (project, dedicated file)
+  Skill:    ~/.config/devin/skills/analyze/SKILL.md
+  Plugin:   Direct skill + CLI/MCP setup in plugins/devin/README.md
 
 Windsurf:
   History:  ~/.codeium/windsurf/**/*.jsonl
@@ -614,7 +773,8 @@ Windsurf:
 
 Cline:
   History:  <VS Code globalStorage>/saoudrizwan.claude-dev/tasks/<task-id>/api_conversation_history.json
-  Output:   <project>/.clinerules/vardoger.md (if .clinerules is a directory)
+  Output:   ~/Documents/Cline/Rules/vardoger.md (global default)
+            <project>/.clinerules/vardoger.md (if .clinerules is a directory)
             <project>/.clinerules (fenced section, if .clinerules is a single file)
   Plugin:   Cline MCP Marketplace — install guide at plugins/cline/llms-install.md
 ```

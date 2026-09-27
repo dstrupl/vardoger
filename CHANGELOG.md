@@ -6,17 +6,71 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-27
+
+This is a minor release because it adds new public CLI commands and supported
+host integrations while preserving the existing command and plugin contracts.
+
 ### Added
 
+- Add a review-first cross-host profile compiler that deterministically
+  combines explicitly selected Vardoger generations, records provenance,
+  recency, confidence, supersession, conflicts, and exclusions, and emits a
+  portable fenced `AGENTS.md` block. Preview and JSON audit are read-only;
+  writes require `profile write --apply` and preserve non-Vardoger content.
+- Add compiler confidence/retention controls and regex-based drop or mask
+  redaction before portable profile rendering.
 - Ship a native Windsurf `vardoger-analyze` skill and install it through
   `vardoger setup windsurf` alongside the existing rules and MCP integration.
+- Add portable Agent Plugins 1.0 root manifests for Cursor, Codex, and Copilot
+  while preserving their existing compatibility manifests and marketplaces.
+- Add Cline user-global personalization at
+  `~/Documents/Cline/Rules/vardoger.md` while retaining both legacy project
+  `.clinerules` layouts.
+- Add a first-class Devin Local target backed by Devin CLI's documented,
+  user-enabled ATIF `--export` files, native global/project rules, and an
+  installed analysis skill; private Devin session storage remains out of scope.
+- Add an explicit full-read OpenClaw 2.0 adapter through the official
+  `openclaw gateway call` CLI. It invokes only `sessions.list` and
+  `chat.history`, never queries private SQLite tables, and accepts no Gateway
+  endpoint or credential arguments.
+- Add a deterministic Codex skills-only submission builder and validator that
+  packages only the portable manifest, OpenAI overlay, analyze skill, and logo.
+- Add a focused refresh kit for conflicting Copilot default-marketplace PR #56,
+  including the exact catalog object, README entry, PR body, and safe rebase
+  validation steps.
+
+### Fixed
+
+- Constrain the MCP Python SDK to the compatible 1.x API so a clean install
+  cannot resolve MCP 2.x, where Vardoger's `FastMCP` import no longer exists.
+- Refresh the lockfile to patched AnyIO 4.15.1, Click 8.5.0,
+  Cryptography 50.0.1, and MCP 1.30.0 releases after the release audit found
+  newly disclosed advisories in the previous locked versions.
+- Discover current Copilot CLI transcripts under
+  `~/.copilot/session-state/<session-id>/events.jsonl`, retain legacy flat-file
+  compatibility, and avoid double-counting sessions present in both layouts.
+- Write Cursor project personalization to the required
+  `.cursor/rules/vardoger.mdc` path with valid frontmatter. Preserve
+  pre-0.4.0 `vardoger.md` files as a read-only migration fallback instead of
+  overwriting or deleting them.
+- Bring the Codex public-listing metadata within OpenAI's final-directory text
+  limits and add its public support URL.
 
 ### Documentation
 
-- Refresh the root and platform READMEs for the live Cursor and Claude
-  listings, the released Codex marketplace, current Copilot discovery paths,
-  Windsurf native-skill support, and the actual MCP Registry, McpMux, Docker,
-  Cline, and ClawHub states.
+- Re-audit every supported product and distribution surface: record the
+  missing Cursor listing, current Claude pin, conflicting Copilot PR, new
+  Cline catalog, Windsurf-to-Devin transition, ClawHub version/license
+  regression, and healthy shared registries; add a sequenced Phase 6 recovery
+  plan and replace the owner runbook with current submission steps.
+- Synchronize the self-hosted Claude Code marketplace metadata with the 0.3.2
+  plugin and package release.
+- Clarify the privacy boundary: Vardoger's filesystem handling and state are
+  local and it operates no backend, while analysis excerpts follow the
+  selected host model's data policy.
+- Document how the Copilot integration complements native Copilot Memory for
+  durable, reviewable, and cross-assistant personalization.
 - Add public terms and a reviewer-ready Codex directory submission package
   with production artwork, listing copy, release notes, a synthetic fixture,
   and the required five positive and three negative test cases.
